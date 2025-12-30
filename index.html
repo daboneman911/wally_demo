@@ -351,7 +351,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 3.30 (Optimized)</div>
+            <div class="app-version">Version 3.31</div>
         </div>
 
         <div class="section-title">Sort Statistics</div>
@@ -671,10 +671,10 @@
     let hourlyVisible = false;
     let lastSortStartTime = null;
     let isFirstOnboard = false;
-    let staffingInterval = null; // Optimization: Store interval ID
+    let staffingInterval = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '3.30';
+    const APP_VERSION = '3.31';
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Matt S", "Robert W", "Trevon C", "Victor M", "Russell H", "Fonseca J"];
@@ -698,6 +698,13 @@
 
     // --- CHANGELOG ---
     const CHANGELOG = `
+v3.31:
+- Automated Staffing Roles:
+  The employee with the most hours is automatically assigned Belt Tender (👑).
+  The next two are Bulk Sweeps (🧹).
+  Roles update dynamically as hours accumulate.
+- Removed manual role dropdowns.
+
 v3.30 (Optimized):
 - Major performance update for speed and battery life.
 - Search is now debounced (smoother typing).
@@ -813,14 +820,13 @@ v3.30 (Optimized):
         updateTabBadges();
     }
 
-    // --- GRANULAR SAVING (OPTIMIZATION 1) ---
+    // --- GRANULAR SAVING ---
     function saveDoors() { localStorage.setItem('ps9_doors', JSON.stringify(doors)); }
     function saveHistory() { localStorage.setItem('ps9_history', JSON.stringify(historyLog)); }
     function saveTeam() { localStorage.setItem('ps9_team', JSON.stringify(teamNames)); }
     function saveStaffing() { localStorage.setItem('ps9_staffing', JSON.stringify(staffing)); }
     function saveAccounts() { localStorage.setItem('ps9_accounts', JSON.stringify(savedAccounts)); }
     
-    // Legacy support wrapper (careful usage)
     function saveData() { 
         saveDoors(); saveHistory(); saveTeam(); saveStaffing(); saveAccounts();
         localStorage.setItem('ps9_dop', currentDOP);
@@ -1058,46 +1064,8 @@ v3.30 (Optimized):
         }
     }
 
-    function saveStaffRole(id, newRole, selectEl = null) {
-        const s = staffing.find(x => x.id === id); if(!s || s.role === newRole) return;
-        const now = Date.now();
-        let limitChanged = false;
-
-        if (newRole === 'Belt Tender') {
-            const currentBT = staffing.find(o => o.id !== s.id && o.role === 'Belt Tender' && o.status !== 'cut');
-            if (currentBT) {
-                if (!confirm(`Switch Belt Tender from ${currentBT.name} to ${s.name}?`)) {
-                    if (selectEl) selectEl.value = s.role; return;
-                }
-                if (currentBT.status === 'active' && currentBT.start) {
-                     currentBT.accumulated = (currentBT.accumulated || 0) + (now - currentBT.start);
-                     currentBT.start = now;
-                }
-                currentBT.role = 'Unloader'; limitChanged = true;
-            }
-        }
-
-        if (newRole === 'Bulk Sweep') {
-            const sweeps = staffing.filter(o => o.id !== s.id && o.role === 'Bulk Sweep' && o.status !== 'cut');
-            if (sweeps.length >= 2) {
-                sweeps.sort((a,b) => calculateTotalHours(a) - calculateTotalHours(b));
-                const toDemote = sweeps[0];
-                 if (toDemote.status === 'active' && toDemote.start) {
-                     toDemote.accumulated = (toDemote.accumulated || 0) + (now - toDemote.start);
-                     toDemote.start = now;
-                }
-                toDemote.role = 'Unloader'; limitChanged = true;
-            }
-        }
-
-        if(s.status === 'active' && s.start) {
-            s.accumulated = (s.accumulated || 0) + (now - s.start);
-            s.start = now;
-        }
-        s.role = newRole;
-        saveStaffing(); renderStaffingView(); showSaveToast();
-        if(limitChanged) alert("Role limits enforced.");
-    }
+    // Legacy function support
+    function saveStaffRole() {}
 
     function pauseStaff(id) {
         const s = staffing.find(x => x.id === id);
@@ -1122,23 +1090,42 @@ v3.30 (Optimized):
         return Math.round(totalMs / 60000) / 60;
     }
 
+    // --- AUTOMATED STAFFING LOGIC ---
+    function autoAssignRoles() {
+        const activeStaff = staffing.filter(s => s.status === 'active' || s.status === 'paused');
+        activeStaff.sort((a, b) => calculateTotalHours(b) - calculateTotalHours(a));
+
+        let changed = false;
+
+        activeStaff.forEach((s, index) => {
+            let newRole = 'Unloader';
+            if (index === 0) newRole = 'Belt Tender';
+            else if (index === 1 || index === 2) newRole = 'Bulk Sweep';
+            
+            if (s.role !== newRole) {
+                s.role = newRole;
+                changed = true;
+            }
+        });
+
+        if (changed) { saveStaffing(); return true; }
+        return false;
+    }
+
     function renderStaffingView() {
+        autoAssignRoles();
         const activeList = byId('staff-list-active'), cutList = byId('staff-list-cut');
         activeList.innerHTML = ''; cutList.innerHTML = '';
         
         const activeStaff = staffing.filter(s => s.status === 'active' || s.status === 'paused')
             .sort((a,b) => calculateTotalHours(b) - calculateTotalHours(a));
 
-        const activeOnly = staffing.filter(s => s.status !== 'cut').map(s=>({id:s.id, total:calculateTotalHours(s)}));
-        activeOnly.sort((a,b)=>b.total-a.total);
-        const topThreeIds = activeOnly.slice(0,3).map(x=>x.id);
-
         activeStaff.forEach(s => {
-            let badge = '';
-            const idx = topThreeIds.indexOf(s.id);
-            if(idx===0) badge='👑'; else if(idx===1||idx===2) badge='🧹';
-            
             const isPaused = s.status === 'paused';
+            let roleIcon = '';
+            if (s.role === 'Belt Tender') roleIcon = '👑';
+            else if (s.role === 'Bulk Sweep') roleIcon = '🧹';
+
             const roleColor = s.role==='Belt Tender'?'#ff9500':(s.role==='Bulk Sweep'?'#34c759':'#000');
             
             const div = document.createElement('div'); div.className = 'staff-card';
@@ -1146,7 +1133,7 @@ v3.30 (Optimized):
             div.innerHTML = `
                 <div style="width:100%">
                     <div class="staff-top-row">
-                        <div class="staff-name">${s.name} <span style="margin-left:5px; font-size:18px;">${badge}</span> ${isPaused?'<span style="background:#ffcc00; color:#000; font-size:10px; padding:2px 4px; border-radius:4px; font-weight:700; margin-left:5px;">PAUSED</span>':''}</div>
+                        <div class="staff-name">${s.name} <span style="margin-left:5px; font-size:18px;">${roleIcon}</span> ${isPaused?'<span style="background:#ffcc00; color:#000; font-size:10px; padding:2px 4px; border-radius:4px; font-weight:700; margin-left:5px;">PAUSED</span>':''}</div>
                         <div style="display:flex; gap:8px;">
                             <button class="icon-btn" onclick="${isPaused?'resumeStaff':'pauseStaff'}(${s.id})" style="width:32px; height:32px; font-size:16px; ${isPaused?'background:#e5e5ea; color:#000;':''}"><i class="ph ${isPaused?'ph-play':'ph-pause'}"></i></button>
                             <button class="icon-btn" onclick="openEditStaffModal(${s.id})" style="width:32px; height:32px; font-size:16px;"><i class="ph ph-pencil-simple"></i></button>
@@ -1154,15 +1141,11 @@ v3.30 (Optimized):
                             <button class="icon-btn" onclick="removeStaff(${s.id})" style="width:32px; height:32px; font-size:16px; color:#ff3b30;"><i class="ph ph-trash"></i></button>
                         </div>
                     </div>
-                    <div class="staff-time">${isPaused?'Paused':'Started: '+new Date(s.start).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} • ${s.role}</div>
+                    <div class="staff-time">${isPaused?'Paused':'Started: '+new Date(s.start).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</div>
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
                         <div class="staff-hours" id="staff-hours-${s.id}" style="color:${roleColor}">${calculateTotalHours(s).toFixed(2)}h</div>
-                        <div style="width:50%">
-                            <select class="role-select" onchange="saveStaffRole(${s.id}, this.value, this)">
-                                <option value="Unloader" ${s.role==='Unloader'?'selected':''}>Unloader</option>
-                                <option value="Belt Tender" ${s.role==='Belt Tender'?'selected':''}>Belt Tender</option>
-                                <option value="Bulk Sweep" ${s.role==='Bulk Sweep'?'selected':''}>Bulk Sweep</option>
-                            </select>
+                        <div style="font-size:14px; font-weight:700; color:${roleColor}; background:#f2f2f7; padding:6px 12px; border-radius:8px;">
+                            ${s.role} ${roleIcon}
                         </div>
                     </div>
                 </div>`;
@@ -1171,22 +1154,26 @@ v3.30 (Optimized):
 
         const cutStaffList = staffing.filter(s => s.status === 'cut').sort((a,b) => calculateTotalHours(b) - calculateTotalHours(a));
         cutStaffList.forEach(s => {
-            const idx = topThreeIds.indexOf(s.id);
-            const badge = (idx===0)?'👑':((idx===1||idx===2)?'🧹':'');
             const div = document.createElement('div'); div.className = 'staff-card cut';
             div.innerHTML = `
-                <div><div class="staff-name">${s.name} <span style="margin-left:5px; font-size:18px;">${badge}</span> • ${s.role}</div><div class="staff-time">Ended: ${new Date(s.end).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</div></div>
+                <div><div class="staff-name">${s.name} • ${s.role}</div><div class="staff-time">Ended: ${new Date(s.end).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</div></div>
                 <div style="display:flex; align-items:center; gap:10px;"><div class="staff-hours">${calculateTotalHours(s).toFixed(2)}h</div><button class="icon-btn" onclick="removeStaff(${s.id})" style="width:32px; height:32px; font-size:16px; color:#ff3b30; background:transparent;"><i class="ph ph-trash"></i></button></div>`;
             cutList.appendChild(div);
         });
 
         byId('badge-on-clock').innerText = activeStaff.length;
         byId('badge-off-clock').innerText = cutStaffList.length;
-        updateStaffingTimers();
+        updateStaffingTimers(false);
     }
 
-    function updateStaffingTimers() {
+    function updateStaffingTimers(checkRoles = true) {
         if(!byId('tab-staffing').classList.contains('active')) return;
+        
+        if(checkRoles) {
+             const changed = autoAssignRoles();
+             if(changed) { renderStaffingView(); return; }
+        }
+
         let onClock=0, uHours=0, bHours=0, sHours=0;
         staffing.forEach(s => {
             let hrs = calculateTotalHours(s);
@@ -1315,7 +1302,7 @@ v3.30 (Optimized):
              if(idx>=0) icons[idx].classList.add('active');
         }
         
-        // OPTIMIZATION 5: Resource Management
+        // Resource Management: Only run staffing timer when active
         if(tabId==='staffing') {
             renderStaffingView();
             if(!staffingInterval) staffingInterval = setInterval(updateStaffingTimers, 1000);
@@ -1412,7 +1399,7 @@ v3.30 (Optimized):
         byId('stat-hour-wally').innerText = hw; byId('stat-last-wally').innerText = lhw;
     }
 
-    // --- RENDER DASHBOARD (OPTIMIZATION 2 & 6) ---
+    // --- RENDER DASHBOARD ---
     function renderDashboard() {
         updateStats();
         const openGrid = byId('open-bays-grid'), activeGrid = byId('active-trailers-grid');
@@ -1422,9 +1409,8 @@ v3.30 (Optimized):
         for(let i=DOORS_START; i<=DOORS_END; i++) {
             const d = doors[i];
             const btn = document.createElement('div');
-            // CSS classes instead of inline styles
             btn.className = `bay-circle bay-${i} ${d.unavailable ? 'unavailable' : ''}`;
-            btn.dataset.door = i; // For event delegation
+            btn.dataset.door = i; 
 
             if (d.status === 'active') {
                 hasActive = true;
@@ -1609,16 +1595,15 @@ v3.30 (Optimized):
         Object.keys(h).sort((a,b)=>a-b).forEach(k=>tb.innerHTML+=`<tr><td>${getHourText(parseInt(k))}</td><td style="text-align:center">${h[k]}</td></tr>`);
     }
 
-    // --- OPTIMIZED RENDER LOGS (VIRTUALIZATION/PAGINATION) ---
+    // --- OPTIMIZED RENDER LOGS ---
     let currentVisibleLogs = 50;
-    let filteredLogsCache = []; // Cache filtered result
+    let filteredLogsCache = []; 
 
     function renderLogs() {
         const list = byId('logs-list'); if(!list) return;
         const filterDisplay = byId('active-filter-display'), filterText = byId('filter-text-display');
         const sVal = byId('log-search').value.trim().toUpperCase(); activeLogFilter.search = sVal;
         
-        // Filter Logic
         const { thisHourStart, thisHourEnd, lastHourStart, lastHourEnd } = getShiftTimeWindows();
         filteredLogsCache = historyLog.filter(l => {
             if (activeLogFilter.date !== 'All' && l.dateKey !== activeLogFilter.date) return false;
@@ -1634,7 +1619,6 @@ v3.30 (Optimized):
             return true;
         });
 
-        // UI Update
         const isFiltering = Object.values(activeLogFilter).some(v => v !== 'All' && v !== '');
         if (filterDisplay) {
             filterDisplay.style.display = isFiltering ? 'flex' : 'none';
@@ -1650,7 +1634,7 @@ v3.30 (Optimized):
         }
 
         list.innerHTML = '';
-        currentVisibleLogs = 50; // Reset pagination on re-render
+        currentVisibleLogs = 50; 
         renderLogBatch();
         
         if(statsVisible) calculateAndRenderStats();
