@@ -237,7 +237,7 @@
         .tool-card.add { border: 2px dashed #ccc; background: transparent; box-shadow: none; }
         .tool-card.add .tool-icon-wrapper { background: #e5e5ea; color: #000; }
 
-        /* --- LOGS --- */
+        /* --- LOGS SECTION (REVISED) --- */
         .stats-collapse-btn { width: 100%; background: #f2f2f7; border: none; border-radius: 16px; padding: 18px; display: flex; justify-content: space-between; align-items: center; font-size: 16px; font-weight: 700; color: #000; cursor: pointer; margin-bottom: 20px; }
         .stats-content-area { background: white; border: 1px solid #e5e5ea; border-radius: 16px; padding: 20px; margin-bottom: 25px; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
         .stats-table { width: 100%; border-collapse: collapse; font-size: 15px; }
@@ -246,16 +246,32 @@
         .stats-table td:last-child { font-weight: 800; text-align: right; }
         .active-filter-display { display: flex; align-items: center; justify-content: space-between; background: #000; color: white; padding: 12px 20px; border-radius: 16px; margin-bottom: 20px; font-weight: 600; }
         .logs-list { display: flex; flex-direction: column; gap: 15px; }
-        .log-card { background: white; border: 1px solid #e5e5ea; border-radius: 20px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); display: flex; justify-content: space-between; align-items: flex-start; }
-        .log-info { display: flex; flex-direction: column; gap: 6px; flex-grow: 1; min-width: 0; }
-        .active-card-header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-        .log-door-pill { background: #000; color: #fff; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 30px; cursor: pointer; flex-shrink: 0; }
-        .log-type-pill { font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 30px; background: #000; color: #fff; margin-left: 6px; flex-shrink: 0; max-width: 100%; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
-        .log-title { font-size: 18px; font-weight: 800; color: #000; word-break: break-all; }
-        .log-details { font-size: 15px; color: var(--text-sub); }
-        .log-timestamp { font-size: 14px; color: #000; font-weight: 700; margin-top: 4px; }
-        .log-actions { display: flex; flex-direction: column; gap: 10px; align-items: flex-end; }
-        .log-action-btn { background: #f2f2f7; border: 1px solid #000; border-radius: 12px; padding: 8px 14px; font-size: 13px; font-weight: 700; color: #000; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+        
+        /* NEW LOG CARD STYLES */
+        .log-card {
+            background: white; border: 1px solid #e5e5ea; border-radius: 20px; padding: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03); display: flex; justify-content: space-between; align-items: center; gap: 15px;
+        }
+        .log-info { display: flex; flex-direction: column; gap: 8px; flex-grow: 1; min-width: 0; }
+        .log-header-row { display: flex; align-items: center; gap: 10px; }
+        .log-door-pill { background: #000; color: #fff; font-size: 11px; font-weight: 800; padding: 6px 12px; border-radius: 8px; cursor: pointer; flex-shrink: 0; letter-spacing: 0.5px; text-transform: uppercase; }
+        .log-title { font-size: 20px; font-weight: 900; color: #000; line-height: 1; letter-spacing: -0.5px; }
+        .log-account { color: #8e8e93; font-weight: 500; font-size: 14px; margin-left: 6px; }
+        .log-tags-row { display: flex; flex-wrap: wrap; gap: 6px; }
+        .log-tag { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 6px; background: #f2f2f7; color: #000; display: inline-flex; align-items: center; gap: 4px; }
+        .tag-black { background: #000; color: white; }
+        .tag-red { background: #ff3b30; color: white; }
+        .tag-gray { background: #e5e5ea; color: #555; }
+        .log-footer-row { display: flex; align-items: center; gap: 15px; color: var(--text-sub); font-size: 13px; font-weight: 500; margin-top: 2px; }
+        .log-footer-item { display: flex; align-items: center; gap: 5px; }
+        .log-footer-item i { font-size: 16px; color: #000; }
+        .log-right-col { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; min-width: 90px; }
+        .log-duration { font-size: 24px; font-weight: 900; color: #000; line-height: 1; }
+        .log-duration-label { font-size: 10px; text-transform: uppercase; color: #8e8e93; font-weight: 700; margin-top: 2px; }
+        .log-actions-row { display: flex; gap: 8px; }
+        .log-mini-btn { width: 36px; height: 36px; border-radius: 12px; border: 1px solid #e5e5ea; background: white; display: flex; align-items: center; justify-content: center; font-size: 18px; color: #000; cursor: pointer; transition: all 0.1s; }
+        .log-mini-btn:active { background: #f2f2f7; transform: scale(0.95); }
+
         .search-bar { width: 100%; padding: 14px; border: 1px solid #e5e5ea; border-radius: 12px; background: #f9f9f9; font-size: 16px; margin-bottom: 20px; outline: none; }
         .load-more-btn { width: 100%; padding: 15px; background: #f2f2f7; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; margin-top: 10px; color: #555; }
 
@@ -377,7 +393,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 3.41</div>
+            <div class="app-version">Version 3.42</div>
         </div>
 
         <div class="section-title">Sort Statistics</div>
@@ -768,7 +784,7 @@
     let currentSwitchType = 'Replacement';
 
     // --- CONFIG ---
-    const APP_VERSION = '3.41';
+    const APP_VERSION = '3.42';
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Matt S", "Robert W", "Trevon C", "Victor M", "Russell H", "Fonseca J"];
@@ -792,14 +808,17 @@
 
     // --- CHANGELOG ---
     const CHANGELOG = `
-v3.41:
-- Fix: Duplicate/Attribution alerts now block screen correctly (High Z-Index).
-- Fix: "Unassigned" ignored for "Started By" credit.
-- Fix: Completing a door without an unloader now prompts for assignment.
-- Visual: Log text wraps properly for long labels.
+v3.42:
+- New Log Card Design ("Structured Stack"):
+  - Fixed layout for consistent look.
+  - Handled long text overflow gracefully.
+  - Mini-buttons for cleaner UI.
+  - Duration highlighted as visual anchor.
 
-v3.40:
-- Bay Door Attribution, Move/Transfer, Totals Fix.
+v3.41:
+- Fix: Duplicate/Attribution alerts now block screen correctly.
+- Fix: "Unassigned" ignored for "Started By".
+- Fix: Completing a door without an unloader prompts for assignment.
     `;
 
     // --- STATE ---
@@ -1124,17 +1143,29 @@ v3.40:
         
         const startTime = Date.now(); 
 
+        // Process Checkboxes
         cbs.forEach(cb => {
             const name = cb.value;
+            // Get specific role for this person
             const roleSelect = document.getElementById(`role-select-${name.replace(/\s+/g, '')}`);
             let roleVal = roleSelect ? roleSelect.value : 'Unloader';
-            let isManual = (roleVal !== 'Unloader'); 
+            let isManual = (roleVal !== 'Unloader'); // Unloader = Auto, Others = Locked
 
             if(!staffing.find(s => s.name === name && s.status !== 'cut')) {
-                staffing.push({ id: Date.now() + Math.random(), name: name, start: startTime, end: null, status: 'active', role: roleVal, accumulated: 0, manualOverride: isManual });
+                staffing.push({ 
+                    id: Date.now() + Math.random(), 
+                    name: name, 
+                    start: startTime, 
+                    end: null, 
+                    status: 'active', 
+                    role: roleVal, 
+                    accumulated: 0, 
+                    manualOverride: isManual 
+                });
             }
         });
 
+        // Process Custom Name
         if (customName) {
             const fmtName = customName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
             let isManual = (customRole !== 'Unloader');
@@ -1147,7 +1178,16 @@ v3.40:
             }
 
             if(!staffing.find(s => s.name === fmtName && s.status !== 'cut')) {
-                 staffing.push({ id: Date.now() + Math.random(), name: fmtName, start: startTime, end: null, status: 'active', role: customRole, accumulated: 0, manualOverride: isManual });
+                 staffing.push({ 
+                     id: Date.now() + Math.random(), 
+                     name: fmtName, 
+                     start: startTime, 
+                     end: null, 
+                     status: 'active', 
+                     role: customRole, 
+                     accumulated: 0, 
+                     manualOverride: isManual 
+                 });
             }
         }
 
@@ -1329,6 +1369,7 @@ v3.40:
 
     function updateStaffingTimers(checkRoles = true) {
         if(!byId('tab-staffing').classList.contains('active')) return;
+        
         if(checkRoles) { const changed = autoAssignRoles(); if(changed) { renderStaffingView(); return; } }
 
         const currentOrder = Array.from(document.querySelectorAll('.staff-card:not(.cut)')).map(el => parseFloat(el.dataset.id));
@@ -1510,7 +1551,6 @@ v3.40:
     function completeDoor(doorNum, force = false) {
         const d = doors[doorNum];
         
-        // --- FIX: CHECK UNASSIGNED ---
         if (!force && (!d.unloader || d.unloader === 'Unassigned')) {
              closeModal('active-detail-modal');
              byId('req-unloader-select').value = "";
@@ -1540,10 +1580,8 @@ v3.40:
             unl = unl.toLowerCase().split(' ').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ');
         }
         
-        // Update the door with this new unloader
         const d = doors[detailDoor];
         d.unloader = unl;
-        // Fix assignment history too
         if(d.assignments.length > 0) {
             if (d.assignments[d.assignments.length-1].name === 'Unassigned') {
                  d.assignments[d.assignments.length-1].name = unl;
@@ -1572,7 +1610,6 @@ v3.40:
         closeModal('move-menu-modal');
         const d = doors[detailDoor];
         
-        // Finalize Assignments
         const now = Date.now();
         if(d.assignments && d.assignments.length > 0) {
             const last = d.assignments[d.assignments.length - 1];
@@ -1598,21 +1635,15 @@ v3.40:
         const d = doors[doorNum];
         let start = d.start;
         
-        // Close last assignment
         if(d.assignments && d.assignments.length > 0) {
             const last = d.assignments[d.assignments.length - 1];
             if(!last.end) last.end = endTime;
         }
 
-        // Calculate Primary Unloader
         const durationMap = {};
         
-        // Fix: Filter Unassigned from Started By
         const realAssignments = (d.assignments || []).filter(a => a.name && a.name !== 'Unassigned');
-        let startedBy = d.unloader;
-        if (realAssignments.length > 0) {
-            startedBy = realAssignments[0].name;
-        }
+        let startedBy = (realAssignments.length > 0) ? realAssignments[0].name : null;
         
         if (d.assignments && d.assignments.length > 0) {
             d.assignments.forEach(a => {
@@ -1634,7 +1665,6 @@ v3.40:
             }
         });
         
-        // Fallback if map empty (shouldn't happen with mandatory check)
         if (!primaryUnloader || primaryUnloader === 'Unassigned') primaryUnloader = "Unknown";
 
         const assistants = Object.keys(durationMap).filter(n => n !== primaryUnloader);
@@ -2044,43 +2074,47 @@ v3.40:
             const card = document.createElement('div'); card.className = 'log-card';
             const dur = Math.round(l.duration/60000);
             
-            // Build Type String
-            let typeStr = l.type + (l.duplicate ? ' DUP' : '');
-            if (l.type === 'CPU' && l.cpuOptions && l.cpuOptions.length > 0) {
-                typeStr += ` (${l.cpuOptions.join(', ')})`;
-            }
+            // Build Tags
+            let tagsHtml = `<span class="log-tag tag-black">${l.type}</span>`;
+            if (l.duplicate) tagsHtml += `<span class="log-tag tag-red">DUP</span>`;
             
-            // Handle Moved status
-            let statusPill = '';
             if (l.status === 'moved') {
-                statusPill = `<span class="log-type-pill" style="background:#8e8e93;">Moved: ${l.moveDest}</span>`;
+                 tagsHtml += `<span class="log-tag tag-gray"><i class="ph ph-arrows-left-right"></i> ${l.moveDest}</span>`;
             } else {
-                statusPill = `<span class="log-type-pill" style="background:${l.duplicate?'#ff3b30':'#000'}">${typeStr}</span>`;
+                if (l.type === 'CPU' && l.cpuOptions && l.cpuOptions.length > 0) {
+                     l.cpuOptions.forEach(opt => { tagsHtml += `<span class="log-tag tag-gray">${opt}</span>`; });
+                }
             }
+            tagsHtml += `<span class="log-tag" style="background:#fff; border:1px solid #e5e5ea;">${getHourText(l.completionHour)}</span>`;
 
-            // Build User String (Started by + Unloader)
-            let userStr = `👤 ${l.unloader}`;
+            // Build User String
+            let userStr = l.unloader;
+            let startStr = "";
             if (l.startedBy && l.startedBy !== l.unloader && l.startedBy !== 'Unassigned') {
-                userStr = `👤 ${l.unloader} <span style="font-size:12px; color:#999;">(Started by ${l.startedBy})</span>`;
+                startStr = ` <span style="color:#999; font-weight:400; margin-left:4px;">(via ${l.startedBy})</span>`;
             }
 
             card.innerHTML = `
                 <div class="log-info">
-                    <div class="active-card-header">
+                    <div class="log-header-row">
                         <span class="log-door-pill" onclick="viewDoorLogs(${l.door})">Door ${l.door}</span>
-                        ${statusPill}
-                        <span class="log-type-pill">${getHourText(l.completionHour)}</span>
+                        <div class="log-title">${l.id}<span class="log-account">${l.account ? l.account : ''}</span></div>
                     </div>
-                    <div class="log-title">${l.id}<span style="color:#8e8e93; font-weight:400">${l.account?' ('+l.account+')':''}</span></div>
-                    <div class="log-details" style="display:flex; justify-content:space-between; margin-top:4px;">
-                        <span>${userStr}</span>
-                        <span style="font-weight:700; color:#000;">Duration: <span style="font-weight:800;">${dur}m</span></span>
+                    <div class="log-tags-row">${tagsHtml}</div>
+                    <div class="log-footer-row">
+                        <div class="log-footer-item"><i class="ph ph-user"></i> ${userStr}${startStr}</div>
+                        <div class="log-footer-item"><i class="ph ph-clock"></i> ${new Date(l.start).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} - ${new Date(l.end).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</div>
                     </div>
-                    <div class="log-timestamp" style="margin-top:6px; color:#555;">${new Date(l.start).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} - ${new Date(l.end).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</div>
                 </div>
-                <div class="log-actions">
-                    ${(Date.now()-l.end < 120000 && !demoActive) ? `<button class="log-action-btn" onclick="revertLog(${historyLog.indexOf(l)})"><i class="ph ph-arrow-u-up-left"></i> Revert</button>` : ''}
-                    <button class="log-action-btn" onclick="openEditLogModal(${historyLog.indexOf(l)})"><i class="ph ph-pencil-simple"></i> Edit</button>
+                <div class="log-right-col">
+                    <div style="text-align:right;">
+                        <div class="log-duration">${dur}<span style="font-size:14px; font-weight:700;">m</span></div>
+                        <div class="log-duration-label">Duration</div>
+                    </div>
+                    <div class="log-actions-row">
+                         ${(Date.now()-l.end < 120000 && !demoActive) ? `<button class="log-mini-btn" onclick="revertLog(${historyLog.indexOf(l)})"><i class="ph ph-arrow-u-up-left"></i></button>` : ''}
+                        <button class="log-mini-btn" onclick="openEditLogModal(${historyLog.indexOf(l)})"><i class="ph ph-pencil-simple"></i></button>
+                    </div>
                 </div>
             `;
             frag.appendChild(card);
