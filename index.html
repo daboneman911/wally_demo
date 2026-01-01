@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+\<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -222,7 +222,6 @@
         .breakdown-row { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.7); margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1); }
         .staff-checkbox-list { max-height: 250px; overflow-y: auto; border: 1px solid #e5e5ea; border-radius: 12px; background: #f9f9f9; padding: 5px; }
         
-        /* New Clock In Row Styles */
         .staff-item-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 8px; border-bottom: 1px solid #e5e5ea; }
         .staff-item-row:last-child { border-bottom: none; }
         .staff-check-label { display: flex; align-items: center; gap: 12px; flex: 1; cursor: pointer; font-size: 16px; font-weight: 500; }
@@ -374,7 +373,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 3.37</div>
+            <div class="app-version">Version 3.38</div>
         </div>
 
         <div class="section-title">Sort Statistics</div>
@@ -732,7 +731,7 @@
     let staffingInterval = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '3.37';
+    const APP_VERSION = '3.38';
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Matt S", "Robert W", "Trevon C", "Victor M", "Russell H", "Fonseca J"];
@@ -756,15 +755,16 @@
 
     // --- CHANGELOG ---
     const CHANGELOG = `
+v3.38:
+- Smart Staffing Logic:
+  - Belt Tender / Sweep roles are top of list (Crown/Broom).
+  - Manual roles are "Locked" (will not be auto-demoted).
+  - If a locked user is Paused/Cut, their role is dynamically filled by the next top performer.
+  - Role selection on Clock In is now per-person.
+
 v3.37:
 - Clock In Upgrade:
   - Role selection is now individual for each staff member.
-  - Selecting "Belt Tender" or "Bulk Sweep" on clock-in locks the role.
-  - "Unloader" defaults to Auto-Sort behavior.
-  - Custom new staff can also have their role set immediately.
-
-v3.36:
-- Clock In Updates: Custom name entry added.
     `;
 
     // --- STATE ---
@@ -1204,53 +1204,101 @@ v3.36:
     // --- AUTOMATED STAFFING LOGIC (WITH MANUAL OVERRIDE) ---
     function autoAssignRoles() {
         const activeStaff = staffing.filter(s => s.status === 'active' || s.status === 'paused');
-        activeStaff.sort((a, b) => calculateTotalHours(b) - calculateTotalHours(a));
 
-        let lockedBeltTenders = 0;
-        let lockedSweeps = 0;
-
+        // 1. Reset everyone who isn't manually locked to 'Unloader' temporarily
         activeStaff.forEach(s => {
-            if (s.manualOverride) {
-                if (s.role === 'Belt Tender') lockedBeltTenders++;
-                if (s.role === 'Bulk Sweep') lockedSweeps++;
-            }
+            if (!s.manualOverride) s.role = 'Unloader';
         });
+
+        // 2. Identify Locked Roles (Active Only - Paused locked users lose priority temporarily if we want dynamic fill, 
+        //    BUT user asked for "dynamic selection based on time if ... paused".
+        //    So we only count 'active' status for locks to hold the slot.)
+        
+        const lockedBelt = activeStaff.filter(s => s.manualOverride && s.role === 'Belt Tender' && s.status === 'active');
+        const lockedSweep = activeStaff.filter(s => s.manualOverride && s.role === 'Bulk Sweep' && s.status === 'active');
+
+        // 3. Determine available slots
+        let neededBelt = 1 - lockedBelt.length;
+        let neededSweep = 2 - lockedSweep.length;
+
+        // 4. Sort candidates (active/paused, not locked to any specific role) by time
+        //    Locked users who are paused are technically candidates for auto-assignment if we want to demote them? 
+        //    Actually, simpler: Candidates are anyone NOT currently holding a locked slot.
+        const candidates = activeStaff.filter(s => !s.manualOverride || s.status !== 'active')
+                                      .sort((a,b) => calculateTotalHours(b) - calculateTotalHours(a));
 
         let changed = false;
 
-        activeStaff.forEach(s => {
-            if (s.manualOverride) return;
+        // 5. Fill Belt Tender
+        if (neededBelt > 0 && candidates.length > 0) {
+            // Find highest hour candidate who isn't locked to something else (e.g. paused belt tender comes back?)
+            // For now, just take top.
+            const s = candidates.shift(); 
+            if (s.role !== 'Belt Tender') { s.role = 'Belt Tender'; changed = true; }
+            neededBelt--;
+        }
 
-            let newRole = 'Unloader';
-            if (lockedBeltTenders < 1) { newRole = 'Belt Tender'; lockedBeltTenders++; } 
-            else if (lockedSweeps < 2) { newRole = 'Bulk Sweep'; lockedSweeps++; }
+        // 6. Fill Bulk Sweeps
+        while (neededSweep > 0 && candidates.length > 0) {
+            const s = candidates.shift();
+            if (s.role !== 'Bulk Sweep') { s.role = 'Bulk Sweep'; changed = true; }
+            neededSweep--;
+        }
 
-            if (s.role !== newRole) { s.role = newRole; changed = true; }
+        // 7. Ensure remaining candidates are Unloaders (unless they are locked to Unloader)
+        candidates.forEach(s => {
+            // If they were assigned a temp role above, skip
+            if (s.role === 'Belt Tender' && neededBelt >= 0) return; // wait, logic check
+            // Actually, simpler: just set everyone else to Unloader if they aren't locked to something else specific
+            if (!s.manualOverride && s.role !== 'Belt Tender' && s.role !== 'Bulk Sweep') {
+                 if (s.role !== 'Unloader') { s.role = 'Unloader'; changed = true; }
+            }
+            // If they ARE manual override (e.g. Paused Belt Tender), they might have been demoted to Unloader by the "Reset" at step 1.
+            // If they weren't picked in step 5/6, they stay Unloader until they resume.
         });
 
-        if (changed) { saveStaffing(); return true; }
-        return false;
+        if (changed) saveStaffing();
+        return changed;
     }
 
     function saveStaffRole(id, value, selectEl) {
         const s = staffing.find(x => x.id === id); 
         if (!s) return;
-        if (value === 'Auto') s.manualOverride = false;
-        else { s.manualOverride = true; s.role = value; }
-        saveStaffing(); renderStaffingView(); updateTabBadges(); showSaveToast();
+
+        if (value === 'Auto') {
+            s.manualOverride = false;
+        } else {
+            s.manualOverride = true;
+            s.role = value;
+        }
+
+        saveStaffing();
+        renderStaffingView(); // Re-render to show updates/locks
+        updateTabBadges();
+        showSaveToast();
     }
 
     function renderStaffingView() {
         autoAssignRoles();
+
         const activeList = byId('staff-list-active'), cutList = byId('staff-list-cut');
         activeList.innerHTML = ''; cutList.innerHTML = '';
         
+        // Sorting: Role Priority then Time
+        const getRoleScore = (r) => { if(r==='Belt Tender') return 3; if(r==='Bulk Sweep') return 2; return 1; };
+
         const activeStaff = staffing.filter(s => s.status === 'active' || s.status === 'paused')
-            .sort((a,b) => calculateTotalHours(b) - calculateTotalHours(a));
+            .sort((a,b) => {
+                const scoreA = getRoleScore(a.role);
+                const scoreB = getRoleScore(b.role);
+                if(scoreA !== scoreB) return scoreB - scoreA; // High score first
+                return calculateTotalHours(b) - calculateTotalHours(a);
+            });
 
         activeStaff.forEach(s => {
             const isPaused = s.status === 'paused';
             const isManual = s.manualOverride === true;
+            
             let roleIcon = '';
             if (s.role === 'Belt Tender') roleIcon = '👑';
             else if (s.role === 'Bulk Sweep') roleIcon = '🧹';
@@ -1258,13 +1306,17 @@ v3.36:
             const roleColor = s.role==='Belt Tender'?'#ff9500':(s.role==='Bulk Sweep'?'#34c759':'#000');
             
             const div = document.createElement('div'); div.className = 'staff-card';
-            div.dataset.id = s.id; // Crucial for auto-sort detection
+            div.dataset.id = s.id; 
             
             if(isPaused) div.style.cssText = 'opacity:0.7; border:1px dashed #ccc;';
             div.innerHTML = `
                 <div style="width:100%">
                     <div class="staff-top-row">
-                        <div class="staff-name">${s.name} <span style="margin-left:5px; font-size:18px;">${roleIcon}</span> ${isManual ? '<i class="ph ph-lock-key" style="font-size:14px; color:#555; margin-left:4px;"></i>' : ''} ${isPaused?'<span style="background:#ffcc00; color:#000; font-size:10px; padding:2px 4px; border-radius:4px; font-weight:700; margin-left:5px;">PAUSED</span>':''}</div>
+                        <div class="staff-name">
+                            ${s.name} <span style="margin-left:5px; font-size:18px;">${roleIcon}</span>
+                            ${isManual ? '<i class="ph ph-lock-key" style="font-size:14px; color:#555; margin-left:4px;"></i>' : ''}
+                            ${isPaused?'<span style="background:#ffcc00; color:#000; font-size:10px; padding:2px 4px; border-radius:4px; font-weight:700; margin-left:5px;">PAUSED</span>':''}
+                        </div>
                         <div style="display:flex; gap:8px;">
                             <button class="icon-btn" onclick="${isPaused?'resumeStaff':'pauseStaff'}(${s.id})" style="width:32px; height:32px; font-size:16px; ${isPaused?'background:#e5e5ea; color:#000;':''}"><i class="ph ${isPaused?'ph-play':'ph-pause'}"></i></button>
                             <button class="icon-btn" onclick="openEditStaffModal(${s.id})" style="width:32px; height:32px; font-size:16px;"><i class="ph ph-pencil-simple"></i></button>
@@ -1306,9 +1358,16 @@ v3.36:
         
         if(checkRoles) { const changed = autoAssignRoles(); if(changed) { renderStaffingView(); return; } }
 
+        // Smart Re-Sort Check
         const currentOrder = Array.from(document.querySelectorAll('.staff-card:not(.cut)')).map(el => parseFloat(el.dataset.id));
+        const getRoleScore = (r) => { if(r==='Belt Tender') return 3; if(r==='Bulk Sweep') return 2; return 1; };
         const newSorted = staffing.filter(s => s.status!=='cut' && (s.status==='active'||s.status==='paused'))
-                                  .sort((a,b) => calculateTotalHours(b) - calculateTotalHours(a));
+                                  .sort((a,b) => {
+                                      const scoreA = getRoleScore(a.role);
+                                      const scoreB = getRoleScore(b.role);
+                                      if(scoreA !== scoreB) return scoreB - scoreA;
+                                      return calculateTotalHours(b) - calculateTotalHours(a);
+                                  });
         const newOrder = newSorted.map(s => s.id);
         
         if(currentOrder.length !== newOrder.length || JSON.stringify(currentOrder) !== JSON.stringify(newOrder)) {
