@@ -371,7 +371,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 3.34</div>
+            <div class="app-version">Version 3.35</div>
         </div>
 
         <div class="section-title">Sort Statistics</div>
@@ -593,8 +593,8 @@
     <div class="modal-sheet">
         <h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Clock In Staff</h2>
         <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Select Employees</label><div id="staff-checkbox-list" class="staff-checkbox-list"></div></div>
-        <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Start Time Override (Optional)</label><input type="time" id="staff-input-time" class="form-input"><div style="font-size:12px; color:#8e8e93; margin-top:4px;">Leave blank for current shift start time</div></div>
-        <button class="btn-primary" onclick="confirmAddStaff()">Clock In</button><button class="btn-cancel" onclick="closeModal('add-staff-modal')">Cancel</button>
+        <div style="margin-bottom:20px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Or Add New Person</label><div style="display:flex; gap:10px;"><input type="text" id="staff-custom-name" class="form-input" style="margin:0;" placeholder="Name" autocapitalize="words"></div></div>
+        <button class="btn-primary" onclick="confirmAddStaff()">Clock In Selected</button><button class="btn-cancel" onclick="closeModal('add-staff-modal')">Cancel</button>
     </div>
 </div>
 <div class="modal-overlay" id="edit-staff-modal"><div class="modal-sheet"><h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Edit Staff</h2><input type="hidden" id="edit-staff-id"><div style="margin-bottom:15px;"><label class="settings-label">Start Time</label><input type="time" id="edit-staff-time" class="form-input"></div><button class="btn-primary" onclick="saveStaffEdit()">Save Changes</button><button class="btn-cancel" onclick="closeModal('edit-staff-modal')">Discard</button></div></div>
@@ -719,7 +719,7 @@
     let staffingInterval = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '3.34';
+    const APP_VERSION = '3.35';
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Matt S", "Robert W", "Trevon C", "Victor M", "Russell H", "Fonseca J"];
@@ -743,13 +743,12 @@
 
     // --- CHANGELOG ---
     const CHANGELOG = `
-v3.34:
-- Staffing Auto-Sort: The list now automatically reorders itself. High performers (Crown/Broom) stay at the top.
-- Visual Upgrade: CPU Option buttons (HOTT, etc.) now match the sleek toggle aesthetic.
-- Verbiage fixes in Settings/Demo mode.
+v3.35:
+- Clock In Update: Can now add a custom employee directly from the Clock In modal.
+- Removed "Start Time Override" on Clock In (defaults to Now). Use Edit button to adjust time if needed.
 
-v3.33:
-- CPU Updates: Removed "53'" label. Added HOTT/RECYCLE/GV options.
+v3.34:
+- Staffing Auto-Sort & Visual Upgrades.
     `;
 
     // --- STATE ---
@@ -1041,26 +1040,48 @@ v3.33:
                 container.appendChild(item);
             }
         });
-        byId('staff-input-time').value = ''; byId('add-staff-modal').style.display = 'flex';
+        byId('staff-custom-name').value = ''; // Reset custom input
+        byId('add-staff-modal').style.display = 'flex';
     }
 
     function confirmAddStaff() {
         const cbs = document.querySelectorAll('.staff-checkbox:checked');
-        const timeInput = byId('staff-input-time').value;
-        if(cbs.length === 0) return alert("Select at least one");
-        let startTime;
-        if(timeInput) {
-            const now = new Date(), [h, m] = timeInput.split(':').map(Number);
-            const d = new Date(now); d.setHours(h, m, 0, 0);
-            if(d > now) d.setDate(d.getDate() - 1);
-            startTime = d.getTime();
-        } else {
-            startTime = getShiftTimeWindows().shiftStart.getTime();
-        }
+        const customName = byId('staff-custom-name').value.trim();
+        
+        if(cbs.length === 0 && !customName) return alert("Select an employee or enter a name.");
+        
+        const startTime = Date.now(); // Default to NOW
+
+        // Process Checkboxes
         cbs.forEach(cb => {
-            staffing.push({ id: Date.now() + Math.random(), name: cb.value, start: startTime, end: null, status: 'active', role: 'Unloader', accumulated: 0, manualOverride: false });
+            if(!staffing.find(s => s.name === cb.value && s.status !== 'cut')) {
+                staffing.push({ id: Date.now() + Math.random(), name: cb.value, start: startTime, end: null, status: 'active', role: 'Unloader', accumulated: 0, manualOverride: false });
+            }
         });
-        saveStaffing(); closeModal('add-staff-modal'); renderStaffingView(); updateTabBadges(); showSaveToast();
+
+        // Process Custom Name
+        if (customName) {
+            const fmtName = customName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+            
+            // Add to Global Team List if not exists
+            if (!teamNames.includes(fmtName)) {
+                teamNames.push(fmtName);
+                refreshTeamNamesSorted();
+                saveTeam();
+                populateUnloaderSelect();
+            }
+
+            // Clock them in
+            if(!staffing.find(s => s.name === fmtName && s.status !== 'cut')) {
+                 staffing.push({ id: Date.now() + Math.random(), name: fmtName, start: startTime, end: null, status: 'active', role: 'Unloader', accumulated: 0, manualOverride: false });
+            }
+        }
+
+        saveStaffing();
+        closeModal('add-staff-modal');
+        renderStaffingView();
+        updateTabBadges();
+        showSaveToast();
     }
 
     function cutStaff(id) {
@@ -1225,7 +1246,6 @@ v3.33:
 
         byId('badge-on-clock').innerText = activeStaff.length;
         byId('badge-off-clock').innerText = cutStaffList.length;
-        // Don't call updateStaffingTimers(false) here to avoid loops, just update static numbers if needed
     }
 
     function updateStaffingTimers(checkRoles = true) {
@@ -1240,7 +1260,6 @@ v3.33:
                                   .sort((a,b) => calculateTotalHours(b) - calculateTotalHours(a));
         const newOrder = newSorted.map(s => s.id);
         
-        // If the arrays are different length or different order, re-render
         if(currentOrder.length !== newOrder.length || JSON.stringify(currentOrder) !== JSON.stringify(newOrder)) {
             renderStaffingView();
             return;
