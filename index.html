@@ -245,7 +245,7 @@
         .tool-card.add { border: 2px dashed #ccc; background: transparent; box-shadow: none; }
         .tool-card.add .tool-icon-wrapper { background: #e5e5ea; color: #000; }
 
-        /* --- LOGS SECTION (REVISED) --- */
+        /* --- LOGS --- */
         .stats-collapse-btn { width: 100%; background: #f2f2f7; border: none; border-radius: 16px; padding: 18px; display: flex; justify-content: space-between; align-items: center; font-size: 16px; font-weight: 700; color: #000; cursor: pointer; margin-bottom: 20px; }
         .stats-content-area { background: white; border: 1px solid #e5e5ea; border-radius: 16px; padding: 20px; margin-bottom: 25px; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
         .stats-table { width: 100%; border-collapse: collapse; font-size: 15px; }
@@ -255,7 +255,7 @@
         .active-filter-display { display: flex; align-items: center; justify-content: space-between; background: #000; color: white; padding: 12px 20px; border-radius: 16px; margin-bottom: 20px; font-weight: 600; }
         .logs-list { display: flex; flex-direction: column; gap: 15px; }
         
-        /* NEW LOG CARD STYLES */
+        /* LOG CARD STYLES */
         .log-card {
             background: white; border: 1px solid #e5e5ea; border-radius: 20px; padding: 16px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.03); display: flex; justify-content: space-between; align-items: center; gap: 15px;
@@ -401,7 +401,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 3.44</div>
+            <div class="app-version">Version 3.45</div>
         </div>
 
         <div class="section-title">Sort Statistics</div>
@@ -550,7 +550,6 @@
                     </div>
                     <div class="settings-note" style="margin-top:20px; padding:0;">Allow attributing trailers completed up to <span id="attr-note-val" style="font-weight:700; color:#000;">5</span> minutes after the hour to the previous hour.</div>
                 </div>
-                <div class="settings-row"><span class="settings-label">Simulate Shift Change</span><div class="toggle-switch" id="switch-sim-window" onclick="toggleSwitch('sim-window')"></div></div>
                  <div class="settings-row"><span class="settings-label">Disable Time Attribution</span><div class="toggle-switch" id="switch-dis-window" onclick="toggleSwitch('dis-window')"></div></div>
             </div>
             <div class="settings-header">Saved Accounts</div>
@@ -564,6 +563,7 @@
             <div class="settings-header">Demo</div>
             <div class="settings-group">
                 <div class="settings-row"><span class="settings-label">Demo Mode</span><div class="toggle-switch" id="switch-demo-mode" onclick="toggleSwitch('demo-mode')"></div></div>
+                <div class="settings-row"><span class="settings-label">Force Attribution (Simulate)</span><div class="toggle-switch" id="switch-sim-window" onclick="toggleSwitch('sim-window')"></div></div>
                 <div class="settings-row"><span class="settings-label">Disable hardcoded times</span><div class="toggle-switch" id="switch-disable-times" onclick="toggleSwitch('disable-times')"></div></div>
                 <div class="settings-row"><span class="settings-label">Generate Random History</span><div class="toggle-switch" id="switch-demo-random" onclick="toggleSwitch('demo-random')"></div></div>
                 <div class="settings-row"><span class="settings-label">Auto-Replenish Bays</span><div class="toggle-switch" id="switch-demo-replenish" onclick="toggleSwitch('demo-replenish')"></div></div>
@@ -630,9 +630,9 @@
             <div class="staff-item-row" style="border:none; padding:0;">
                 <input type="text" id="staff-custom-name" class="form-input" style="margin:0; flex:1; margin-right:10px;" placeholder="Name" autocapitalize="words">
                 <select class="staff-role-select" id="staff-custom-role" onchange="toggleStaffOther(this)">
-                    <option value="Unloader">Unloader</option>
-                    <option value="Belt Tender">Belt Tender</option>
-                    <option value="Bulk Sweep">Bulk Sweep</option>
+                    <option value="Unloader">Auto (Unloader)</option>
+                    <option value="Belt Tender">Belt Tender (Locked)</option>
+                    <option value="Bulk Sweep">Bulk Sweep (Locked)</option>
                     <option value="Small Sort">Small Sort</option>
                     <option value="Metros">Metros</option>
                     <option value="PS1">PS1</option>
@@ -642,7 +642,7 @@
                     <option value="PS11">PS11</option>
                     <option value="Other">Other</option>
                 </select>
-                <input type="text" id="staff-custom-other" class="staff-other-input" placeholder="Specify Area">
+                <input type="text" id="staff-custom-other" class="staff-other-input" placeholder="Area">
             </div>
         </div>
         <button class="btn-primary" onclick="confirmAddStaff()">Clock In Selected</button><button class="btn-cancel" onclick="closeModal('add-staff-modal')">Cancel</button>
@@ -730,8 +730,19 @@
     <div class="modal-sheet">
         <h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Move/Transfer</h2>
         <p style="text-align:center; color:#757575; margin-bottom:20px;">Moving a door ends the current session but does not count towards total completions.</p>
-        <button class="btn-primary" style="background:#e5e5ea; color:#000; margin-bottom:10px;" onclick="moveDoor('Small Sort')">Move to Small Sort</button>
-        <button class="btn-primary" style="background:#e5e5ea; color:#000;" onclick="moveDoor('Bulk Directs')">Move to Bulk Directs</button>
+        <select id="move-dest-select" class="form-input" onchange="toggleMoveOther(this)">
+            <option value="Small Sort">Small Sort</option>
+            <option value="Bulk Directs">Bulk Directs</option>
+            <option value="Metros">Metros</option>
+            <option value="PS1">PS1</option>
+            <option value="PS3">PS3</option>
+            <option value="PS5">PS5</option>
+            <option value="PS7">PS7</option>
+            <option value="PS11">PS11</option>
+            <option value="Other">Other</option>
+        </select>
+        <input type="text" id="move-custom-other" class="form-input" style="display:none; margin-top:10px;" placeholder="Specify Location">
+        <button class="btn-primary" onclick="confirmMoveDoor()">Confirm Move</button>
         <button class="btn-cancel" onclick="closeModal('move-menu-modal')">Cancel</button>
     </div>
 </div>
@@ -822,7 +833,7 @@
     let pendingLoanId = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '3.44';
+    const APP_VERSION = '3.45';
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Matt S", "Robert W", "Trevon C", "Victor M", "Russell H", "Fonseca J"];
@@ -846,17 +857,15 @@
 
     // --- CHANGELOG ---
     const CHANGELOG = `
+v3.45:
+- Fixed Staffing Sort: "Unloader" is now always auto-sort. Only Belt Tender/Sweep are locked.
+- Fixed Robert/Trevon defaults (no longer locked).
+- Updated "Move" menu to allow custom destinations.
+- Unified "Move" and "Loan" UI.
+
 v3.44:
 - Clock-In Upgrade: Select "Small Sort", "Metros" etc. directly at clock-in.
-- Added "Other" option to clock-in dropdowns for custom areas.
-- Direct-to-Loan: Staff clocked into areas bypass "Active" list and go straight to "Loaned".
-
-v3.43:
-- Settings Update: "Simulate Shift Change" is now "Force Attribution" and moved to Demo section.
-- Staffing Update:
-  - Robert defaults to Belt Tender (Locked).
-  - Trevon defaults to Bulk Sweep (Locked).
-  - Added "Loan" button to active staff cards.
+- Direct-to-Loan: Staff clocked into areas bypass "Active" list.
     `;
 
     // --- STATE ---
@@ -1167,9 +1176,9 @@ v3.43:
                         <span>${n}</span>
                     </label>
                     <select class="staff-role-select" id="role-select-${n.replace(/\s+/g, '')}" onchange="toggleStaffOther(this)">
-                        <option value="Unloader">Unloader</option>
-                        <option value="Belt Tender">Belt Tender</option>
-                        <option value="Bulk Sweep">Bulk Sweep</option>
+                        <option value="Unloader">Auto (Unloader)</option>
+                        <option value="Belt Tender">Belt Tender (Locked)</option>
+                        <option value="Bulk Sweep">Bulk Sweep (Locked)</option>
                         <option value="Small Sort">Small Sort</option>
                         <option value="Metros">Metros</option>
                         <option value="PS1">PS1</option>
@@ -1214,21 +1223,15 @@ v3.43:
                 if(otherInput) roleVal = otherInput.value.trim();
             }
 
-            // Smart Defaults (Overwrite selection if not Loan/Other)
-            if (roleVal === 'Unloader') {
-                 if (name.includes('Robert')) roleVal = 'Belt Tender';
-                 if (name.includes('Trevon')) roleVal = 'Bulk Sweep';
-            }
-            
             let status = 'active';
             let loanDest = null;
-            let manualOverride = (roleVal !== 'Unloader');
+            let manualOverride = (roleVal === 'Belt Tender' || roleVal === 'Bulk Sweep');
             
-            // Check if Role is a Loan Destination or Custom Area
             if (LOAN_ROLES.includes(roleVal) || (roleVal !== 'Unloader' && roleVal !== 'Belt Tender' && roleVal !== 'Bulk Sweep')) {
                  status = 'loaned';
                  loanDest = roleVal;
-                 roleVal = 'Unloader'; // Reset internal role
+                 roleVal = 'Unloader'; 
+                 manualOverride = false;
             }
 
             if(!staffing.find(s => s.name === name && s.status !== 'cut')) {
@@ -1247,12 +1250,13 @@ v3.43:
             let roleVal = customRoleVal;
             let status = 'active';
             let loanDest = null;
-            let manualOverride = (roleVal !== 'Unloader');
+            let manualOverride = (roleVal === 'Belt Tender' || roleVal === 'Bulk Sweep');
 
              if (LOAN_ROLES.includes(roleVal) || (roleVal !== 'Unloader' && roleVal !== 'Belt Tender' && roleVal !== 'Bulk Sweep')) {
                  status = 'loaned';
                  loanDest = roleVal;
                  roleVal = 'Unloader';
+                 manualOverride = false;
             }
 
             if (!teamNames.includes(fmtName)) {
@@ -1301,7 +1305,7 @@ v3.43:
         if(s) {
             s.status = 'loaned';
             s.loanDest = dest;
-            s.end = Date.now(); // Stops counting unloader time
+            s.end = Date.now(); 
             if (s.start !== null) s.accumulated = (s.accumulated || 0) + (Date.now() - s.start);
             s.start = null;
             
@@ -1397,8 +1401,14 @@ v3.43:
     function saveStaffRole(id, value, selectEl) {
         const s = staffing.find(x => x.id === id); 
         if (!s) return;
-        if (value === 'Auto') s.manualOverride = false;
-        else { s.manualOverride = true; s.role = value; }
+        
+        if (value === 'Auto' || value === 'Unloader') {
+            s.manualOverride = false;
+        } else { 
+            s.manualOverride = true; 
+            s.role = value; 
+        }
+        
         saveStaffing(); renderStaffingView(); updateTabBadges(); showSaveToast();
     }
 
@@ -1409,7 +1419,6 @@ v3.43:
         
         const getRoleScore = (r) => { if(r==='Belt Tender') return 3; if(r==='Bulk Sweep') return 2; return 1; };
         
-        // Active List
         const activeStaff = staffing.filter(s => s.status === 'active' || s.status === 'paused')
             .sort((a,b) => {
                 const scoreA = getRoleScore(a.role);
@@ -1448,10 +1457,9 @@ v3.43:
                         <div class="staff-hours" id="staff-hours-${s.id}" style="color:${roleColor}">${calculateTotalHours(s).toFixed(2)}h</div>
                         <div style="width:55%">
                              <select class="role-select" onchange="saveStaffRole(${s.id}, this.value, this)" style="background:${isManual ? '#e5e5ea' : '#f2f2f7'}; border:${isManual ? '1px solid #ccc' : 'none'};">
-                                <option value="Auto" ${!isManual ? 'selected' : ''}>Auto (${s.role})</option>
-                                <option value="Unloader" ${isManual && s.role==='Unloader'?'selected':''}>Unloader</option>
-                                <option value="Belt Tender" ${isManual && s.role==='Belt Tender'?'selected':''}>Belt Tender</option>
-                                <option value="Bulk Sweep" ${isManual && s.role==='Bulk Sweep'?'selected':''}>Bulk Sweep</option>
+                                <option value="Auto" ${!isManual ? 'selected' : ''}>Auto (Unloader)</option>
+                                <option value="Belt Tender" ${s.role==='Belt Tender'?'selected':''}>Belt Tender (Locked)</option>
+                                <option value="Bulk Sweep" ${s.role==='Bulk Sweep'?'selected':''}>Bulk Sweep (Locked)</option>
                             </select>
                         </div>
                     </div>
@@ -1459,7 +1467,7 @@ v3.43:
             activeList.appendChild(div);
         });
 
-        // Loaned List (New)
+        // Loaned List
         const loanStaffList = staffing.filter(s => s.status === 'loaned');
         loanStaffList.forEach(s => {
              const div = document.createElement('div'); div.className = 'log-card'; 
@@ -1526,6 +1534,28 @@ v3.43:
         byId('staff-total-hours').innerText = uHours.toFixed(2);
         byId('staff-belt-hours').innerText = bHours.toFixed(2);
         byId('staff-sweep-hours').innerText = sHours.toFixed(2);
+    }
+    
+    function toggleMoveOther(selectEl) {
+        const input = byId('move-custom-other');
+        if(input) {
+            input.style.display = (selectEl.value === 'Other') ? 'block' : 'none';
+            if(selectEl.value==='Other') input.focus();
+        }
+    }
+    
+    function openMoveMenu() { 
+        closeModal('active-detail-modal'); 
+        byId('move-dest-select').value = 'Small Sort';
+        toggleMoveOther(byId('move-dest-select'));
+        byId('move-menu-modal').style.display = 'flex'; 
+    }
+    
+    function confirmMoveDoor() {
+        let dest = byId('move-dest-select').value;
+        if(dest === 'Other') dest = byId('move-custom-other').value.trim();
+        if(!dest) return alert("Please specify a destination");
+        moveDoor(dest);
     }
 
     function addSavedAccount() {
@@ -1730,7 +1760,6 @@ v3.43:
         pendingCompletion = null;
     }
 
-    function openMoveMenu() { closeModal('active-detail-modal'); byId('move-menu-modal').style.display = 'flex'; }
     function moveDoor(destination) {
         closeModal('move-menu-modal');
         const d = doors[detailDoor];
