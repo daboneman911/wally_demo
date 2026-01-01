@@ -220,11 +220,14 @@
         .staff-action-btn { background: #ffe5e5; color: #ff3b30; border: none; padding: 6px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; }
         .role-select { width: 100%; padding: 8px; background: #f2f2f7; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; color: #000; margin-top: 4px; outline: none; }
         .breakdown-row { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.7); margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1); }
-        .staff-checkbox-list { max-height: 250px; overflow-y: auto; border: 1px solid #e5e5ea; border-radius: 12px; background: #f9f9f9; }
-        .staff-checkbox-item { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid #e5e5ea; cursor: pointer; }
-        .staff-checkbox-item:last-child { border-bottom: none; }
-        .staff-checkbox-item input { margin-right: 12px; width: 20px; height: 20px; accent-color: #000; }
-        .staff-checkbox-item span { font-size: 16px; font-weight: 500; }
+        .staff-checkbox-list { max-height: 250px; overflow-y: auto; border: 1px solid #e5e5ea; border-radius: 12px; background: #f9f9f9; padding: 5px; }
+        
+        /* New Clock In Row Styles */
+        .staff-item-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 8px; border-bottom: 1px solid #e5e5ea; }
+        .staff-item-row:last-child { border-bottom: none; }
+        .staff-check-label { display: flex; align-items: center; gap: 12px; flex: 1; cursor: pointer; font-size: 16px; font-weight: 500; }
+        .staff-check-label input { width: 20px; height: 20px; accent-color: #000; }
+        .staff-role-select { background: #f2f2f7; border: none; padding: 8px; border-radius: 8px; font-size: 13px; font-weight: 600; width: 110px; color: #000; }
 
         /* --- TOOLS GRID --- */
         .tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 10px 0; }
@@ -371,7 +374,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 3.36</div>
+            <div class="app-version">Version 3.37</div>
         </div>
 
         <div class="section-title">Sort Statistics</div>
@@ -592,14 +595,17 @@
 <div class="modal-overlay" id="add-staff-modal">
     <div class="modal-sheet">
         <h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Clock In Staff</h2>
-        <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Select Employees</label><div id="staff-checkbox-list" class="staff-checkbox-list"></div></div>
-        <div style="margin-bottom:20px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Or Add New Person</label><input type="text" id="staff-custom-name" class="form-input" style="margin:0;" placeholder="Name" autocapitalize="words"></div>
-        <div style="margin-bottom:20px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Starting Role</label>
-            <select id="staff-start-role" class="form-input">
-                <option value="Unloader">Unloader (Auto-Sort)</option>
-                <option value="Belt Tender">Belt Tender (Locked 👑)</option>
-                <option value="Bulk Sweep">Bulk Sweep (Locked 🧹)</option>
-            </select>
+        <div id="staff-checkbox-list" class="staff-checkbox-list"></div>
+        <div style="margin: 20px 0 20px 0; border-top: 1px solid #eee; padding-top:15px;">
+            <label style="font-size:12px; color:var(--text-sub); font-weight:600; display:block; margin-bottom:5px;">Add New Person</label>
+            <div class="staff-item-row" style="border:none; padding:0;">
+                <input type="text" id="staff-custom-name" class="form-input" style="margin:0; flex:1; margin-right:10px;" placeholder="Name" autocapitalize="words">
+                <select class="staff-role-select" id="staff-custom-role">
+                    <option value="Unloader">Unloader</option>
+                    <option value="Belt Tender">Belt Tender</option>
+                    <option value="Bulk Sweep">Bulk Sweep</option>
+                </select>
+            </div>
         </div>
         <button class="btn-primary" onclick="confirmAddStaff()">Clock In Selected</button><button class="btn-cancel" onclick="closeModal('add-staff-modal')">Cancel</button>
     </div>
@@ -726,7 +732,7 @@
     let staffingInterval = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '3.36';
+    const APP_VERSION = '3.37';
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Matt S", "Robert W", "Trevon C", "Victor M", "Russell H", "Fonseca J"];
@@ -750,14 +756,15 @@
 
     // --- CHANGELOG ---
     const CHANGELOG = `
-v3.36:
-- Clock In Updates:
-  - Added "Starting Role" dropdown to lock role on entry.
-  - Can enter custom new names directly.
-  - Removed start time override (defaults to current time).
+v3.37:
+- Clock In Upgrade:
+  - Role selection is now individual for each staff member.
+  - Selecting "Belt Tender" or "Bulk Sweep" on clock-in locks the role.
+  - "Unloader" defaults to Auto-Sort behavior.
+  - Custom new staff can also have their role set immediately.
 
-v3.35:
-- Minor fixes to staff time tracking.
+v3.36:
+- Clock In Updates: Custom name entry added.
     `;
 
     // --- STATE ---
@@ -834,7 +841,7 @@ v3.35:
             historyLog.forEach(l => {
                 if (!l.dateKey) l.dateKey = dateKeyFromTs(l.end);
                 if (!l.completionHour) l.completionHour = getCompletionHour(l.end - (l.statOffset || 0));
-                if (!l.cpuOptions) l.cpuOptions = []; // Upgrade old logs
+                if (!l.cpuOptions) l.cpuOptions = []; 
             });
         }
 
@@ -1044,45 +1051,64 @@ v3.35:
         teamNamesSorted.forEach(n => {
             const isActive = staffing.find(s => s.name === n && (s.status === 'active' || s.status === 'paused'));
             if(!isActive) {
-                const item = document.createElement('label'); item.className = 'staff-checkbox-item';
-                item.innerHTML = `<input type="checkbox" value="${n}" class="staff-checkbox"><span>${n}</span>`;
+                // Modified Row with individual Select
+                const item = document.createElement('div');
+                item.className = 'staff-item-row';
+                item.innerHTML = `
+                    <label class="staff-check-label">
+                        <input type="checkbox" value="${n}" class="staff-checkbox">
+                        <span>${n}</span>
+                    </label>
+                    <select class="staff-role-select" id="role-select-${n.replace(/\s+/g, '')}">
+                        <option value="Unloader">Unloader</option>
+                        <option value="Belt Tender">Belt Tender</option>
+                        <option value="Bulk Sweep">Bulk Sweep</option>
+                    </select>
+                `;
                 container.appendChild(item);
             }
         });
         byId('staff-custom-name').value = ''; 
-        byId('staff-start-role').value = 'Unloader'; // Reset role select
+        byId('staff-custom-role').value = 'Unloader';
         byId('add-staff-modal').style.display = 'flex';
     }
 
     function confirmAddStaff() {
         const cbs = document.querySelectorAll('.staff-checkbox:checked');
         const customName = byId('staff-custom-name').value.trim();
-        const roleVal = byId('staff-start-role').value;
+        const customRole = byId('staff-custom-role').value;
         
         if(cbs.length === 0 && !customName) return alert("Select an employee or enter a name.");
         
         const startTime = Date.now(); 
-        
-        // Determine Initial Role & Override Status
-        let startRole = 'Unloader';
-        let startOverride = false;
-        
-        if (roleVal === 'Belt Tender' || roleVal === 'Bulk Sweep') {
-            startRole = roleVal;
-            startOverride = true;
-        }
 
         // Process Checkboxes
         cbs.forEach(cb => {
-            if(!staffing.find(s => s.name === cb.value && s.status !== 'cut')) {
-                staffing.push({ id: Date.now() + Math.random(), name: cb.value, start: startTime, end: null, status: 'active', role: startRole, accumulated: 0, manualOverride: startOverride });
+            const name = cb.value;
+            // Get specific role for this person
+            const roleSelect = document.getElementById(`role-select-${name.replace(/\s+/g, '')}`);
+            let roleVal = roleSelect ? roleSelect.value : 'Unloader';
+            let isManual = (roleVal !== 'Unloader'); // Unloader = Auto, Others = Locked
+
+            if(!staffing.find(s => s.name === name && s.status !== 'cut')) {
+                staffing.push({ 
+                    id: Date.now() + Math.random(), 
+                    name: name, 
+                    start: startTime, 
+                    end: null, 
+                    status: 'active', 
+                    role: roleVal, 
+                    accumulated: 0, 
+                    manualOverride: isManual 
+                });
             }
         });
 
         // Process Custom Name
         if (customName) {
             const fmtName = customName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-            
+            let isManual = (customRole !== 'Unloader');
+
             if (!teamNames.includes(fmtName)) {
                 teamNames.push(fmtName);
                 refreshTeamNamesSorted();
@@ -1091,7 +1117,16 @@ v3.35:
             }
 
             if(!staffing.find(s => s.name === fmtName && s.status !== 'cut')) {
-                 staffing.push({ id: Date.now() + Math.random(), name: fmtName, start: startTime, end: null, status: 'active', role: startRole, accumulated: 0, manualOverride: startOverride });
+                 staffing.push({ 
+                     id: Date.now() + Math.random(), 
+                     name: fmtName, 
+                     start: startTime, 
+                     end: null, 
+                     status: 'active', 
+                     role: customRole, 
+                     accumulated: 0, 
+                     manualOverride: isManual 
+                 });
             }
         }
 
@@ -1264,7 +1299,6 @@ v3.35:
 
         byId('badge-on-clock').innerText = activeStaff.length;
         byId('badge-off-clock').innerText = cutStaffList.length;
-        updateStaffingTimers(false); 
     }
 
     function updateStaffingTimers(checkRoles = true) {
