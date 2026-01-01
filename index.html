@@ -227,6 +227,14 @@
         .staff-check-label { display: flex; align-items: center; gap: 12px; flex: 1; cursor: pointer; font-size: 16px; font-weight: 500; }
         .staff-check-label input { width: 20px; height: 20px; accent-color: #000; }
         .staff-role-select { background: #f2f2f7; border: none; padding: 8px; border-radius: 8px; font-size: 13px; font-weight: 600; width: 110px; color: #000; }
+        .staff-other-input { background: #fff; border: 1px solid #000; padding: 8px; border-radius: 8px; font-size: 13px; width: 100px; color: #000; margin-left: 5px; display: none; }
+        
+        /* Loaned Staff Styling */
+        .loaned-card {
+            background: #fff; border: 1px dashed #ccc; border-radius: 18px; padding: 16px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02); display: flex; justify-content: space-between; align-items: center;
+        }
+        .loan-dest-pill { background: #e5e5ea; color: #555; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; margin-left: 6px; }
 
         /* --- TOOLS GRID --- */
         .tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 10px 0; }
@@ -393,7 +401,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 3.42</div>
+            <div class="app-version">Version 3.44</div>
         </div>
 
         <div class="section-title">Sort Statistics</div>
@@ -497,6 +505,8 @@
 
         <div class="staff-section-title">On Clock <span class="staff-count-badge" id="badge-on-clock">0</span></div>
         <div id="staff-list-active"></div>
+        <div class="staff-section-title" style="margin-top:40px; opacity:0.6;">Loaned Out <span class="staff-count-badge" id="badge-loaned">0</span></div>
+        <div id="staff-list-loaned"></div>
         <div class="staff-section-title" style="margin-top:40px; opacity:0.6;">Off Clock <span class="staff-count-badge" id="badge-off-clock">0</span></div>
         <div id="staff-list-cut"></div>
     </div>
@@ -619,11 +629,20 @@
             <label style="font-size:12px; color:var(--text-sub); font-weight:600; display:block; margin-bottom:5px;">Add New Person</label>
             <div class="staff-item-row" style="border:none; padding:0;">
                 <input type="text" id="staff-custom-name" class="form-input" style="margin:0; flex:1; margin-right:10px;" placeholder="Name" autocapitalize="words">
-                <select class="staff-role-select" id="staff-custom-role">
+                <select class="staff-role-select" id="staff-custom-role" onchange="toggleStaffOther(this)">
                     <option value="Unloader">Unloader</option>
                     <option value="Belt Tender">Belt Tender</option>
                     <option value="Bulk Sweep">Bulk Sweep</option>
+                    <option value="Small Sort">Small Sort</option>
+                    <option value="Metros">Metros</option>
+                    <option value="PS1">PS1</option>
+                    <option value="PS3">PS3</option>
+                    <option value="PS5">PS5</option>
+                    <option value="PS7">PS7</option>
+                    <option value="PS11">PS11</option>
+                    <option value="Other">Other</option>
                 </select>
+                <input type="text" id="staff-custom-other" class="staff-other-input" placeholder="Specify Area">
             </div>
         </div>
         <button class="btn-primary" onclick="confirmAddStaff()">Clock In Selected</button><button class="btn-cancel" onclick="closeModal('add-staff-modal')">Cancel</button>
@@ -716,6 +735,24 @@
         <button class="btn-cancel" onclick="closeModal('move-menu-modal')">Cancel</button>
     </div>
 </div>
+<div class="modal-overlay" id="loan-staff-modal">
+    <div class="modal-sheet">
+        <h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Loan Employee</h2>
+        <p style="text-align:center; color:#757575; margin-bottom:20px;">Where is this employee going?</p>
+        <select id="loan-dest-select" class="form-input">
+            <option value="Small Sort">Small Sort</option>
+            <option value="Metros">Metros</option>
+            <option value="PS3">PS3</option>
+            <option value="PS5">PS5</option>
+            <option value="PS7">PS7</option>
+            <option value="PS11">PS11</option>
+            <option value="PS1">PS1</option>
+            <option value="Other">Other</option>
+        </select>
+        <button class="btn-primary" onclick="confirmLoanStaff()">Confirm Loan</button>
+        <button class="btn-cancel" onclick="closeModal('loan-staff-modal')">Cancel</button>
+    </div>
+</div>
 <div class="modal-overlay" id="edit-active-modal">
     <div class="modal-sheet">
         <h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Edit Active Bay</h2>
@@ -782,9 +819,10 @@
     let isFirstOnboard = false;
     let staffingInterval = null;
     let currentSwitchType = 'Replacement';
+    let pendingLoanId = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '3.42';
+    const APP_VERSION = '3.44';
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Matt S", "Robert W", "Trevon C", "Victor M", "Russell H", "Fonseca J"];
@@ -808,17 +846,17 @@
 
     // --- CHANGELOG ---
     const CHANGELOG = `
-v3.42:
-- New Log Card Design ("Structured Stack"):
-  - Fixed layout for consistent look.
-  - Handled long text overflow gracefully.
-  - Mini-buttons for cleaner UI.
-  - Duration highlighted as visual anchor.
+v3.44:
+- Clock-In Upgrade: Select "Small Sort", "Metros" etc. directly at clock-in.
+- Added "Other" option to clock-in dropdowns for custom areas.
+- Direct-to-Loan: Staff clocked into areas bypass "Active" list and go straight to "Loaned".
 
-v3.41:
-- Fix: Duplicate/Attribution alerts now block screen correctly.
-- Fix: "Unassigned" ignored for "Started By".
-- Fix: Completing a door without an unloader prompts for assignment.
+v3.43:
+- Settings Update: "Simulate Shift Change" is now "Force Attribution" and moved to Demo section.
+- Staffing Update:
+  - Robert defaults to Belt Tender (Locked).
+  - Trevon defaults to Bulk Sweep (Locked).
+  - Added "Loan" button to active staff cards.
     `;
 
     // --- STATE ---
@@ -1108,10 +1146,18 @@ v3.41:
 
     function saveDOP(val) { currentDOP = val; localStorage.setItem('ps9_dop', currentDOP); showSaveToast(); }
     
+    function toggleStaffOther(selectEl) {
+        const input = selectEl.nextElementSibling;
+        if(input && input.classList.contains('staff-other-input')) {
+            input.style.display = (selectEl.value === 'Other') ? 'block' : 'none';
+            if(selectEl.value==='Other') input.focus();
+        }
+    }
+
     function openAddStaffModal() {
         const container = byId('staff-checkbox-list'); container.innerHTML = '';
         teamNamesSorted.forEach(n => {
-            const isActive = staffing.find(s => s.name === n && (s.status === 'active' || s.status === 'paused'));
+            const isActive = staffing.find(s => s.name === n && (s.status === 'active' || s.status === 'paused' || s.status === 'loaned'));
             if(!isActive) {
                 const item = document.createElement('div');
                 item.className = 'staff-item-row';
@@ -1120,47 +1166,77 @@ v3.41:
                         <input type="checkbox" value="${n}" class="staff-checkbox">
                         <span>${n}</span>
                     </label>
-                    <select class="staff-role-select" id="role-select-${n.replace(/\s+/g, '')}">
+                    <select class="staff-role-select" id="role-select-${n.replace(/\s+/g, '')}" onchange="toggleStaffOther(this)">
                         <option value="Unloader">Unloader</option>
                         <option value="Belt Tender">Belt Tender</option>
                         <option value="Bulk Sweep">Bulk Sweep</option>
+                        <option value="Small Sort">Small Sort</option>
+                        <option value="Metros">Metros</option>
+                        <option value="PS1">PS1</option>
+                        <option value="PS3">PS3</option>
+                        <option value="PS5">PS5</option>
+                        <option value="PS7">PS7</option>
+                        <option value="PS11">PS11</option>
+                        <option value="Other">Other</option>
                     </select>
+                    <input type="text" id="other-input-${n.replace(/\s+/g, '')}" class="staff-other-input" placeholder="Area">
                 `;
                 container.appendChild(item);
             }
         });
         byId('staff-custom-name').value = ''; 
         byId('staff-custom-role').value = 'Unloader';
+        byId('staff-custom-other').style.display = 'none';
         byId('add-staff-modal').style.display = 'flex';
     }
 
     function confirmAddStaff() {
         const cbs = document.querySelectorAll('.staff-checkbox:checked');
         const customName = byId('staff-custom-name').value.trim();
-        const customRole = byId('staff-custom-role').value;
+        const customRoleSelect = byId('staff-custom-role');
+        let customRoleVal = customRoleSelect.value;
+        if(customRoleVal === 'Other') customRoleVal = byId('staff-custom-other').value.trim();
         
         if(cbs.length === 0 && !customName) return alert("Select an employee or enter a name.");
         
         const startTime = Date.now(); 
+        const LOAN_ROLES = ['Small Sort', 'Metros', 'PS1', 'PS3', 'PS5', 'PS7', 'PS11'];
 
         // Process Checkboxes
         cbs.forEach(cb => {
             const name = cb.value;
-            // Get specific role for this person
-            const roleSelect = document.getElementById(`role-select-${name.replace(/\s+/g, '')}`);
+            const safeId = name.replace(/\s+/g, '');
+            const roleSelect = document.getElementById(`role-select-${safeId}`);
             let roleVal = roleSelect ? roleSelect.value : 'Unloader';
-            let isManual = (roleVal !== 'Unloader'); // Unloader = Auto, Others = Locked
+            
+            if(roleVal === 'Other') {
+                const otherInput = document.getElementById(`other-input-${safeId}`);
+                if(otherInput) roleVal = otherInput.value.trim();
+            }
+
+            // Smart Defaults (Overwrite selection if not Loan/Other)
+            if (roleVal === 'Unloader') {
+                 if (name.includes('Robert')) roleVal = 'Belt Tender';
+                 if (name.includes('Trevon')) roleVal = 'Bulk Sweep';
+            }
+            
+            let status = 'active';
+            let loanDest = null;
+            let manualOverride = (roleVal !== 'Unloader');
+            
+            // Check if Role is a Loan Destination or Custom Area
+            if (LOAN_ROLES.includes(roleVal) || (roleVal !== 'Unloader' && roleVal !== 'Belt Tender' && roleVal !== 'Bulk Sweep')) {
+                 status = 'loaned';
+                 loanDest = roleVal;
+                 roleVal = 'Unloader'; // Reset internal role
+            }
 
             if(!staffing.find(s => s.name === name && s.status !== 'cut')) {
                 staffing.push({ 
-                    id: Date.now() + Math.random(), 
-                    name: name, 
-                    start: startTime, 
-                    end: null, 
-                    status: 'active', 
-                    role: roleVal, 
-                    accumulated: 0, 
-                    manualOverride: isManual 
+                    id: Date.now() + Math.random(), name: name, 
+                    start: startTime, end: (status==='loaned'?startTime:null), 
+                    status: status, role: roleVal, accumulated: 0, 
+                    manualOverride: manualOverride, loanDest: loanDest 
                 });
             }
         });
@@ -1168,7 +1244,16 @@ v3.41:
         // Process Custom Name
         if (customName) {
             const fmtName = customName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-            let isManual = (customRole !== 'Unloader');
+            let roleVal = customRoleVal;
+            let status = 'active';
+            let loanDest = null;
+            let manualOverride = (roleVal !== 'Unloader');
+
+             if (LOAN_ROLES.includes(roleVal) || (roleVal !== 'Unloader' && roleVal !== 'Belt Tender' && roleVal !== 'Bulk Sweep')) {
+                 status = 'loaned';
+                 loanDest = roleVal;
+                 roleVal = 'Unloader';
+            }
 
             if (!teamNames.includes(fmtName)) {
                 teamNames.push(fmtName);
@@ -1179,14 +1264,10 @@ v3.41:
 
             if(!staffing.find(s => s.name === fmtName && s.status !== 'cut')) {
                  staffing.push({ 
-                     id: Date.now() + Math.random(), 
-                     name: fmtName, 
-                     start: startTime, 
-                     end: null, 
-                     status: 'active', 
-                     role: customRole, 
-                     accumulated: 0, 
-                     manualOverride: isManual 
+                     id: Date.now() + Math.random(), name: fmtName, 
+                     start: startTime, end: (status==='loaned'?startTime:null), 
+                     status: status, role: roleVal, accumulated: 0, 
+                     manualOverride: manualOverride, loanDest: loanDest 
                  });
             }
         }
@@ -1207,6 +1288,27 @@ v3.41:
             if(s.role === 'Belt Tender' || s.role === 'Bulk Sweep') s.role = 'Unloader';
             saveStaffing(); renderStaffingView(); updateTabBadges(); showSaveToast();
         }
+    }
+    
+    function openLoanModal(id) {
+        pendingLoanId = id;
+        byId('loan-staff-modal').style.display='flex';
+    }
+    
+    function confirmLoanStaff() {
+        const dest = byId('loan-dest-select').value;
+        const s = staffing.find(x => x.id === pendingLoanId);
+        if(s) {
+            s.status = 'loaned';
+            s.loanDest = dest;
+            s.end = Date.now(); // Stops counting unloader time
+            if (s.start !== null) s.accumulated = (s.accumulated || 0) + (Date.now() - s.start);
+            s.start = null;
+            
+            if(s.role === 'Belt Tender' || s.role === 'Bulk Sweep') s.role = 'Unloader';
+            saveStaffing(); renderStaffingView(); updateTabBadges(); showSaveToast();
+        }
+        closeModal('loan-staff-modal');
     }
 
     function removeStaff(id) {
@@ -1302,10 +1404,12 @@ v3.41:
 
     function renderStaffingView() {
         autoAssignRoles();
-        const activeList = byId('staff-list-active'), cutList = byId('staff-list-cut');
-        activeList.innerHTML = ''; cutList.innerHTML = '';
+        const activeList = byId('staff-list-active'), cutList = byId('staff-list-cut'), loanList = byId('staff-list-loaned');
+        activeList.innerHTML = ''; cutList.innerHTML = ''; loanList.innerHTML = '';
         
         const getRoleScore = (r) => { if(r==='Belt Tender') return 3; if(r==='Bulk Sweep') return 2; return 1; };
+        
+        // Active List
         const activeStaff = staffing.filter(s => s.status === 'active' || s.status === 'paused')
             .sort((a,b) => {
                 const scoreA = getRoleScore(a.role);
@@ -1325,13 +1429,14 @@ v3.41:
             
             const div = document.createElement('div'); div.className = 'staff-card';
             div.dataset.id = s.id; 
-            
             if(isPaused) div.style.cssText = 'opacity:0.7; border:1px dashed #ccc;';
+            
             div.innerHTML = `
                 <div style="width:100%">
                     <div class="staff-top-row">
                         <div class="staff-name">${s.name} <span style="margin-left:5px; font-size:18px;">${roleIcon}</span> ${isManual ? '<i class="ph ph-lock-key" style="font-size:14px; color:#555; margin-left:4px;"></i>' : ''} ${isPaused?'<span style="background:#ffcc00; color:#000; font-size:10px; padding:2px 4px; border-radius:4px; font-weight:700; margin-left:5px;">PAUSED</span>':''}</div>
                         <div style="display:flex; gap:8px;">
+                             <button class="icon-btn" onclick="openLoanModal(${s.id})" style="width:32px; height:32px; font-size:16px;"><i class="ph ph-export"></i></button>
                             <button class="icon-btn" onclick="${isPaused?'resumeStaff':'pauseStaff'}(${s.id})" style="width:32px; height:32px; font-size:16px; ${isPaused?'background:#e5e5ea; color:#000;':''}"><i class="ph ${isPaused?'ph-play':'ph-pause'}"></i></button>
                             <button class="icon-btn" onclick="openEditStaffModal(${s.id})" style="width:32px; height:32px; font-size:16px;"><i class="ph ph-pencil-simple"></i></button>
                             <button class="staff-action-btn" onclick="cutStaff(${s.id})">CUT</button>
@@ -1354,6 +1459,24 @@ v3.41:
             activeList.appendChild(div);
         });
 
+        // Loaned List (New)
+        const loanStaffList = staffing.filter(s => s.status === 'loaned');
+        loanStaffList.forEach(s => {
+             const div = document.createElement('div'); div.className = 'log-card'; 
+             div.innerHTML = `
+                <div class="log-info">
+                     <div class="log-header-row"><span class="log-door-pill" style="background:#000;">${s.name}</span></div>
+                     <div class="log-tags-row"><span class="log-tag tag-gray"><i class="ph ph-arrow-right"></i> ${s.loanDest}</span></div>
+                </div>
+                <div class="log-right-col">
+                    <div style="text-align:right;"><div class="log-duration" style="font-size:18px;">${new Date(s.end).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</div><div class="log-duration-label">Left At</div></div>
+                    <button class="log-mini-btn" style="color:#ff3b30; border-color:#ff3b30;" onclick="removeStaff(${s.id})"><i class="ph ph-trash"></i></button>
+                </div>
+             `;
+             loanList.appendChild(div);
+        });
+
+        // Cut List
         const cutStaffList = staffing.filter(s => s.status === 'cut').sort((a,b) => calculateTotalHours(b) - calculateTotalHours(a));
         cutStaffList.forEach(s => {
             const div = document.createElement('div'); div.className = 'staff-card cut';
@@ -1365,6 +1488,8 @@ v3.41:
 
         byId('badge-on-clock').innerText = activeStaff.length;
         byId('badge-off-clock').innerText = cutStaffList.length;
+        byId('badge-loaned').innerText = loanStaffList.length;
+        updateStaffingTimers(false); 
     }
 
     function updateStaffingTimers(checkRoles = true) {
@@ -1374,7 +1499,7 @@ v3.41:
 
         const currentOrder = Array.from(document.querySelectorAll('.staff-card:not(.cut)')).map(el => parseFloat(el.dataset.id));
         const getRoleScore = (r) => { if(r==='Belt Tender') return 3; if(r==='Bulk Sweep') return 2; return 1; };
-        const newSorted = staffing.filter(s => s.status!=='cut' && (s.status==='active'||s.status==='paused'))
+        const newSorted = staffing.filter(s => s.status!=='cut' && s.status!=='loaned' && (s.status==='active'||s.status==='paused'))
                                   .sort((a,b) => {
                                       const scoreA = getRoleScore(a.role);
                                       const scoreB = getRoleScore(b.role);
@@ -2074,25 +2199,33 @@ v3.41:
             const card = document.createElement('div'); card.className = 'log-card';
             const dur = Math.round(l.duration/60000);
             
-            // Build Tags
-            let tagsHtml = `<span class="log-tag tag-black">${l.type}</span>`;
-            if (l.duplicate) tagsHtml += `<span class="log-tag tag-red">DUP</span>`;
+            // Build Type String
+            let typeStr = l.type + (l.duplicate ? ' DUP' : '');
+            if (l.type === 'CPU' && l.cpuOptions && l.cpuOptions.length > 0) {
+                typeStr += ` (${l.cpuOptions.join(', ')})`;
+            }
             
+            // Handle Moved status
+            let statusPill = '';
             if (l.status === 'moved') {
-                 tagsHtml += `<span class="log-tag tag-gray"><i class="ph ph-arrows-left-right"></i> ${l.moveDest}</span>`;
+                statusPill = `<span class="log-tag tag-gray"><i class="ph ph-arrows-left-right"></i> ${l.moveDest}</span>`;
             } else {
+                statusPill = `<span class="log-tag tag-black">${l.type}</span>`;
+                if(l.duplicate) statusPill += ` <span class="log-tag tag-red">DUP</span>`;
                 if (l.type === 'CPU' && l.cpuOptions && l.cpuOptions.length > 0) {
-                     l.cpuOptions.forEach(opt => { tagsHtml += `<span class="log-tag tag-gray">${opt}</span>`; });
+                     l.cpuOptions.forEach(opt => { statusPill += ` <span class="log-tag tag-gray">${opt}</span>`; });
                 }
             }
-            tagsHtml += `<span class="log-tag" style="background:#fff; border:1px solid #e5e5ea;">${getHourText(l.completionHour)}</span>`;
+            statusPill += `<span class="log-tag" style="background:#fff; border:1px solid #e5e5ea;">${getHourText(l.completionHour)}</span>`;
 
             // Build User String
             let userStr = l.unloader;
             let startStr = "";
             if (l.startedBy && l.startedBy !== l.unloader && l.startedBy !== 'Unassigned') {
-                startStr = ` <span style="color:#999; font-weight:400; margin-left:4px;">(via ${l.startedBy})</span>`;
+                startStr = ` <span style="font-size:12px; color:#999;">(via ${l.startedBy})</span>`;
             }
+            
+            const timeRange = `${new Date(l.start).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} - ${new Date(l.end).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
 
             card.innerHTML = `
                 <div class="log-info">
@@ -2100,10 +2233,10 @@ v3.41:
                         <span class="log-door-pill" onclick="viewDoorLogs(${l.door})">Door ${l.door}</span>
                         <div class="log-title">${l.id}<span class="log-account">${l.account ? l.account : ''}</span></div>
                     </div>
-                    <div class="log-tags-row">${tagsHtml}</div>
+                    <div class="log-tags-row">${statusPill}</div>
                     <div class="log-footer-row">
                         <div class="log-footer-item"><i class="ph ph-user"></i> ${userStr}${startStr}</div>
-                        <div class="log-footer-item"><i class="ph ph-clock"></i> ${new Date(l.start).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} - ${new Date(l.end).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</div>
+                        <div class="log-footer-item"><i class="ph ph-clock"></i> ${timeRange}</div>
                     </div>
                 </div>
                 <div class="log-right-col">
