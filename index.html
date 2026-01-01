@@ -256,6 +256,13 @@
         .search-bar { width: 100%; padding: 14px; border: 1px solid #e5e5ea; border-radius: 12px; background: #f9f9f9; font-size: 16px; margin-bottom: 20px; outline: none; }
         .load-more-btn { width: 100%; padding: 15px; background: #f2f2f7; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; margin-top: 10px; color: #555; }
 
+        /* --- NEW: Checkbox Pills --- */
+        .checkbox-group { display: flex; gap: 8px; flex-wrap: wrap; }
+        .checkbox-pill { position: relative; cursor: pointer; user-select: none; }
+        .checkbox-pill input { position: absolute; opacity: 0; cursor: pointer; height: 0; width: 0; }
+        .checkbox-pill span { background-color: #f2f2f7; color: #000; padding: 8px 14px; border-radius: 20px; font-size: 13px; font-weight: 700; display: inline-block; transition: all 0.2s; border: 1px solid #e5e5ea; }
+        .checkbox-pill input:checked ~ span { background-color: #000; color: #fff; border-color: #000; }
+
         /* --- NAV --- */
         .tab-bar { position: fixed; bottom: 30px; left: 20px; right: 20px; background: white; border-radius: 40px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); display: flex; justify-content: space-around; align-items: center; height: 70px; z-index: 1000; padding-bottom: 0; }
         .tab-btn { background: none; border: none; display: flex; flex-direction: column; align-items: center; color: #ccc; font-size: 11px; font-weight: 600; width: 60px; cursor: pointer; gap: 4px; position: relative; }
@@ -351,7 +358,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 3.32</div>
+            <div class="app-version">Version 3.33</div>
         </div>
 
         <div class="section-title">Sort Statistics</div>
@@ -594,11 +601,19 @@
     <div class="modal-sheet">
         <h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Onboard Door <span id="modal-door-num"></span></h2>
         <div id="onboard-form-container">
-            <div class="type-selector"><div class="type-opt selected" id="opt-wally" onclick="setType('Wally')">Wally</div><div class="type-opt" id="opt-cpu" onclick="setType('CPU')">CPU (53')</div></div>
+            <div class="type-selector"><div class="type-opt selected" id="opt-wally" onclick="setType('Wally')">Wally</div><div class="type-opt" id="opt-cpu" onclick="setType('CPU')">CPU</div></div>
             <div id="wally-inputs"><div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Wally Number</label><input type="text" id="input-wally-id" class="form-input" placeholder="e.g. 5589" inputmode="numeric" pattern="[0-9]*" oninput="this.value = this.value.replace(/[^0-9]/g, '')"></div></div>
             <div id="cpu-inputs" style="display:none;">
                 <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Trailer Number</label><input type="text" id="input-trailer-id" class="form-input" placeholder="e.g. TRL123" autocapitalize="characters" oninput="this.value = this.value.toUpperCase()"></div>
                 <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Account Number</label><input type="text" id="input-account-id" class="form-input" placeholder="e.g. ACCT456" autocapitalize="characters" oninput="this.value = this.value.toUpperCase()" list="saved-accounts-datalist"><datalist id="saved-accounts-datalist"></datalist></div>
+                <div style="margin-bottom:15px;">
+                     <label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:8px; display:block;">Options</label>
+                     <div class="checkbox-group">
+                         <label class="checkbox-pill"><input type="checkbox" id="chk-hott" value="HOTT"><span>HOTT</span></label>
+                         <label class="checkbox-pill"><input type="checkbox" id="chk-recycle" value="RECYCLE"><span>RECYCLE</span></label>
+                         <label class="checkbox-pill"><input type="checkbox" id="chk-gv" value="GV"><span>GV</span></label>
+                     </div>
+                </div>
             </div>
             <div style="margin-bottom:15px;">
                 <label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Assigned Unloader (Optional)</label>
@@ -622,6 +637,7 @@
             <div class="detail-row"><span class="detail-label">Type</span><span class="detail-value" id="detail-type"></span></div>
             <div class="detail-row"><span class="detail-label">ID #</span><span class="detail-value" id="detail-id"></span></div>
             <div class="detail-row" id="row-account" style="display:none;"><span class="detail-label">Account #</span><span class="detail-value" id="detail-account"></span></div>
+            <div class="detail-row" id="row-cpu-opts" style="display:none;"><span class="detail-label">Options</span><span class="detail-value" id="detail-cpu-opts"></span></div>
             <div class="detail-row"><span class="detail-label">Unloader</span><span class="detail-value" id="detail-unloader"></span></div>
             <div class="detail-row"><span class="detail-label">Start Time</span><span class="detail-value" id="detail-time"></span></div>
             <div class="detail-row"><span class="detail-label">Duration</span><span class="detail-value" id="detail-duration">0m</span></div>
@@ -638,6 +654,14 @@
         <div class="type-selector"><div class="type-opt selected" id="active-opt-wally" onclick="setEditActiveType('Wally')">Wally</div><div class="type-opt" id="active-opt-cpu" onclick="setEditActiveType('CPU')">CPU</div></div>
         <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">ID / Trailer #</label><input type="text" id="edit-active-id" class="form-input" oninput="this.value = this.value.toUpperCase()"></div>
         <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Account # (CPU only)</label><input type="text" id="edit-active-account" class="form-input" oninput="this.value = this.value.toUpperCase()"></div>
+        <div id="edit-active-options-container" style="display:none; margin-bottom:15px;">
+             <label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:8px; display:block;">Options</label>
+             <div class="checkbox-group">
+                 <label class="checkbox-pill"><input type="checkbox" id="edit-active-chk-hott" value="HOTT"><span>HOTT</span></label>
+                 <label class="checkbox-pill"><input type="checkbox" id="edit-active-chk-recycle" value="RECYCLE"><span>RECYCLE</span></label>
+                 <label class="checkbox-pill"><input type="checkbox" id="edit-active-chk-gv" value="GV"><span>GV</span></label>
+             </div>
+        </div>
         <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Unloader</label><select id="edit-active-unloader" class="form-input" onchange="checkActiveCustomUnloader(this)"></select><input type="text" id="edit-active-custom-unloader" class="form-input" style="display:none; margin-top:10px;" placeholder="Enter Name" autocapitalize="words"></div>
         <button class="btn-primary" onclick="saveActiveEdit()">Save Changes</button><button class="btn-cancel" onclick="closeModal('edit-active-modal')">Discard</button>
     </div>
@@ -646,8 +670,16 @@
     <div class="modal-sheet">
         <h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Edit Log Entry</h2>
         <input type="hidden" id="edit-log-index">
-        <div class="type-selector"><div class="type-opt selected" id="edit-opt-wally" onclick="setEditType('Wally')">Wally</div><div class="type-opt" id="edit-opt-cpu" onclick="setEditType('CPU')">CPU (53')</div></div>
+        <div class="type-selector"><div class="type-opt selected" id="edit-opt-wally" onclick="setEditType('Wally')">Wally</div><div class="type-opt" id="edit-opt-cpu" onclick="setEditType('CPU')">CPU</div></div>
         <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">ID / Trailer #</label><input type="text" id="edit-input-id" class="form-input" oninput="this.value = this.value.toUpperCase()"></div>
+        <div id="edit-log-options-container" style="display:none; margin-bottom:15px;">
+             <label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:8px; display:block;">Options</label>
+             <div class="checkbox-group">
+                 <label class="checkbox-pill"><input type="checkbox" id="edit-log-chk-hott" value="HOTT"><span>HOTT</span></label>
+                 <label class="checkbox-pill"><input type="checkbox" id="edit-log-chk-recycle" value="RECYCLE"><span>RECYCLE</span></label>
+                 <label class="checkbox-pill"><input type="checkbox" id="edit-log-chk-gv" value="GV"><span>GV</span></label>
+             </div>
+        </div>
         <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Unloader</label><select id="edit-select-unloader" class="form-input"></select></div>
         <button class="btn-primary" onclick="confirmLogEdit()">Save Changes</button><button class="btn-cancel" onclick="closeModal('edit-log-modal')">Discard</button>
     </div>
@@ -674,7 +706,7 @@
     let staffingInterval = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '3.32';
+    const APP_VERSION = '3.33';
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Matt S", "Robert W", "Trevon C", "Victor M", "Russell H", "Fonseca J"];
@@ -698,17 +730,16 @@
 
     // --- CHANGELOG ---
     const CHANGELOG = `
+v3.33:
+- CPU Updates:
+  Removed "53'" label.
+  Added options for HOTT, RECYCLE, and GV when selecting CPU.
+  Options are tracked in active details and logs.
+
 v3.32:
 - Staffing Fix: Manual role changes now work instantly and icons (👑/🧹) update correctly.
 - Added "Lock" icons for manually assigned roles.
 - Improved "Auto-Assign" logic to respect manual locks.
-
-v3.31:
-- Automated Staffing Roles based on time.
-- Removed manual role dropdowns (Restored in v3.32).
-
-v3.30 (Optimized):
-- Major performance update for speed and battery life.
     `;
 
     // --- STATE ---
@@ -785,6 +816,7 @@ v3.30 (Optimized):
             historyLog.forEach(l => {
                 if (!l.dateKey) l.dateKey = dateKeyFromTs(l.end);
                 if (!l.completionHour) l.completionHour = getCompletionHour(l.end - (l.statOffset || 0));
+                if (!l.cpuOptions) l.cpuOptions = []; // Upgrade old logs
             });
         }
 
@@ -1088,11 +1120,8 @@ v3.30 (Optimized):
     // --- AUTOMATED STAFFING LOGIC (WITH MANUAL OVERRIDE) ---
     function autoAssignRoles() {
         const activeStaff = staffing.filter(s => s.status === 'active' || s.status === 'paused');
-        
-        // Sort by total hours descending
         activeStaff.sort((a, b) => calculateTotalHours(b) - calculateTotalHours(a));
 
-        // Step 1: Count how many special roles are already locked manually
         let lockedBeltTenders = 0;
         let lockedSweeps = 0;
 
@@ -1105,56 +1134,30 @@ v3.30 (Optimized):
 
         let changed = false;
 
-        // Step 2: Fill remaining slots with non-locked staff based on time rank
         activeStaff.forEach(s => {
-            if (s.manualOverride) return; // Skip manually set users
+            if (s.manualOverride) return;
 
             let newRole = 'Unloader';
-            
-            // Try to fill Belt Tender slot (Max 1)
-            if (lockedBeltTenders < 1) {
-                newRole = 'Belt Tender';
-                lockedBeltTenders++; 
-            } 
-            // Try to fill Bulk Sweep slots (Max 2)
-            else if (lockedSweeps < 2) {
-                newRole = 'Bulk Sweep';
-                lockedSweeps++;
-            }
+            if (lockedBeltTenders < 1) { newRole = 'Belt Tender'; lockedBeltTenders++; } 
+            else if (lockedSweeps < 2) { newRole = 'Bulk Sweep'; lockedSweeps++; }
 
-            if (s.role !== newRole) {
-                s.role = newRole;
-                changed = true;
-            }
+            if (s.role !== newRole) { s.role = newRole; changed = true; }
         });
 
-        if (changed) {
-            saveStaffing();
-            return true;
-        }
+        if (changed) { saveStaffing(); return true; }
         return false;
     }
 
     function saveStaffRole(id, value, selectEl) {
         const s = staffing.find(x => x.id === id); 
         if (!s) return;
-
-        if (value === 'Auto') {
-            s.manualOverride = false;
-        } else {
-            s.manualOverride = true;
-            s.role = value;
-        }
-
-        saveStaffing();
-        renderStaffingView(); // Re-render to show updates/locks
-        updateTabBadges();
-        showSaveToast();
+        if (value === 'Auto') s.manualOverride = false;
+        else { s.manualOverride = true; s.role = value; }
+        saveStaffing(); renderStaffingView(); updateTabBadges(); showSaveToast();
     }
 
     function renderStaffingView() {
         autoAssignRoles();
-
         const activeList = byId('staff-list-active'), cutList = byId('staff-list-cut');
         activeList.innerHTML = ''; cutList.innerHTML = '';
         
@@ -1164,8 +1167,6 @@ v3.30 (Optimized):
         activeStaff.forEach(s => {
             const isPaused = s.status === 'paused';
             const isManual = s.manualOverride === true;
-            
-            // Icon & Color Logic (Always applies, manual or auto)
             let roleIcon = '';
             if (s.role === 'Belt Tender') roleIcon = '👑';
             else if (s.role === 'Bulk Sweep') roleIcon = '🧹';
@@ -1174,15 +1175,10 @@ v3.30 (Optimized):
             
             const div = document.createElement('div'); div.className = 'staff-card';
             if(isPaused) div.style.cssText = 'opacity:0.7; border:1px dashed #ccc;';
-            
             div.innerHTML = `
                 <div style="width:100%">
                     <div class="staff-top-row">
-                        <div class="staff-name">
-                            ${s.name} <span style="margin-left:5px; font-size:18px;">${roleIcon}</span>
-                            ${isManual ? '<i class="ph ph-lock-key" style="font-size:14px; color:#555; margin-left:4px;"></i>' : ''}
-                            ${isPaused?'<span style="background:#ffcc00; color:#000; font-size:10px; padding:2px 4px; border-radius:4px; font-weight:700; margin-left:5px;">PAUSED</span>':''}
-                        </div>
+                        <div class="staff-name">${s.name} <span style="margin-left:5px; font-size:18px;">${roleIcon}</span> ${isManual ? '<i class="ph ph-lock-key" style="font-size:14px; color:#555; margin-left:4px;"></i>' : ''} ${isPaused?'<span style="background:#ffcc00; color:#000; font-size:10px; padding:2px 4px; border-radius:4px; font-weight:700; margin-left:5px;">PAUSED</span>':''}</div>
                         <div style="display:flex; gap:8px;">
                             <button class="icon-btn" onclick="${isPaused?'resumeStaff':'pauseStaff'}(${s.id})" style="width:32px; height:32px; font-size:16px; ${isPaused?'background:#e5e5ea; color:#000;':''}"><i class="ph ${isPaused?'ph-play':'ph-pause'}"></i></button>
                             <button class="icon-btn" onclick="openEditStaffModal(${s.id})" style="width:32px; height:32px; font-size:16px;"><i class="ph ph-pencil-simple"></i></button>
@@ -1193,7 +1189,6 @@ v3.30 (Optimized):
                     <div class="staff-time">${isPaused?'Paused':'Started: '+new Date(s.start).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</div>
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
                         <div class="staff-hours" id="staff-hours-${s.id}" style="color:${roleColor}">${calculateTotalHours(s).toFixed(2)}h</div>
-                        
                         <div style="width:55%">
                              <select class="role-select" onchange="saveStaffRole(${s.id}, this.value, this)" style="background:${isManual ? '#e5e5ea' : '#f2f2f7'}; border:${isManual ? '1px solid #ccc' : 'none'};">
                                 <option value="Auto" ${!isManual ? 'selected' : ''}>Auto (${s.role})</option>
@@ -1223,11 +1218,7 @@ v3.30 (Optimized):
 
     function updateStaffingTimers(checkRoles = true) {
         if(!byId('tab-staffing').classList.contains('active')) return;
-        
-        if(checkRoles) {
-             const changed = autoAssignRoles();
-             if(changed) { renderStaffingView(); return; }
-        }
+        if(checkRoles) { const changed = autoAssignRoles(); if(changed) { renderStaffingView(); return; } }
 
         let onClock=0, uHours=0, bHours=0, sHours=0;
         staffing.forEach(s => {
@@ -1296,7 +1287,7 @@ v3.30 (Optimized):
         let type = config.mixedTypes ? (Math.random()>0.5?'Wally':'CPU') : config.demoType;
         const id = Math.floor(1000 + Math.random() * 9000).toString();
         const unloader = teamNames[Math.floor(Math.random() * teamNames.length)];
-        doors[doorNum] = { status: 'active', start: Date.now(), id: id.toUpperCase(), account: type==='CPU'?"DEMO"+Math.floor(Math.random()*100):"", type: type, unloader: unloader, unavailable: false, lastCompletionTime: null };
+        doors[doorNum] = { status: 'active', start: Date.now(), id: id.toUpperCase(), account: type==='CPU'?"DEMO"+Math.floor(Math.random()*100):"", type: type, unloader: unloader, unavailable: false, lastCompletionTime: null, cpuOptions: [] };
         renderDashboard(); updateTabBadges();
     }
 
@@ -1357,7 +1348,6 @@ v3.30 (Optimized):
              if(idx>=0) icons[idx].classList.add('active');
         }
         
-        // Resource Management: Only run staffing timer when active
         if(tabId==='staffing') {
             renderStaffingView();
             if(!staffingInterval) staffingInterval = setInterval(updateStaffingTimers, 1000);
@@ -1380,7 +1370,7 @@ v3.30 (Optimized):
         closeModal('duplicate-wally-modal');
         if (pendingWallyDuplicate) {
             const { doorNum, wallyId, unloader, startTime } = pendingWallyDuplicate;
-            doors[doorNum] = { status: 'active', start: startTime, id: wallyId, account: "", type: 'Wally', unloader: unloader || "Unassigned", isDuplicate: true, unavailable: false, lastCompletionTime: null };
+            doors[doorNum] = { status: 'active', start: startTime, id: wallyId, account: "", type: 'Wally', unloader: unloader || "Unassigned", isDuplicate: true, unavailable: false, lastCompletionTime: null, cpuOptions: [] };
             if(isFirstOnboard) { isFirstOnboard = false; localStorage.setItem('ps9_is_first_onboard', 'false'); }
             saveDoors(); closeModal('input-modal'); renderDashboard(); updateTabBadges(); showSaveToast(); pendingWallyDuplicate = null;
         }
@@ -1426,7 +1416,8 @@ v3.30 (Optimized):
             start: start, end: endTime, dateKey: dateKeyFromTs(endTime), duration: endTime - start,
             durationMinutes: Math.round((endTime - start)/60000), statOffset: offset,
             logId: Date.now().toString(36), duplicate: d.isDuplicate||false,
-            completionHour: getCompletionHour(endTime - offset)
+            completionHour: getCompletionHour(endTime - offset),
+            cpuOptions: d.cpuOptions || [] // Save options to history
         });
         
         if (d.type === 'Wally' && navigator.share && !demoActive) {
@@ -1514,6 +1505,16 @@ v3.30 (Optimized):
         byId('detail-duration').innerText = Math.floor((Date.now() - d.start)/60000) + "m";
         const ar = byId('row-account');
         if (d.account) { ar.style.display = 'flex'; byId('detail-account').innerText = d.account; } else ar.style.display = 'none';
+        
+        // Show CPU Options
+        const rowOpts = byId('row-cpu-opts');
+        if (d.type === 'CPU' && d.cpuOptions && d.cpuOptions.length > 0) {
+            rowOpts.style.display = 'flex';
+            byId('detail-cpu-opts').innerText = d.cpuOptions.join(', ');
+        } else {
+            rowOpts.style.display = 'none';
+        }
+
         byId('active-detail-modal').style.display = 'flex';
     }
 
@@ -1527,6 +1528,13 @@ v3.30 (Optimized):
         if(us.selectedIndex === -1) { us.value = 'Custom'; checkActiveCustomUnloader(us); byId('edit-active-custom-unloader').value = d.unloader; }
         else checkActiveCustomUnloader(us);
         setEditActiveType(d.type);
+        
+        // Pre-check options
+        const opts = d.cpuOptions || [];
+        byId('edit-active-chk-hott').checked = opts.includes('HOTT');
+        byId('edit-active-chk-recycle').checked = opts.includes('RECYCLE');
+        byId('edit-active-chk-gv').checked = opts.includes('GV');
+
         const sel = byId('edit-active-door-select'); sel.innerHTML = '';
         for(let i=DOORS_START; i<=DOORS_END; i++) {
             if(i===doorNum || doors[i].status==='empty') {
@@ -1536,7 +1544,13 @@ v3.30 (Optimized):
         byId('edit-active-modal').style.display = 'flex';
     }
 
-    function setEditActiveType(t) { byId('active-opt-wally').classList.toggle('selected', t==='Wally'); byId('active-opt-cpu').classList.toggle('selected', t==='CPU'); byId('edit-active-modal').dataset.type = t; }
+    function setEditActiveType(t) { 
+        byId('active-opt-wally').classList.toggle('selected', t==='Wally'); 
+        byId('active-opt-cpu').classList.toggle('selected', t==='CPU'); 
+        byId('edit-active-modal').dataset.type = t; 
+        const optsContainer = byId('edit-active-options-container');
+        if(optsContainer) optsContainer.style.display = (t === 'CPU') ? 'block' : 'none';
+    }
     function checkActiveCustomUnloader(s) { byId('edit-active-custom-unloader').style.display = s.value === 'Custom' ? 'block' : 'none'; }
 
     function saveActiveEdit() {
@@ -1545,8 +1559,16 @@ v3.30 (Optimized):
         if(unl === 'Custom') unl = byId('edit-active-custom-unloader').value.trim();
         if (!unl) unl = "Unassigned";
         else if (unl !== "Unassigned" && unl === byId('edit-active-custom-unloader').value.trim()) unl = unl.toLowerCase().split(' ').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ');
+        
+        const type = byId('edit-active-modal').dataset.type;
+        let cpuOpts = [];
+        if(type === 'CPU') {
+            if(byId('edit-active-chk-hott').checked) cpuOpts.push('HOTT');
+            if(byId('edit-active-chk-recycle').checked) cpuOpts.push('RECYCLE');
+            if(byId('edit-active-chk-gv').checked) cpuOpts.push('GV');
+        }
 
-        const data = { status: 'active', start: doors[orig].start, id: byId('edit-active-id').value.trim().toUpperCase(), account: byId('edit-active-account').value.trim().toUpperCase(), type: byId('edit-active-modal').dataset.type, unloader: unl, unavailable: false, lastCompletionTime: doors[orig].lastCompletionTime };
+        const data = { status: 'active', start: doors[orig].start, id: byId('edit-active-id').value.trim().toUpperCase(), account: byId('edit-active-account').value.trim().toUpperCase(), type: type, unloader: unl, unavailable: false, lastCompletionTime: doors[orig].lastCompletionTime, cpuOptions: cpuOpts };
         if(dest !== orig) { doors[dest] = data; doors[orig] = {status:'empty', start:0, id:'', type:'', unloader:'', unavailable: false, lastCompletionTime: doors[orig].lastCompletionTime}; }
         else doors[orig] = data;
         saveDoors(); closeModal('edit-active-modal'); renderActiveTab(); renderDashboard(); updateTabBadges(); showSaveToast();
@@ -1569,13 +1591,21 @@ v3.30 (Optimized):
                 byId('duplicate-wally-modal').style.display = 'flex'; return;
             }
         }
+
+        let cpuOpts = [];
+        if (currentType === 'CPU') {
+            if(byId('chk-hott').checked) cpuOpts.push('HOTT');
+            if(byId('chk-recycle').checked) cpuOpts.push('RECYCLE');
+            if(byId('chk-gv').checked) cpuOpts.push('GV');
+        }
+
         let startTime = Date.now(), cTime = byId('input-onboard-time').value;
         if (cTime) {
             const now = new Date(), [h, m] = cTime.split(':').map(Number);
             const d = new Date(now); d.setHours(h, m, 0, 0);
             if (d > now) d.setDate(d.getDate() - 1); startTime = d.getTime();
         }
-        doors[currentDoor] = { status: 'active', start: startTime, id: fId, account: fAcc, type: currentType, unloader: unl||"Unassigned", isDuplicate: false, unavailable: false, lastCompletionTime: null };
+        doors[currentDoor] = { status: 'active', start: startTime, id: fId, account: fAcc, type: currentType, unloader: unl||"Unassigned", isDuplicate: false, unavailable: false, lastCompletionTime: null, cpuOptions: cpuOpts };
         if(isFirstOnboard) { isFirstOnboard = false; localStorage.setItem('ps9_is_first_onboard', 'false'); }
         saveDoors(); closeModal('input-modal'); renderDashboard(); updateTabBadges(); showSaveToast();
     }
@@ -1590,6 +1620,12 @@ v3.30 (Optimized):
         byId('modal-door-num').innerText = currentDoor;
         byId('input-wally-id').value = ''; byId('input-trailer-id').value = ''; byId('input-account-id').value = '';
         byId('select-unloader').value = ""; byId('input-custom-unloader').style.display = 'none';
+        
+        // Reset Checkboxes
+        byId('chk-hott').checked = false;
+        byId('chk-recycle').checked = false;
+        byId('chk-gv').checked = false;
+
         const tIn = byId('input-onboard-time');
         if (isFirstOnboard && lastSortStartTime) tIn.value = lastSortStartTime;
         else { const now=new Date(); tIn.value = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`; }
@@ -1713,11 +1749,17 @@ v3.30 (Optimized):
             const card = document.createElement('div'); card.className = 'log-card';
             const dur = Math.round(l.duration/60000);
             
+            // Build Type String
+            let typeStr = l.type + (l.duplicate ? ' DUP' : '');
+            if (l.type === 'CPU' && l.cpuOptions && l.cpuOptions.length > 0) {
+                typeStr += ` (${l.cpuOptions.join(', ')})`;
+            }
+
             card.innerHTML = `
                 <div class="log-info">
                     <div class="active-card-header">
                         <span class="log-door-pill" onclick="viewDoorLogs(${l.door})">Door ${l.door}</span>
-                        <span class="log-type-pill" style="background:${l.duplicate?'#ff3b30':'#000'}">${l.type}${l.duplicate?' DUP':''}</span>
+                        <span class="log-type-pill" style="background:${l.duplicate?'#ff3b30':'#000'}">${typeStr}</span>
                         <span class="log-type-pill">${getHourText(l.completionHour)}</span>
                     </div>
                     <div class="log-title">${l.id}<span style="color:#8e8e93; font-weight:400">${l.account?' ('+l.account+')':''}</span></div>
@@ -1747,7 +1789,7 @@ v3.30 (Optimized):
     function revertLog(i) {
         const l = historyLog[i];
         if(!l || (Date.now()-l.end>120000 && !demoActive) || doors[l.door].status!=='empty') return alert("Cannot revert");
-        doors[l.door] = { status:'active', start:l.start, id:l.id, account:l.account, type:l.type, unloader:l.unloader, unavailable:false, lastCompletionTime:null };
+        doors[l.door] = { status:'active', start:l.start, id:l.id, account:l.account, type:l.type, unloader:l.unloader, unavailable:false, lastCompletionTime:null, cpuOptions: l.cpuOptions || [] };
         historyLog.splice(i, 1); saveDoors(); saveHistory(); renderDashboard(); renderLogs(); updateTabBadges();
     }
 
@@ -1756,21 +1798,39 @@ v3.30 (Optimized):
         const sel = byId('edit-select-unloader'); sel.innerHTML='<option value="">Unassigned</option>';
         teamNamesSorted.forEach(n => { const o=document.createElement('option'); o.value=n; o.innerText=n; sel.appendChild(o); });
         sel.value = l.unloader;
-        byId('edit-opt-wally').classList.toggle('selected', l.type==='Wally'); byId('edit-opt-cpu').classList.toggle('selected', l.type==='CPU'); byId('edit-log-modal').dataset.type = l.type;
+        setEditType(l.type);
+        
+        const opts = l.cpuOptions || [];
+        byId('edit-log-chk-hott').checked = opts.includes('HOTT');
+        byId('edit-log-chk-recycle').checked = opts.includes('RECYCLE');
+        byId('edit-log-chk-gv').checked = opts.includes('GV');
+
         byId('edit-log-modal').style.display='flex';
     }
 
     function confirmLogEdit() {
         const i = parseInt(byId('edit-log-index').value), id = byId('edit-input-id').value.toUpperCase(), unl = byId('edit-select-unloader').value;
-        historyLog[i].id = id; historyLog[i].unloader = unl; historyLog[i].type = byId('edit-log-modal').dataset.type;
+        const type = byId('edit-log-modal').dataset.type;
+        
+        let cpuOpts = [];
+        if(type === 'CPU') {
+            if(byId('edit-log-chk-hott').checked) cpuOpts.push('HOTT');
+            if(byId('edit-log-chk-recycle').checked) cpuOpts.push('RECYCLE');
+            if(byId('edit-log-chk-gv').checked) cpuOpts.push('GV');
+        }
+
+        historyLog[i].id = id; historyLog[i].unloader = unl; historyLog[i].type = type; historyLog[i].cpuOptions = cpuOpts;
         saveHistory(); closeModal('edit-log-modal'); renderLogs();
     }
 
     function openExportModal() { byId('export-modal').style.display = 'flex'; }
     function exportLogsCSV() {
         closeModal('export-modal');
-        let csv = "Type,ID,Account,Door,Unloader,Duration(mins),StartTime,EndTime,StartHour,EndHour,Duplicate,Hour\n";
-        historyLog.forEach(l => csv += `${l.type},${l.id},${l.account||''},${l.door},${l.unloader},${Math.round(l.duration/60000)},${new Date(l.start).toLocaleString()},${new Date(l.end).toLocaleString()},${new Date(l.start).getHours()},${new Date(l.end).getHours()},${l.duplicate?'Yes':'No'},${l.completionHour}\n`);
+        let csv = "Type,ID,Account,Door,Unloader,Duration(mins),StartTime,EndTime,StartHour,EndHour,Duplicate,Hour,Options\n";
+        historyLog.forEach(l => {
+            const opts = (l.cpuOptions || []).join(';');
+            csv += `${l.type},${l.id},${l.account||''},${l.door},${l.unloader},${Math.round(l.duration/60000)},${new Date(l.start).toLocaleString()},${new Date(l.end).toLocaleString()},${new Date(l.start).getHours()},${new Date(l.end).getHours()},${l.duplicate?'Yes':'No'},${l.completionHour},${opts}\n`
+        });
         const a = document.createElement('a'); a.href=window.URL.createObjectURL(new Blob([csv], {type:'text/csv'})); a.download='wally-logs.csv'; a.click();
     }
     
@@ -1784,7 +1844,11 @@ v3.30 (Optimized):
         const stats={}; historyLog.forEach(l=>{ const n=l.unloader; if(!stats[n])stats[n]={w:0,c:0,t:0}; if(l.type==='Wally')stats[n].w++; else stats[n].c++; stats[n].t++; });
         doc.autoTable({ startY: 45, head:[['Name','Wally','CPU','Total']], body:Object.entries(stats).sort((a,b)=>b[1].t-a[1].t).map(([n,d])=>[n,d.w,d.c,d.t]) });
         
-        const logsBody = historyLog.map(l => [new Date(l.end).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}), l.door, l.type+(l.duplicate?' (DUP)':''), l.id, l.unloader, Math.round(l.duration/60000)+"m", getHourText(l.completionHour)]);
+        const logsBody = historyLog.map(l => {
+             let typeStr = l.type + (l.duplicate?' (DUP)':'');
+             if(l.type === 'CPU' && l.cpuOptions && l.cpuOptions.length>0) typeStr += `\n${l.cpuOptions.join(',')}`;
+             return [new Date(l.end).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}), l.door, typeStr, l.id, l.unloader, Math.round(l.duration/60000)+"m", getHourText(l.completionHour)];
+        });
         doc.autoTable({ startY: doc.lastAutoTable.finalY+15, head:[['Time','Door','Type','ID','Unloader','Duration','Hour']], body:logsBody });
         doc.save(`wally-report-${now.toISOString().split('T')[0]}.pdf`);
     }
@@ -1810,7 +1874,13 @@ v3.30 (Optimized):
         const v = parseFloat(byId('pph-volume-input').value)||0, h = parseFloat(byId('pph-unloader-hours-input').value)||0;
         byId('pph-result').innerText = h===0 ? '0' : Math.round(v/h).toLocaleString();
     }
-    function setEditType(t) { byId('edit-opt-wally').classList.toggle('selected', t==='Wally'); byId('edit-opt-cpu').classList.toggle('selected', t==='CPU'); byId('edit-log-modal').dataset.type = t; }
+    function setEditType(t) { 
+        byId('edit-opt-wally').classList.toggle('selected', t==='Wally'); 
+        byId('edit-opt-cpu').classList.toggle('selected', t==='CPU'); 
+        byId('edit-log-modal').dataset.type = t; 
+        const c = byId('edit-log-options-container');
+        if(c) c.style.display = (t === 'CPU') ? 'block' : 'none';
+    }
 
     init();
 </script>
