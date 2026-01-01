@@ -247,10 +247,11 @@
         .active-filter-display { display: flex; align-items: center; justify-content: space-between; background: #000; color: white; padding: 12px 20px; border-radius: 16px; margin-bottom: 20px; font-weight: 600; }
         .logs-list { display: flex; flex-direction: column; gap: 15px; }
         .log-card { background: white; border: 1px solid #e5e5ea; border-radius: 20px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); display: flex; justify-content: space-between; align-items: flex-start; }
-        .log-info { display: flex; flex-direction: column; gap: 6px; flex-grow: 1; }
-        .log-door-pill { background: #000; color: #fff; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 30px; cursor: pointer; }
-        .log-type-pill { font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 30px; background: #000; color: #fff; margin-left: 6px; }
-        .log-title { font-size: 18px; font-weight: 800; color: #000; }
+        .log-info { display: flex; flex-direction: column; gap: 6px; flex-grow: 1; min-width: 0; }
+        .active-card-header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .log-door-pill { background: #000; color: #fff; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 30px; cursor: pointer; flex-shrink: 0; }
+        .log-type-pill { font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 30px; background: #000; color: #fff; margin-left: 6px; flex-shrink: 0; max-width: 100%; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+        .log-title { font-size: 18px; font-weight: 800; color: #000; word-break: break-all; }
         .log-details { font-size: 15px; color: var(--text-sub); }
         .log-timestamp { font-size: 14px; color: #000; font-weight: 700; margin-top: 4px; }
         .log-actions { display: flex; flex-direction: column; gap: 10px; align-items: flex-end; }
@@ -295,6 +296,9 @@
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 2000; display: none; justify-content: center; align-items: flex-end; backdrop-filter: blur(4px); }
         .modal-sheet { background: white; width: 100%; max-width: 600px; border-top-left-radius: 28px; border-top-right-radius: 28px; padding: 30px; padding-bottom: max(40px, var(--safe-bottom)); animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+        /* High Z-Index for Alerts to prevent freezing */
+        .z-high { z-index: 3000 !important; }
 
         .form-input { width: 100%; padding: 18px; background: #f2f2f7; border: none; border-radius: 16px; font-size: 18px; margin-bottom: 15px; box-sizing: border-box; outline: none; appearance: none; color: #000; font-weight: 500; }
         .type-selector { display: flex; background: #f2f2f7; padding: 5px; border-radius: 16px; margin-bottom: 25px; }
@@ -373,7 +377,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 3.40</div>
+            <div class="app-version">Version 3.41</div>
         </div>
 
         <div class="section-title">Sort Statistics</div>
@@ -611,7 +615,7 @@
 </div>
 <div class="modal-overlay" id="edit-staff-modal"><div class="modal-sheet"><h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Edit Staff</h2><input type="hidden" id="edit-staff-id"><div style="margin-bottom:15px;"><label class="settings-label">Start Time</label><input type="time" id="edit-staff-time" class="form-input"></div><button class="btn-primary" onclick="saveStaffEdit()">Save Changes</button><button class="btn-cancel" onclick="closeModal('edit-staff-modal')">Discard</button></div></div>
 <div class="modal-overlay" id="export-modal"><div class="modal-sheet"><h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Export Data</h2><button class="btn-primary" onclick="exportLogsCSV()">Export CSV (Spreadsheet)</button><button class="btn-primary" onclick="exportLogsPDF()" style="margin-top:10px; background:#e5e5ea; color:#000;">Export PDF (Report)</button><button class="btn-cancel" onclick="closeModal('export-modal')">Cancel</button></div></div>
-<div class="modal-overlay" id="hour-attribution-modal"><div class="modal-sheet"><h2 style="margin: 0 0 10px 0; font-size:24px; text-align:center;">Attribute Completion</h2><p style="text-align:center; color:#757575; margin-bottom:25px; padding: 0 10px;">This trailer was completed during the shift transition window (<span id="attribution-window-text">00-05</span>).</p><button class="btn-primary" onclick="resolveAttribution('Previous')">Previous Hour</button><button class="btn-primary" onclick="resolveAttribution('Current')" style="background:#f2f2f7; color:#000; margin-top:10px;">Current Hour</button></div></div>
+<div class="modal-overlay z-high" id="hour-attribution-modal"><div class="modal-sheet"><h2 style="margin: 0 0 10px 0; font-size:24px; text-align:center;">Attribute Completion</h2><p style="text-align:center; color:#757575; margin-bottom:25px; padding: 0 10px;">This trailer was completed during the shift transition window (<span id="attribution-window-text">00-05</span>).</p><button class="btn-primary" onclick="resolveAttribution('Previous')">Previous Hour</button><button class="btn-primary" onclick="resolveAttribution('Current')" style="background:#f2f2f7; color:#000; margin-top:10px;">Current Hour</button></div></div>
 <div class="modal-overlay" id="filter-modal">
     <div class="modal-sheet">
         <h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Filter Logs</h2>
@@ -621,7 +625,7 @@
         <button class="btn-primary" onclick="applyFilter()">Apply Filters</button><button class="btn-cancel" onclick="closeModal('filter-modal')">Cancel</button>
     </div>
 </div>
-<div class="modal-overlay" id="duplicate-wally-modal"><div class="modal-sheet"><h2 style="margin: 0 0 10px 0; font-size:24px; text-align:center;">Duplicate Wally Detected</h2><div style="background:#f9f9f9; padding:15px; border-radius:12px; margin-bottom:20px; font-size:14px; line-height:1.5;"><p style="margin:0 0 10px 0;">Wally <strong id="dup-wally-id"></strong> was already completed.</p><div style="display:flex; justify-content:space-between;"><span style="color:#757575;">Door:</span><strong id="dup-door"></strong></div><div style="display:flex; justify-content:space-between; margin-top:5px;"><span style="color:#757575;">Completed:</span><strong id="dup-time"></strong></div><div style="display:flex; justify-content:space-between; margin-top:5px;"><span style="color:#757575;">Unloader:</span><strong id="dup-unloader"></strong></div></div><button class="btn-primary" onclick="continueWithDuplicate()">Continue Anyway</button><button class="btn-cancel" onclick="closeModal('duplicate-wally-modal')" style="margin-top:10px;">Cancel</button></div></div>
+<div class="modal-overlay z-high" id="duplicate-wally-modal"><div class="modal-sheet"><h2 style="margin: 0 0 10px 0; font-size:24px; text-align:center;">Duplicate Wally Detected</h2><div style="background:#f9f9f9; padding:15px; border-radius:12px; margin-bottom:20px; font-size:14px; line-height:1.5;"><p style="margin:0 0 10px 0;">Wally <strong id="dup-wally-id"></strong> was already completed.</p><div style="display:flex; justify-content:space-between;"><span style="color:#757575;">Door:</span><strong id="dup-door"></strong></div><div style="display:flex; justify-content:space-between; margin-top:5px;"><span style="color:#757575;">Completed:</span><strong id="dup-time"></strong></div><div style="display:flex; justify-content:space-between; margin-top:5px;"><span style="color:#757575;">Unloader:</span><strong id="dup-unloader"></strong></div></div><button class="btn-primary" onclick="continueWithDuplicate()">Continue Anyway</button><button class="btn-cancel" onclick="closeModal('duplicate-wally-modal')" style="margin-top:10px;">Cancel</button></div></div>
 <div class="modal-overlay" id="input-modal">
     <div class="modal-sheet">
         <h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Onboard Door <span id="modal-door-num"></span></h2>
@@ -675,6 +679,16 @@
             <button class="btn-primary btn-history" onclick="viewDoorLogs(detailDoor)" style="flex:3; margin:0;">View History</button>
         </div>
         <button class="btn-cancel" onclick="closeModal('active-detail-modal')">Close</button>
+    </div>
+</div>
+<div class="modal-overlay z-high" id="unloader-required-modal">
+    <div class="modal-sheet">
+        <h2 style="margin: 0 0 10px 0; font-size:24px; text-align:center;">Assign Unloader</h2>
+        <p style="text-align:center; color:#757575; margin-bottom:25px; padding: 0 10px;">Who completed this door?</p>
+        <select id="req-unloader-select" class="form-input" onchange="checkReqCustom(this)"></select>
+        <input type="text" id="req-custom-unloader" class="form-input" style="display:none; margin-top:10px;" placeholder="Enter Name" autocapitalize="words">
+        <button class="btn-primary" onclick="saveRequiredUnloader()">Confirm & Finish</button>
+        <button class="btn-cancel" onclick="closeModal('unloader-required-modal')">Cancel</button>
     </div>
 </div>
 <div class="modal-overlay" id="move-menu-modal">
@@ -754,7 +768,7 @@
     let currentSwitchType = 'Replacement';
 
     // --- CONFIG ---
-    const APP_VERSION = '3.40';
+    const APP_VERSION = '3.41';
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Matt S", "Robert W", "Trevon C", "Victor M", "Russell H", "Fonseca J"];
@@ -778,20 +792,14 @@
 
     // --- CHANGELOG ---
     const CHANGELOG = `
-v3.40:
-- Major Feature: Bay Door Attribution
-  - Tracks specific time spent per unloader.
-  - "Started By" vs "Completed By" logic.
-  - Completion credit goes to whoever spent the most time.
-  - "Assist" vs "Replacement" option when changing unloaders.
-- Feature: Move / Transfer
-  - Can now move active doors to "Small Sort" or "Bulk Directs".
-  - These do not count towards totals but are logged.
-- Fix: Attribution Window Totals
-  - Totals now correctly update even for backdated completions.
+v3.41:
+- Fix: Duplicate/Attribution alerts now block screen correctly (High Z-Index).
+- Fix: "Unassigned" ignored for "Started By" credit.
+- Fix: Completing a door without an unloader now prompts for assignment.
+- Visual: Log text wraps properly for long labels.
 
-v3.38:
-- Smart Staffing Logic & Auto-Sort.
+v3.40:
+- Bay Door Attribution, Move/Transfer, Totals Fix.
     `;
 
     // --- STATE ---
@@ -863,7 +871,7 @@ v3.38:
             }
         }
 
-        // Migration: Ensure 'assignments' array exists for active doors
+        // Migration: Ensure 'assignments' array exists
         for(let i=DOORS_START; i<=DOORS_END; i++) {
             if(doors[i].status === 'active' && (!doors[i].assignments || doors[i].assignments.length===0)) {
                 doors[i].assignments = [{ name: doors[i].unloader || "Unassigned", start: doors[i].start, end: null }];
@@ -876,7 +884,7 @@ v3.38:
                 if (!l.dateKey) l.dateKey = dateKeyFromTs(l.end);
                 if (!l.completionHour) l.completionHour = getCompletionHour(l.end - (l.statOffset || 0));
                 if (!l.cpuOptions) l.cpuOptions = []; 
-                if (!l.status) l.status = 'completed'; // Default old logs to completed
+                if (!l.status) l.status = 'completed'; 
             });
         }
 
@@ -1116,28 +1124,17 @@ v3.38:
         
         const startTime = Date.now(); 
 
-        // Process Checkboxes
         cbs.forEach(cb => {
             const name = cb.value;
             const roleSelect = document.getElementById(`role-select-${name.replace(/\s+/g, '')}`);
             let roleVal = roleSelect ? roleSelect.value : 'Unloader';
-            let isManual = (roleVal !== 'Unloader');
+            let isManual = (roleVal !== 'Unloader'); 
 
             if(!staffing.find(s => s.name === name && s.status !== 'cut')) {
-                staffing.push({ 
-                    id: Date.now() + Math.random(), 
-                    name: name, 
-                    start: startTime, 
-                    end: null, 
-                    status: 'active', 
-                    role: roleVal, 
-                    accumulated: 0, 
-                    manualOverride: isManual 
-                });
+                staffing.push({ id: Date.now() + Math.random(), name: name, start: startTime, end: null, status: 'active', role: roleVal, accumulated: 0, manualOverride: isManual });
             }
         });
 
-        // Process Custom Name
         if (customName) {
             const fmtName = customName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
             let isManual = (customRole !== 'Unloader');
@@ -1150,16 +1147,7 @@ v3.38:
             }
 
             if(!staffing.find(s => s.name === fmtName && s.status !== 'cut')) {
-                 staffing.push({ 
-                     id: Date.now() + Math.random(), 
-                     name: fmtName, 
-                     start: startTime, 
-                     end: null, 
-                     status: 'active', 
-                     role: customRole, 
-                     accumulated: 0, 
-                     manualOverride: isManual 
-                 });
+                 staffing.push({ id: Date.now() + Math.random(), name: fmtName, start: startTime, end: null, status: 'active', role: customRole, accumulated: 0, manualOverride: isManual });
             }
         }
 
@@ -1234,7 +1222,6 @@ v3.38:
         return Math.round(totalMs / 60000) / 60;
     }
 
-    // --- AUTOMATED STAFFING LOGIC (WITH MANUAL OVERRIDE) ---
     function autoAssignRoles() {
         const activeStaff = staffing.filter(s => s.status === 'active' || s.status === 'paused');
         activeStaff.sort((a, b) => calculateTotalHours(b) - calculateTotalHours(a));
@@ -1275,13 +1262,10 @@ v3.38:
 
     function renderStaffingView() {
         autoAssignRoles();
-
         const activeList = byId('staff-list-active'), cutList = byId('staff-list-cut');
         activeList.innerHTML = ''; cutList.innerHTML = '';
         
-        // Sorting: Role Priority then Time
         const getRoleScore = (r) => { if(r==='Belt Tender') return 3; if(r==='Bulk Sweep') return 2; return 1; };
-
         const activeStaff = staffing.filter(s => s.status === 'active' || s.status === 'paused')
             .sort((a,b) => {
                 const scoreA = getRoleScore(a.role);
@@ -1293,7 +1277,6 @@ v3.38:
         activeStaff.forEach(s => {
             const isPaused = s.status === 'paused';
             const isManual = s.manualOverride === true;
-            
             let roleIcon = '';
             if (s.role === 'Belt Tender') roleIcon = '👑';
             else if (s.role === 'Bulk Sweep') roleIcon = '🧹';
@@ -1307,11 +1290,7 @@ v3.38:
             div.innerHTML = `
                 <div style="width:100%">
                     <div class="staff-top-row">
-                        <div class="staff-name">
-                            ${s.name} <span style="margin-left:5px; font-size:18px;">${roleIcon}</span>
-                            ${isManual ? '<i class="ph ph-lock-key" style="font-size:14px; color:#555; margin-left:4px;"></i>' : ''}
-                            ${isPaused?'<span style="background:#ffcc00; color:#000; font-size:10px; padding:2px 4px; border-radius:4px; font-weight:700; margin-left:5px;">PAUSED</span>':''}
-                        </div>
+                        <div class="staff-name">${s.name} <span style="margin-left:5px; font-size:18px;">${roleIcon}</span> ${isManual ? '<i class="ph ph-lock-key" style="font-size:14px; color:#555; margin-left:4px;"></i>' : ''} ${isPaused?'<span style="background:#ffcc00; color:#000; font-size:10px; padding:2px 4px; border-radius:4px; font-weight:700; margin-left:5px;">PAUSED</span>':''}</div>
                         <div style="display:flex; gap:8px;">
                             <button class="icon-btn" onclick="${isPaused?'resumeStaff':'pauseStaff'}(${s.id})" style="width:32px; height:32px; font-size:16px; ${isPaused?'background:#e5e5ea; color:#000;':''}"><i class="ph ${isPaused?'ph-play':'ph-pause'}"></i></button>
                             <button class="icon-btn" onclick="openEditStaffModal(${s.id})" style="width:32px; height:32px; font-size:16px;"><i class="ph ph-pencil-simple"></i></button>
@@ -1350,7 +1329,6 @@ v3.38:
 
     function updateStaffingTimers(checkRoles = true) {
         if(!byId('tab-staffing').classList.contains('active')) return;
-        
         if(checkRoles) { const changed = autoAssignRoles(); if(changed) { renderStaffingView(); return; } }
 
         const currentOrder = Array.from(document.querySelectorAll('.staff-card:not(.cut)')).map(el => parseFloat(el.dataset.id));
@@ -1462,7 +1440,7 @@ v3.38:
     }
 
     function populateUnloaderSelect() {
-        const ids = ['select-unloader', 'edit-select-unloader', 'edit-active-unloader', 'filter-unloader-select'];
+        const ids = ['select-unloader', 'edit-select-unloader', 'edit-active-unloader', 'filter-unloader-select', 'req-unloader-select'];
         ids.forEach(id => {
             const el = byId(id); if(!el) return;
             const isFilter = id === 'filter-unloader-select';
@@ -1525,8 +1503,21 @@ v3.38:
         }
     }
 
-    function confirmCompleteDoor() { if(detailDoor) completeDoor(detailDoor); }
-    function completeDoor(doorNum) {
+    function confirmCompleteDoor() { 
+        if(detailDoor) completeDoor(detailDoor); 
+    }
+    
+    function completeDoor(doorNum, force = false) {
+        const d = doors[doorNum];
+        
+        // --- FIX: CHECK UNASSIGNED ---
+        if (!force && (!d.unloader || d.unloader === 'Unassigned')) {
+             closeModal('active-detail-modal');
+             byId('req-unloader-select').value = "";
+             byId('unloader-required-modal').style.display = 'flex';
+             return;
+        }
+        
         const now = new Date(), mins = now.getMinutes();
         const { shiftStart } = getShiftTimeWindows();
         const win = attributionConfig.minutes;
@@ -1536,6 +1527,35 @@ v3.38:
             pendingCompletion = { doorNum, time: now.getTime() };
             byId('hour-attribution-modal').style.display = 'flex';
         } else finalizeCompletion(doorNum, now.getTime(), 0);
+    }
+    
+    function checkReqCustom(s) { byId('req-custom-unloader').style.display = s.value === 'Custom' ? 'block' : 'none'; }
+    
+    function saveRequiredUnloader() {
+        let unl = byId('req-unloader-select').value;
+        if(unl === 'Custom') unl = byId('req-custom-unloader').value.trim();
+        if(!unl) return alert("Please select an unloader");
+        
+        if(unl !== "Unassigned" && unl === byId('req-custom-unloader').value.trim()) {
+            unl = unl.toLowerCase().split(' ').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ');
+        }
+        
+        // Update the door with this new unloader
+        const d = doors[detailDoor];
+        d.unloader = unl;
+        // Fix assignment history too
+        if(d.assignments.length > 0) {
+            if (d.assignments[d.assignments.length-1].name === 'Unassigned') {
+                 d.assignments[d.assignments.length-1].name = unl;
+            } else {
+                 d.assignments.push({ name: unl, start: Date.now(), end: null });
+            }
+        } else {
+             d.assignments = [{ name: unl, start: d.start, end: null }];
+        }
+        saveDoors();
+        closeModal('unloader-required-modal');
+        completeDoor(detailDoor, true);
     }
 
     function resolveAttribution(choice) {
@@ -1586,16 +1606,23 @@ v3.38:
 
         // Calculate Primary Unloader
         const durationMap = {};
+        
+        // Fix: Filter Unassigned from Started By
+        const realAssignments = (d.assignments || []).filter(a => a.name && a.name !== 'Unassigned');
         let startedBy = d.unloader;
+        if (realAssignments.length > 0) {
+            startedBy = realAssignments[0].name;
+        }
+        
         if (d.assignments && d.assignments.length > 0) {
-            startedBy = d.assignments[0].name;
             d.assignments.forEach(a => {
+                if (a.name === 'Unassigned') return;
                 const dur = (a.end || endTime) - a.start;
                 if (!durationMap[a.name]) durationMap[a.name] = 0;
                 durationMap[a.name] += dur;
             });
         } else {
-            durationMap[d.unloader] = endTime - start;
+            if(d.unloader !== 'Unassigned') durationMap[d.unloader] = endTime - start;
         }
 
         let primaryUnloader = d.unloader;
@@ -1606,8 +1633,10 @@ v3.38:
                 primaryUnloader = name;
             }
         });
+        
+        // Fallback if map empty (shouldn't happen with mandatory check)
+        if (!primaryUnloader || primaryUnloader === 'Unassigned') primaryUnloader = "Unknown";
 
-        // Assistants (everyone else involved)
         const assistants = Object.keys(durationMap).filter(n => n !== primaryUnloader);
 
         if(config.randomHistory && demoActive) {
@@ -1645,9 +1674,9 @@ v3.38:
         const { thisHourStart, thisHourEnd, lastHourStart, lastHourEnd } = getShiftTimeWindows();
         let tw=0, tc=0, hw=0, lhw=0;
         historyLog.forEach(l => {
-            if (l.status && l.status !== 'completed') return; // Skip moved doors
+            if (l.status && l.status !== 'completed') return; 
 
-            const t = l.end - (l.statOffset || 0); // Apply attribution offset
+            const t = l.end - (l.statOffset || 0); 
             if (l.type === 'Wally') {
                 tw++;
                 if (t >= thisHourStart.getTime() && t < thisHourEnd.getTime()) hw++;
@@ -1715,11 +1744,14 @@ v3.38:
         byId('detail-id').innerText = d.id;
         byId('detail-unloader').innerText = d.unloader || "Unassigned";
         
-        // Show Started By if different
+        // Show Started By if different (and filter Unassigned)
+        const realAssignments = (d.assignments || []).filter(a => a.name && a.name !== 'Unassigned');
+        let startedBy = (realAssignments.length > 0) ? realAssignments[0].name : null;
+
         const startedRow = byId('row-started-by');
-        if (d.assignments && d.assignments.length > 0 && d.assignments[0].name !== d.unloader) {
+        if (startedBy && startedBy !== d.unloader) {
             startedRow.style.display = 'flex';
-            byId('detail-started-by').innerText = d.assignments[0].name;
+            byId('detail-started-by').innerText = startedBy;
         } else {
             startedRow.style.display = 'none';
         }
@@ -1729,7 +1761,6 @@ v3.38:
         const ar = byId('row-account');
         if (d.account) { ar.style.display = 'flex'; byId('detail-account').innerText = d.account; } else ar.style.display = 'none';
         
-        // Show CPU Options
         const rowOpts = byId('row-cpu-opts');
         if (d.type === 'CPU' && d.cpuOptions && d.cpuOptions.length > 0) {
             rowOpts.style.display = 'flex';
@@ -1752,7 +1783,6 @@ v3.38:
         else checkActiveCustomUnloader(us);
         setEditActiveType(d.type);
         
-        // Pre-check options
         const opts = d.cpuOptions || [];
         byId('edit-active-chk-hott').checked = opts.includes('HOTT');
         byId('edit-active-chk-recycle').checked = opts.includes('RECYCLE');
@@ -1764,7 +1794,6 @@ v3.38:
                 const opt = document.createElement('option'); opt.value = i; opt.innerText = `Bay ${i}`; if(i===doorNum) opt.selected=true; sel.appendChild(opt);
             }
         }
-        // Reset Switch Type
         setSwitchType('Replacement');
         byId('edit-active-modal').style.display = 'flex';
     }
@@ -1785,10 +1814,6 @@ v3.38:
 
     function checkActiveCustomUnloader(s) { 
         byId('edit-active-custom-unloader').style.display = s.value === 'Custom' ? 'block' : 'none'; 
-        // Show Switch Type option if unloader changes from original
-        const origDoor = parseInt(byId('edit-active-original-door').value);
-        const originalUnloader = doors[origDoor].unloader;
-        // Logic to show/hide switch type could go here if we wanted it dynamic
         byId('edit-active-assist-option').style.display = 'block';
     }
 
@@ -1807,17 +1832,14 @@ v3.38:
             if(byId('edit-active-chk-gv').checked) cpuOpts.push('GV');
         }
 
-        // Handle Assignment Switching
         const d = doors[orig];
         const now = Date.now();
         let newAssignments = [...(d.assignments || [])];
         
         if (d.unloader !== unl) {
-            // Close old
             if (newAssignments.length > 0) {
                 newAssignments[newAssignments.length - 1].end = now;
             }
-            // Add new
             const entryName = (currentSwitchType === 'Assist') ? `${unl} (Assist)` : unl;
             newAssignments.push({ name: entryName, start: now, end: null });
         }
@@ -1848,7 +1870,8 @@ v3.38:
                 pendingWallyDuplicate = { doorNum: currentDoor, wallyId: fId, unloader: unl||"Unassigned", startTime: Date.now() };
                 byId('dup-wally-id').textContent = fId; byId('dup-door').textContent = `Door ${dup.door}`;
                 byId('dup-time').textContent = new Date(dup.end).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); byId('dup-unloader').textContent = dup.unloader;
-                byId('duplicate-wally-modal').style.display = 'flex'; return;
+                byId('duplicate-wally-modal').style.display = 'flex'; 
+                return;
             }
         }
 
@@ -1886,7 +1909,6 @@ v3.38:
         byId('input-wally-id').value = ''; byId('input-trailer-id').value = ''; byId('input-account-id').value = '';
         byId('select-unloader').value = ""; byId('input-custom-unloader').style.display = 'none';
         
-        // Reset Checkboxes
         byId('chk-hott').checked = false;
         byId('chk-recycle').checked = false;
         byId('chk-gv').checked = false;
@@ -2038,7 +2060,7 @@ v3.38:
 
             // Build User String (Started by + Unloader)
             let userStr = `👤 ${l.unloader}`;
-            if (l.startedBy && l.startedBy !== l.unloader) {
+            if (l.startedBy && l.startedBy !== l.unloader && l.startedBy !== 'Unassigned') {
                 userStr = `👤 ${l.unloader} <span style="font-size:12px; color:#999;">(Started by ${l.startedBy})</span>`;
             }
 
@@ -2076,7 +2098,6 @@ v3.38:
     function revertLog(i) {
         const l = historyLog[i];
         if(!l || (Date.now()-l.end>120000 && !demoActive) || doors[l.door].status!=='empty') return alert("Cannot revert");
-        // Warning: Reverting a complex assignment chain is simplified here
         doors[l.door] = { 
             status:'active', start:l.start, id:l.id, account:l.account, type:l.type, 
             unloader:l.unloader, unavailable:false, lastCompletionTime:null, 
@@ -2145,7 +2166,7 @@ v3.38:
              else if(l.type === 'CPU' && l.cpuOptions && l.cpuOptions.length>0) typeStr += `\n${l.cpuOptions.join(',')}`;
              
              let uStr = l.unloader;
-             if(l.startedBy && l.startedBy !== l.unloader) uStr += `\n(Start: ${l.startedBy})`;
+             if(l.startedBy && l.startedBy !== l.unloader && l.startedBy !== 'Unassigned') uStr += `\n(Start: ${l.startedBy})`;
 
              return [new Date(l.end).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}), l.door, typeStr, l.id, uStr, Math.round(l.duration/60000)+"m", getHourText(l.completionHour)];
         });
