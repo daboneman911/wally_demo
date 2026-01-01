@@ -211,7 +211,7 @@
         .dop-select { background: #f2f2f7; border: none; padding: 8px 12px; border-radius: 8px; font-size: 14px; font-weight: 600; }
         .staff-section-title { font-size: 18px; font-weight: 800; margin: 25px 0 15px 0; display: flex; justify-content: space-between; align-items: center; }
         .staff-count-badge { background: #e5e5ea; color: #000; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 700; margin-left: 8px; }
-        .staff-card { background: white; border: 1px solid #e5e5ea; border-radius: 18px; padding: 16px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+        .staff-card { background: white; border: 1px solid #e5e5ea; border-radius: 18px; padding: 16px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); transition: all 0.3s ease; }
         .staff-card.cut { opacity: 0.6; background: #f9f9f9; }
         .staff-top-row { display: flex; justify-content: space-between; align-items: center; width: 100%; }
         .staff-name { font-size: 17px; font-weight: 700; color: #000; display: flex; align-items: center; gap: 6px; }
@@ -256,12 +256,25 @@
         .search-bar { width: 100%; padding: 14px; border: 1px solid #e5e5ea; border-radius: 12px; background: #f9f9f9; font-size: 16px; margin-bottom: 20px; outline: none; }
         .load-more-btn { width: 100%; padding: 15px; background: #f2f2f7; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; margin-top: 10px; color: #555; }
 
-        /* --- NEW: Checkbox Pills --- */
-        .checkbox-group { display: flex; gap: 8px; flex-wrap: wrap; }
-        .checkbox-pill { position: relative; cursor: pointer; user-select: none; }
-        .checkbox-pill input { position: absolute; opacity: 0; cursor: pointer; height: 0; width: 0; }
-        .checkbox-pill span { background-color: #f2f2f7; color: #000; padding: 8px 14px; border-radius: 20px; font-size: 13px; font-weight: 700; display: inline-block; transition: all 0.2s; border: 1px solid #e5e5ea; }
-        .checkbox-pill input:checked ~ span { background-color: #000; color: #fff; border-color: #000; }
+        /* --- UPDATED: Aesthetic Option Pills --- */
+        .options-grid { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 5px; }
+        .option-toggle { flex: 1; position: relative; cursor: pointer; min-width: 80px; }
+        .option-toggle input { position: absolute; opacity: 0; width: 0; height: 0; }
+        .option-toggle span {
+            display: flex; align-items: center; justify-content: center;
+            width: 100%; padding: 12px;
+            background: #f2f2f7; color: #8e8e93;
+            border-radius: 12px; font-weight: 700; font-size: 14px;
+            transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+            border: 1px solid transparent;
+            box-sizing: border-box;
+        }
+        .option-toggle input:checked ~ span {
+            background: #000; color: #fff;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            transform: translateY(-1px);
+        }
+        .option-toggle:active span { transform: scale(0.96); }
 
         /* --- NAV --- */
         .tab-bar { position: fixed; bottom: 30px; left: 20px; right: 20px; background: white; border-radius: 40px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); display: flex; justify-content: space-around; align-items: center; height: 70px; z-index: 1000; padding-bottom: 0; }
@@ -358,7 +371,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 3.33</div>
+            <div class="app-version">Version 3.34</div>
         </div>
 
         <div class="section-title">Sort Statistics</div>
@@ -505,8 +518,8 @@
                     </div>
                     <div class="settings-note" style="margin-top:20px; padding:0;">Allow attributing trailers completed up to <span id="attr-note-val" style="font-weight:700; color:#000;">5</span> minutes after the hour to the previous hour.</div>
                 </div>
-                <div class="settings-row"><span class="settings-label">Simulate Window (Test)</span><div class="toggle-switch" id="switch-sim-window" onclick="toggleSwitch('sim-window')"></div></div>
-                 <div class="settings-row"><span class="settings-label">Disable Attribution</span><div class="toggle-switch" id="switch-dis-window" onclick="toggleSwitch('dis-window')"></div></div>
+                <div class="settings-row"><span class="settings-label">Simulate Shift Change</span><div class="toggle-switch" id="switch-sim-window" onclick="toggleSwitch('sim-window')"></div></div>
+                 <div class="settings-row"><span class="settings-label">Disable Time Attribution</span><div class="toggle-switch" id="switch-dis-window" onclick="toggleSwitch('dis-window')"></div></div>
             </div>
             <div class="settings-header">Saved Accounts</div>
             <div class="settings-group">
@@ -520,13 +533,13 @@
             <div class="settings-group">
                 <div class="settings-row"><span class="settings-label">Demo Mode</span><div class="toggle-switch" id="switch-demo-mode" onclick="toggleSwitch('demo-mode')"></div></div>
                 <div class="settings-row"><span class="settings-label">Disable hardcoded times</span><div class="toggle-switch" id="switch-disable-times" onclick="toggleSwitch('disable-times')"></div></div>
-                <div class="settings-row"><span class="settings-label">Randomize History (Demo)</span><div class="toggle-switch" id="switch-demo-random" onclick="toggleSwitch('demo-random')"></div></div>
-                <div class="settings-row"><span class="settings-label">Auto re-onboard (Demo)</span><div class="toggle-switch" id="switch-demo-replenish" onclick="toggleSwitch('demo-replenish')"></div></div>
+                <div class="settings-row"><span class="settings-label">Generate Random History</span><div class="toggle-switch" id="switch-demo-random" onclick="toggleSwitch('demo-random')"></div></div>
+                <div class="settings-row"><span class="settings-label">Auto-Replenish Bays</span><div class="toggle-switch" id="switch-demo-replenish" onclick="toggleSwitch('demo-replenish')"></div></div>
                 <div class="settings-row">
                     <span class="settings-label">Number of Doors</span>
                     <div class="stepper"><button class="stepper-btn" onclick="stepDoor(-1)">−</button><span class="stepper-val" id="demo-door-val">2</span><button class="stepper-btn" onclick="stepDoor(1)">+</button></div>
                 </div>
-                <div class="settings-row"><span class="settings-label">Mixed Types (Wally + CPU)</span><div class="toggle-switch" id="switch-mixed-types" onclick="toggleSwitch('mixed-types')"></div></div>
+                <div class="settings-row"><span class="settings-label">Mix Trailer Types</span><div class="toggle-switch" id="switch-mixed-types" onclick="toggleSwitch('mixed-types')"></div></div>
                 <div class="settings-row" style="justify-content:center; background:#f9f9f9;">
                     <div class="segment-control"><div class="segment-opt selected" id="seg-wally" onclick="setDemoType('Wally')">Wally</div><div class="segment-opt" id="seg-cpu" onclick="setDemoType('CPU')">CPU</div></div>
                 </div>
@@ -608,10 +621,10 @@
                 <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Account Number</label><input type="text" id="input-account-id" class="form-input" placeholder="e.g. ACCT456" autocapitalize="characters" oninput="this.value = this.value.toUpperCase()" list="saved-accounts-datalist"><datalist id="saved-accounts-datalist"></datalist></div>
                 <div style="margin-bottom:15px;">
                      <label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:8px; display:block;">Options</label>
-                     <div class="checkbox-group">
-                         <label class="checkbox-pill"><input type="checkbox" id="chk-hott" value="HOTT"><span>HOTT</span></label>
-                         <label class="checkbox-pill"><input type="checkbox" id="chk-recycle" value="RECYCLE"><span>RECYCLE</span></label>
-                         <label class="checkbox-pill"><input type="checkbox" id="chk-gv" value="GV"><span>GV</span></label>
+                     <div class="options-grid">
+                         <label class="option-toggle"><input type="checkbox" id="chk-hott" value="HOTT"><span>HOTT</span></label>
+                         <label class="option-toggle"><input type="checkbox" id="chk-recycle" value="RECYCLE"><span>RECYCLE</span></label>
+                         <label class="option-toggle"><input type="checkbox" id="chk-gv" value="GV"><span>GV</span></label>
                      </div>
                 </div>
             </div>
@@ -656,10 +669,10 @@
         <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Account # (CPU only)</label><input type="text" id="edit-active-account" class="form-input" oninput="this.value = this.value.toUpperCase()"></div>
         <div id="edit-active-options-container" style="display:none; margin-bottom:15px;">
              <label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:8px; display:block;">Options</label>
-             <div class="checkbox-group">
-                 <label class="checkbox-pill"><input type="checkbox" id="edit-active-chk-hott" value="HOTT"><span>HOTT</span></label>
-                 <label class="checkbox-pill"><input type="checkbox" id="edit-active-chk-recycle" value="RECYCLE"><span>RECYCLE</span></label>
-                 <label class="checkbox-pill"><input type="checkbox" id="edit-active-chk-gv" value="GV"><span>GV</span></label>
+             <div class="options-grid">
+                 <label class="option-toggle"><input type="checkbox" id="edit-active-chk-hott" value="HOTT"><span>HOTT</span></label>
+                 <label class="option-toggle"><input type="checkbox" id="edit-active-chk-recycle" value="RECYCLE"><span>RECYCLE</span></label>
+                 <label class="option-toggle"><input type="checkbox" id="edit-active-chk-gv" value="GV"><span>GV</span></label>
              </div>
         </div>
         <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Unloader</label><select id="edit-active-unloader" class="form-input" onchange="checkActiveCustomUnloader(this)"></select><input type="text" id="edit-active-custom-unloader" class="form-input" style="display:none; margin-top:10px;" placeholder="Enter Name" autocapitalize="words"></div>
@@ -674,10 +687,10 @@
         <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">ID / Trailer #</label><input type="text" id="edit-input-id" class="form-input" oninput="this.value = this.value.toUpperCase()"></div>
         <div id="edit-log-options-container" style="display:none; margin-bottom:15px;">
              <label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:8px; display:block;">Options</label>
-             <div class="checkbox-group">
-                 <label class="checkbox-pill"><input type="checkbox" id="edit-log-chk-hott" value="HOTT"><span>HOTT</span></label>
-                 <label class="checkbox-pill"><input type="checkbox" id="edit-log-chk-recycle" value="RECYCLE"><span>RECYCLE</span></label>
-                 <label class="checkbox-pill"><input type="checkbox" id="edit-log-chk-gv" value="GV"><span>GV</span></label>
+             <div class="options-grid">
+                 <label class="option-toggle"><input type="checkbox" id="edit-log-chk-hott" value="HOTT"><span>HOTT</span></label>
+                 <label class="option-toggle"><input type="checkbox" id="edit-log-chk-recycle" value="RECYCLE"><span>RECYCLE</span></label>
+                 <label class="option-toggle"><input type="checkbox" id="edit-log-chk-gv" value="GV"><span>GV</span></label>
              </div>
         </div>
         <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Unloader</label><select id="edit-select-unloader" class="form-input"></select></div>
@@ -706,7 +719,7 @@
     let staffingInterval = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '3.33';
+    const APP_VERSION = '3.34';
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Matt S", "Robert W", "Trevon C", "Victor M", "Russell H", "Fonseca J"];
@@ -730,16 +743,13 @@
 
     // --- CHANGELOG ---
     const CHANGELOG = `
-v3.33:
-- CPU Updates:
-  Removed "53'" label.
-  Added options for HOTT, RECYCLE, and GV when selecting CPU.
-  Options are tracked in active details and logs.
+v3.34:
+- Staffing Auto-Sort: The list now automatically reorders itself. High performers (Crown/Broom) stay at the top.
+- Visual Upgrade: CPU Option buttons (HOTT, etc.) now match the sleek toggle aesthetic.
+- Verbiage fixes in Settings/Demo mode.
 
-v3.32:
-- Staffing Fix: Manual role changes now work instantly and icons (👑/🧹) update correctly.
-- Added "Lock" icons for manually assigned roles.
-- Improved "Auto-Assign" logic to respect manual locks.
+v3.33:
+- CPU Updates: Removed "53'" label. Added HOTT/RECYCLE/GV options.
     `;
 
     // --- STATE ---
@@ -1174,6 +1184,8 @@ v3.32:
             const roleColor = s.role==='Belt Tender'?'#ff9500':(s.role==='Bulk Sweep'?'#34c759':'#000');
             
             const div = document.createElement('div'); div.className = 'staff-card';
+            div.dataset.id = s.id; // Crucial for auto-sort detection
+            
             if(isPaused) div.style.cssText = 'opacity:0.7; border:1px dashed #ccc;';
             div.innerHTML = `
                 <div style="width:100%">
@@ -1213,12 +1225,26 @@ v3.32:
 
         byId('badge-on-clock').innerText = activeStaff.length;
         byId('badge-off-clock').innerText = cutStaffList.length;
-        updateStaffingTimers(false); 
+        // Don't call updateStaffingTimers(false) here to avoid loops, just update static numbers if needed
     }
 
     function updateStaffingTimers(checkRoles = true) {
         if(!byId('tab-staffing').classList.contains('active')) return;
+        
+        // 1. Check if roles changed
         if(checkRoles) { const changed = autoAssignRoles(); if(changed) { renderStaffingView(); return; } }
+
+        // 2. Check if Order Changed (Auto-Sort logic)
+        const currentOrder = Array.from(document.querySelectorAll('.staff-card:not(.cut)')).map(el => parseFloat(el.dataset.id));
+        const newSorted = staffing.filter(s => s.status!=='cut' && (s.status==='active'||s.status==='paused'))
+                                  .sort((a,b) => calculateTotalHours(b) - calculateTotalHours(a));
+        const newOrder = newSorted.map(s => s.id);
+        
+        // If the arrays are different length or different order, re-render
+        if(currentOrder.length !== newOrder.length || JSON.stringify(currentOrder) !== JSON.stringify(newOrder)) {
+            renderStaffingView();
+            return;
+        }
 
         let onClock=0, uHours=0, bHours=0, sHours=0;
         staffing.forEach(s => {
@@ -1640,8 +1666,10 @@ v3.32:
     function handleAvailabilityToggle() { doors[currentDoor].unavailable = !doors[currentDoor].unavailable; saveDoors(); renderDashboard(); showSaveToast(); closeModal('input-modal'); }
     function setType(t) {
         currentType = t;
-        byId('opt-wally').classList.toggle('selected', t==='Wally'); byId('opt-cpu').classList.toggle('selected', t==='CPU');
-        byId('wally-inputs').style.display = t==='Wally'?'block':'none'; byId('cpu-inputs').style.display = t==='CPU'?'block':'none';
+        byId('opt-wally').classList.toggle('selected', t==='Wally'); 
+        byId('opt-cpu').classList.toggle('selected', t==='CPU'); 
+        byId('wally-inputs').style.display = t==='Wally'?'block':'none'; 
+        byId('cpu-inputs').style.display = t==='CPU'?'block':'none';
     }
 
     function viewStatLogs(type) {
