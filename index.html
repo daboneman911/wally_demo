@@ -218,7 +218,7 @@
         .staff-time { font-size: 13px; color: var(--text-sub); margin-top: 2px; }
         .staff-hours { font-size: 16px; font-weight: 800; color: #000; font-variant-numeric: tabular-nums; }
         .staff-action-btn { background: #ffe5e5; color: #ff3b30; border: none; padding: 6px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; }
-        .role-select { width: 100%; padding: 8px; background: #f2f2f7; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; color: #000; margin-top: 4px; }
+        .role-select { width: 100%; padding: 8px; background: #f2f2f7; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; color: #000; margin-top: 4px; outline: none; }
         .breakdown-row { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.7); margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1); }
         .staff-checkbox-list { max-height: 250px; overflow-y: auto; border: 1px solid #e5e5ea; border-radius: 12px; background: #f9f9f9; }
         .staff-checkbox-item { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid #e5e5ea; cursor: pointer; }
@@ -351,7 +351,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 3.31</div>
+            <div class="app-version">Version 3.32</div>
         </div>
 
         <div class="section-title">Sort Statistics</div>
@@ -674,7 +674,7 @@
     let staffingInterval = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '3.31';
+    const APP_VERSION = '3.32';
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Matt S", "Robert W", "Trevon C", "Victor M", "Russell H", "Fonseca J"];
@@ -698,19 +698,17 @@
 
     // --- CHANGELOG ---
     const CHANGELOG = `
+v3.32:
+- Staffing Fix: Manual role changes now work instantly and icons (👑/🧹) update correctly.
+- Added "Lock" icons for manually assigned roles.
+- Improved "Auto-Assign" logic to respect manual locks.
+
 v3.31:
-- Automated Staffing Roles:
-  The employee with the most hours is automatically assigned Belt Tender (👑).
-  The next two are Bulk Sweeps (🧹).
-  Roles update dynamically as hours accumulate.
-- Removed manual role dropdowns.
+- Automated Staffing Roles based on time.
+- Removed manual role dropdowns (Restored in v3.32).
 
 v3.30 (Optimized):
 - Major performance update for speed and battery life.
-- Search is now debounced (smoother typing).
-- Logs now load in pages (Load More button) to prevent freezing.
-- Staffing timers stop running when tab is closed.
-- Data saving is split up to prevent "jank".
     `;
 
     // --- STATE ---
@@ -1018,7 +1016,7 @@ v3.30 (Optimized):
             startTime = getShiftTimeWindows().shiftStart.getTime();
         }
         cbs.forEach(cb => {
-            staffing.push({ id: Date.now() + Math.random(), name: cb.value, start: startTime, end: null, status: 'active', role: 'Unloader', accumulated: 0 });
+            staffing.push({ id: Date.now() + Math.random(), name: cb.value, start: startTime, end: null, status: 'active', role: 'Unloader', accumulated: 0, manualOverride: false });
         });
         saveStaffing(); closeModal('add-staff-modal'); renderStaffingView(); updateTabBadges(); showSaveToast();
     }
@@ -1064,9 +1062,6 @@ v3.30 (Optimized):
         }
     }
 
-    // Legacy function support
-    function saveStaffRole() {}
-
     function pauseStaff(id) {
         const s = staffing.find(x => x.id === id);
         if (s && s.status === 'active') {
@@ -1090,30 +1085,76 @@ v3.30 (Optimized):
         return Math.round(totalMs / 60000) / 60;
     }
 
-    // --- AUTOMATED STAFFING LOGIC ---
+    // --- AUTOMATED STAFFING LOGIC (WITH MANUAL OVERRIDE) ---
     function autoAssignRoles() {
         const activeStaff = staffing.filter(s => s.status === 'active' || s.status === 'paused');
+        
+        // Sort by total hours descending
         activeStaff.sort((a, b) => calculateTotalHours(b) - calculateTotalHours(a));
+
+        // Step 1: Count how many special roles are already locked manually
+        let lockedBeltTenders = 0;
+        let lockedSweeps = 0;
+
+        activeStaff.forEach(s => {
+            if (s.manualOverride) {
+                if (s.role === 'Belt Tender') lockedBeltTenders++;
+                if (s.role === 'Bulk Sweep') lockedSweeps++;
+            }
+        });
 
         let changed = false;
 
-        activeStaff.forEach((s, index) => {
+        // Step 2: Fill remaining slots with non-locked staff based on time rank
+        activeStaff.forEach(s => {
+            if (s.manualOverride) return; // Skip manually set users
+
             let newRole = 'Unloader';
-            if (index === 0) newRole = 'Belt Tender';
-            else if (index === 1 || index === 2) newRole = 'Bulk Sweep';
             
+            // Try to fill Belt Tender slot (Max 1)
+            if (lockedBeltTenders < 1) {
+                newRole = 'Belt Tender';
+                lockedBeltTenders++; 
+            } 
+            // Try to fill Bulk Sweep slots (Max 2)
+            else if (lockedSweeps < 2) {
+                newRole = 'Bulk Sweep';
+                lockedSweeps++;
+            }
+
             if (s.role !== newRole) {
                 s.role = newRole;
                 changed = true;
             }
         });
 
-        if (changed) { saveStaffing(); return true; }
+        if (changed) {
+            saveStaffing();
+            return true;
+        }
         return false;
+    }
+
+    function saveStaffRole(id, value, selectEl) {
+        const s = staffing.find(x => x.id === id); 
+        if (!s) return;
+
+        if (value === 'Auto') {
+            s.manualOverride = false;
+        } else {
+            s.manualOverride = true;
+            s.role = value;
+        }
+
+        saveStaffing();
+        renderStaffingView(); // Re-render to show updates/locks
+        updateTabBadges();
+        showSaveToast();
     }
 
     function renderStaffingView() {
         autoAssignRoles();
+
         const activeList = byId('staff-list-active'), cutList = byId('staff-list-cut');
         activeList.innerHTML = ''; cutList.innerHTML = '';
         
@@ -1122,18 +1163,26 @@ v3.30 (Optimized):
 
         activeStaff.forEach(s => {
             const isPaused = s.status === 'paused';
+            const isManual = s.manualOverride === true;
+            
+            // Icon & Color Logic (Always applies, manual or auto)
             let roleIcon = '';
             if (s.role === 'Belt Tender') roleIcon = '👑';
             else if (s.role === 'Bulk Sweep') roleIcon = '🧹';
-
+            
             const roleColor = s.role==='Belt Tender'?'#ff9500':(s.role==='Bulk Sweep'?'#34c759':'#000');
             
             const div = document.createElement('div'); div.className = 'staff-card';
             if(isPaused) div.style.cssText = 'opacity:0.7; border:1px dashed #ccc;';
+            
             div.innerHTML = `
                 <div style="width:100%">
                     <div class="staff-top-row">
-                        <div class="staff-name">${s.name} <span style="margin-left:5px; font-size:18px;">${roleIcon}</span> ${isPaused?'<span style="background:#ffcc00; color:#000; font-size:10px; padding:2px 4px; border-radius:4px; font-weight:700; margin-left:5px;">PAUSED</span>':''}</div>
+                        <div class="staff-name">
+                            ${s.name} <span style="margin-left:5px; font-size:18px;">${roleIcon}</span>
+                            ${isManual ? '<i class="ph ph-lock-key" style="font-size:14px; color:#555; margin-left:4px;"></i>' : ''}
+                            ${isPaused?'<span style="background:#ffcc00; color:#000; font-size:10px; padding:2px 4px; border-radius:4px; font-weight:700; margin-left:5px;">PAUSED</span>':''}
+                        </div>
                         <div style="display:flex; gap:8px;">
                             <button class="icon-btn" onclick="${isPaused?'resumeStaff':'pauseStaff'}(${s.id})" style="width:32px; height:32px; font-size:16px; ${isPaused?'background:#e5e5ea; color:#000;':''}"><i class="ph ${isPaused?'ph-play':'ph-pause'}"></i></button>
                             <button class="icon-btn" onclick="openEditStaffModal(${s.id})" style="width:32px; height:32px; font-size:16px;"><i class="ph ph-pencil-simple"></i></button>
@@ -1144,8 +1193,14 @@ v3.30 (Optimized):
                     <div class="staff-time">${isPaused?'Paused':'Started: '+new Date(s.start).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</div>
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
                         <div class="staff-hours" id="staff-hours-${s.id}" style="color:${roleColor}">${calculateTotalHours(s).toFixed(2)}h</div>
-                        <div style="font-size:14px; font-weight:700; color:${roleColor}; background:#f2f2f7; padding:6px 12px; border-radius:8px;">
-                            ${s.role} ${roleIcon}
+                        
+                        <div style="width:55%">
+                             <select class="role-select" onchange="saveStaffRole(${s.id}, this.value, this)" style="background:${isManual ? '#e5e5ea' : '#f2f2f7'}; border:${isManual ? '1px solid #ccc' : 'none'};">
+                                <option value="Auto" ${!isManual ? 'selected' : ''}>Auto (${s.role})</option>
+                                <option value="Unloader" ${isManual && s.role==='Unloader'?'selected':''}>Unloader</option>
+                                <option value="Belt Tender" ${isManual && s.role==='Belt Tender'?'selected':''}>Belt Tender</option>
+                                <option value="Bulk Sweep" ${isManual && s.role==='Bulk Sweep'?'selected':''}>Bulk Sweep</option>
+                            </select>
                         </div>
                     </div>
                 </div>`;
@@ -1163,7 +1218,7 @@ v3.30 (Optimized):
 
         byId('badge-on-clock').innerText = activeStaff.length;
         byId('badge-off-clock').innerText = cutStaffList.length;
-        updateStaffingTimers(false);
+        updateStaffingTimers(false); 
     }
 
     function updateStaffingTimers(checkRoles = true) {
