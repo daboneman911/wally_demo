@@ -371,7 +371,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 3.35</div>
+            <div class="app-version">Version 3.36</div>
         </div>
 
         <div class="section-title">Sort Statistics</div>
@@ -593,7 +593,14 @@
     <div class="modal-sheet">
         <h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Clock In Staff</h2>
         <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Select Employees</label><div id="staff-checkbox-list" class="staff-checkbox-list"></div></div>
-        <div style="margin-bottom:20px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Or Add New Person</label><div style="display:flex; gap:10px;"><input type="text" id="staff-custom-name" class="form-input" style="margin:0;" placeholder="Name" autocapitalize="words"></div></div>
+        <div style="margin-bottom:20px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Or Add New Person</label><input type="text" id="staff-custom-name" class="form-input" style="margin:0;" placeholder="Name" autocapitalize="words"></div>
+        <div style="margin-bottom:20px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Starting Role</label>
+            <select id="staff-start-role" class="form-input">
+                <option value="Unloader">Unloader (Auto-Sort)</option>
+                <option value="Belt Tender">Belt Tender (Locked 👑)</option>
+                <option value="Bulk Sweep">Bulk Sweep (Locked 🧹)</option>
+            </select>
+        </div>
         <button class="btn-primary" onclick="confirmAddStaff()">Clock In Selected</button><button class="btn-cancel" onclick="closeModal('add-staff-modal')">Cancel</button>
     </div>
 </div>
@@ -719,7 +726,7 @@
     let staffingInterval = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '3.35';
+    const APP_VERSION = '3.36';
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Matt S", "Robert W", "Trevon C", "Victor M", "Russell H", "Fonseca J"];
@@ -743,12 +750,14 @@
 
     // --- CHANGELOG ---
     const CHANGELOG = `
-v3.35:
-- Clock In Update: Can now add a custom employee directly from the Clock In modal.
-- Removed "Start Time Override" on Clock In (defaults to Now). Use Edit button to adjust time if needed.
+v3.36:
+- Clock In Updates:
+  - Added "Starting Role" dropdown to lock role on entry.
+  - Can enter custom new names directly.
+  - Removed start time override (defaults to current time).
 
-v3.34:
-- Staffing Auto-Sort & Visual Upgrades.
+v3.35:
+- Minor fixes to staff time tracking.
     `;
 
     // --- STATE ---
@@ -1040,22 +1049,33 @@ v3.34:
                 container.appendChild(item);
             }
         });
-        byId('staff-custom-name').value = ''; // Reset custom input
+        byId('staff-custom-name').value = ''; 
+        byId('staff-start-role').value = 'Unloader'; // Reset role select
         byId('add-staff-modal').style.display = 'flex';
     }
 
     function confirmAddStaff() {
         const cbs = document.querySelectorAll('.staff-checkbox:checked');
         const customName = byId('staff-custom-name').value.trim();
+        const roleVal = byId('staff-start-role').value;
         
         if(cbs.length === 0 && !customName) return alert("Select an employee or enter a name.");
         
-        const startTime = Date.now(); // Default to NOW
+        const startTime = Date.now(); 
+        
+        // Determine Initial Role & Override Status
+        let startRole = 'Unloader';
+        let startOverride = false;
+        
+        if (roleVal === 'Belt Tender' || roleVal === 'Bulk Sweep') {
+            startRole = roleVal;
+            startOverride = true;
+        }
 
         // Process Checkboxes
         cbs.forEach(cb => {
             if(!staffing.find(s => s.name === cb.value && s.status !== 'cut')) {
-                staffing.push({ id: Date.now() + Math.random(), name: cb.value, start: startTime, end: null, status: 'active', role: 'Unloader', accumulated: 0, manualOverride: false });
+                staffing.push({ id: Date.now() + Math.random(), name: cb.value, start: startTime, end: null, status: 'active', role: startRole, accumulated: 0, manualOverride: startOverride });
             }
         });
 
@@ -1063,7 +1083,6 @@ v3.34:
         if (customName) {
             const fmtName = customName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
             
-            // Add to Global Team List if not exists
             if (!teamNames.includes(fmtName)) {
                 teamNames.push(fmtName);
                 refreshTeamNamesSorted();
@@ -1071,9 +1090,8 @@ v3.34:
                 populateUnloaderSelect();
             }
 
-            // Clock them in
             if(!staffing.find(s => s.name === fmtName && s.status !== 'cut')) {
-                 staffing.push({ id: Date.now() + Math.random(), name: fmtName, start: startTime, end: null, status: 'active', role: 'Unloader', accumulated: 0, manualOverride: false });
+                 staffing.push({ id: Date.now() + Math.random(), name: fmtName, start: startTime, end: null, status: 'active', role: startRole, accumulated: 0, manualOverride: startOverride });
             }
         }
 
@@ -1246,15 +1264,14 @@ v3.34:
 
         byId('badge-on-clock').innerText = activeStaff.length;
         byId('badge-off-clock').innerText = cutStaffList.length;
+        updateStaffingTimers(false); 
     }
 
     function updateStaffingTimers(checkRoles = true) {
         if(!byId('tab-staffing').classList.contains('active')) return;
         
-        // 1. Check if roles changed
         if(checkRoles) { const changed = autoAssignRoles(); if(changed) { renderStaffingView(); return; } }
 
-        // 2. Check if Order Changed (Auto-Sort logic)
         const currentOrder = Array.from(document.querySelectorAll('.staff-card:not(.cut)')).map(el => parseFloat(el.dataset.id));
         const newSorted = staffing.filter(s => s.status!=='cut' && (s.status==='active'||s.status==='paused'))
                                   .sort((a,b) => calculateTotalHours(b) - calculateTotalHours(a));
