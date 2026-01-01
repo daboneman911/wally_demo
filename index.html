@@ -206,9 +206,14 @@
         .staffing-header-card { background: #000; color: #fff; border-radius: 20px; padding: 20px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         .staffing-header-title { font-size: 14px; opacity: 0.8; font-weight: 600; text-transform: uppercase; margin-bottom: 5px; }
         .staffing-header-val { font-size: 32px; font-weight: 800; }
-        .dop-container { margin-bottom: 20px; background: #fff; border: 1px solid #e5e5ea; border-radius: 16px; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; }
+        .dop-container { margin-bottom: 20px; background: #fff; border: 1px solid #e5e5ea; border-radius: 16px; padding: 15px; display: flex; flex-direction: column; gap: 12px; }
+        .dop-row { display: flex; justify-content: space-between; align-items: center; }
         .dop-label { font-size: 14px; font-weight: 700; color: #000; }
         .dop-select { background: #f2f2f7; border: none; padding: 8px 12px; border-radius: 8px; font-size: 14px; font-weight: 600; }
+        .dop-status { font-size: 13px; font-weight: 600; padding: 8px 12px; border-radius: 8px; text-align: center; }
+        .dop-ok { background: #d1fae5; color: #065f46; }
+        .dop-warn { background: #fee2e2; color: #991b1b; }
+
         .staff-section-title { font-size: 18px; font-weight: 800; margin: 25px 0 15px 0; display: flex; justify-content: space-between; align-items: center; }
         .staff-count-badge { background: #e5e5ea; color: #000; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 700; margin-left: 8px; }
         .staff-card { background: white; border: 1px solid #e5e5ea; border-radius: 18px; padding: 16px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); transition: all 0.3s ease; }
@@ -401,7 +406,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 3.45</div>
+            <div class="app-version">Version 3.46</div>
         </div>
 
         <div class="section-title">Sort Statistics</div>
@@ -486,13 +491,16 @@
         </div>
 
         <div class="dop-container">
-            <span class="dop-label">Daily Operating Plan</span>
-            <select id="dop-select" class="dop-select" onchange="saveDOP(this.value)">
-                <option value="5-2">5-2</option>
-                <option value="6-2">6-2</option>
-                <option value="7-2">7-2</option>
-                <option value="8-2">8-2</option>
-            </select>
+            <div class="dop-row">
+                 <span class="dop-label">Daily Operating Plan</span>
+                 <select id="dop-select" class="dop-select" onchange="saveDOP(this.value)">
+                    <option value="5-2">5-2</option>
+                    <option value="6-2">6-2</option>
+                    <option value="7-2">7-2</option>
+                    <option value="8-2">8-2</option>
+                </select>
+            </div>
+            <div id="dop-status-bar" class="dop-status">Checking...</div>
         </div>
 
         <div class="staffing-header-card">
@@ -833,7 +841,7 @@
     let pendingLoanId = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '3.45';
+    const APP_VERSION = '3.46';
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Matt S", "Robert W", "Trevon C", "Victor M", "Russell H", "Fonseca J"];
@@ -857,15 +865,14 @@
 
     // --- CHANGELOG ---
     const CHANGELOG = `
-v3.45:
-- Fixed Staffing Sort: "Unloader" is now always auto-sort. Only Belt Tender/Sweep are locked.
-- Fixed Robert/Trevon defaults (no longer locked).
-- Updated "Move" menu to allow custom destinations.
-- Unified "Move" and "Loan" UI.
+v3.46:
+- DOP Status: Added "Staffing Shortage / DOP Met" indicator.
+- Total Staff Goal now includes Unloaders + Sweeps + 1 Belt Tender.
+- Count of active staff updates in real-time.
 
-v3.44:
-- Clock-In Upgrade: Select "Small Sort", "Metros" etc. directly at clock-in.
-- Direct-to-Loan: Staff clocked into areas bypass "Active" list.
+v3.45:
+- Staffing Fix: "Unloader" is always auto-sort.
+- "Move" menu updated with dropdown and custom destination.
     `;
 
     // --- STATE ---
@@ -1153,11 +1160,19 @@ v3.44:
         }
     }
 
-    function saveDOP(val) { currentDOP = val; localStorage.setItem('ps9_dop', currentDOP); showSaveToast(); }
+    function saveDOP(val) { currentDOP = val; localStorage.setItem('ps9_dop', currentDOP); updateStaffingTimers(false); showSaveToast(); }
     
     function toggleStaffOther(selectEl) {
         const input = selectEl.nextElementSibling;
         if(input && input.classList.contains('staff-other-input')) {
+            input.style.display = (selectEl.value === 'Other') ? 'block' : 'none';
+            if(selectEl.value==='Other') input.focus();
+        }
+    }
+    
+    function toggleMoveOther(selectEl) {
+        const input = byId('move-custom-other');
+        if(input) {
             input.style.display = (selectEl.value === 'Other') ? 'block' : 'none';
             if(selectEl.value==='Other') input.focus();
         }
@@ -1211,7 +1226,6 @@ v3.44:
         const startTime = Date.now(); 
         const LOAN_ROLES = ['Small Sort', 'Metros', 'PS1', 'PS3', 'PS5', 'PS7', 'PS11'];
 
-        // Process Checkboxes
         cbs.forEach(cb => {
             const name = cb.value;
             const safeId = name.replace(/\s+/g, '');
@@ -1223,9 +1237,13 @@ v3.44:
                 if(otherInput) roleVal = otherInput.value.trim();
             }
 
+            // Smart Defaults: Robert / Trevon logic removed as per request for pure logic
+            // But user asked for them to "automatically be assigned until switched" - meaning they start as Unloader (Auto) and the sort logic handles it.
+            // So default behavior is fine.
+            
             let status = 'active';
             let loanDest = null;
-            let manualOverride = (roleVal === 'Belt Tender' || roleVal === 'Bulk Sweep');
+            let manualOverride = (roleVal !== 'Unloader');
             
             if (LOAN_ROLES.includes(roleVal) || (roleVal !== 'Unloader' && roleVal !== 'Belt Tender' && roleVal !== 'Bulk Sweep')) {
                  status = 'loaned';
@@ -1244,13 +1262,12 @@ v3.44:
             }
         });
 
-        // Process Custom Name
         if (customName) {
             const fmtName = customName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
             let roleVal = customRoleVal;
             let status = 'active';
             let loanDest = null;
-            let manualOverride = (roleVal === 'Belt Tender' || roleVal === 'Bulk Sweep');
+            let manualOverride = (roleVal !== 'Unloader');
 
              if (LOAN_ROLES.includes(roleVal) || (roleVal !== 'Unloader' && roleVal !== 'Belt Tender' && roleVal !== 'Bulk Sweep')) {
                  status = 'loaned';
@@ -1305,7 +1322,7 @@ v3.44:
         if(s) {
             s.status = 'loaned';
             s.loanDest = dest;
-            s.end = Date.now(); 
+            s.end = Date.now(); // Stops counting unloader time
             if (s.start !== null) s.accumulated = (s.accumulated || 0) + (Date.now() - s.start);
             s.start = null;
             
@@ -1401,14 +1418,8 @@ v3.44:
     function saveStaffRole(id, value, selectEl) {
         const s = staffing.find(x => x.id === id); 
         if (!s) return;
-        
-        if (value === 'Auto' || value === 'Unloader') {
-            s.manualOverride = false;
-        } else { 
-            s.manualOverride = true; 
-            s.role = value; 
-        }
-        
+        if (value === 'Auto') s.manualOverride = false;
+        else { s.manualOverride = true; s.role = value; }
         saveStaffing(); renderStaffingView(); updateTabBadges(); showSaveToast();
     }
 
@@ -1467,24 +1478,23 @@ v3.44:
             activeList.appendChild(div);
         });
 
-        // Loaned List
         const loanStaffList = staffing.filter(s => s.status === 'loaned');
         loanStaffList.forEach(s => {
-             const div = document.createElement('div'); div.className = 'log-card'; 
+             const div = document.createElement('div'); div.className = 'loaned-card';
              div.innerHTML = `
-                <div class="log-info">
-                     <div class="log-header-row"><span class="log-door-pill" style="background:#000;">${s.name}</span></div>
-                     <div class="log-tags-row"><span class="log-tag tag-gray"><i class="ph ph-arrow-right"></i> ${s.loanDest}</span></div>
+                <div style="display:flex; align-items:center;">
+                    <div style="font-weight:700; font-size:16px; color:#000;">${s.name}</div>
+                    <div class="loan-dest-pill"><i class="ph ph-arrow-right"></i> ${s.loanDest}</div>
                 </div>
-                <div class="log-right-col">
-                    <div style="text-align:right;"><div class="log-duration" style="font-size:18px;">${new Date(s.end).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</div><div class="log-duration-label">Left At</div></div>
-                    <button class="log-mini-btn" style="color:#ff3b30; border-color:#ff3b30;" onclick="removeStaff(${s.id})"><i class="ph ph-trash"></i></button>
+                <div style="text-align:right;">
+                    <div style="font-size:12px; color:#999; font-weight:600;">LEFT AT</div>
+                    <div style="font-size:14px; font-weight:700; color:#000;">${new Date(s.end).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</div>
                 </div>
+                <button class="icon-btn" onclick="removeStaff(${s.id})" style="width:32px; height:32px; font-size:16px; color:#ff3b30; background:transparent;"><i class="ph ph-trash"></i></button>
              `;
              loanList.appendChild(div);
         });
 
-        // Cut List
         const cutStaffList = staffing.filter(s => s.status === 'cut').sort((a,b) => calculateTotalHours(b) - calculateTotalHours(a));
         cutStaffList.forEach(s => {
             const div = document.createElement('div'); div.className = 'staff-card cut';
@@ -1534,6 +1544,20 @@ v3.44:
         byId('staff-total-hours').innerText = uHours.toFixed(2);
         byId('staff-belt-hours').innerText = bHours.toFixed(2);
         byId('staff-sweep-hours').innerText = sHours.toFixed(2);
+        
+        // DOP STATUS UPDATE
+        const [uStr, sStr] = currentDOP.split('-');
+        const targetTotal = parseInt(uStr) + parseInt(sStr) + 1; // +1 Belt Tender
+        const missing = targetTotal - onClock;
+        
+        const statusBar = byId('dop-status-bar');
+        if(missing <= 0) {
+            statusBar.className = 'dop-status dop-ok';
+            statusBar.innerText = `DOP Met ✅`;
+        } else {
+            statusBar.className = 'dop-status dop-warn';
+            statusBar.innerText = `Staffing Shortage: Need ${missing} more`;
+        }
     }
     
     function toggleMoveOther(selectEl) {
@@ -1760,6 +1784,7 @@ v3.44:
         pendingCompletion = null;
     }
 
+    function openMoveMenu() { closeModal('active-detail-modal'); byId('move-menu-modal').style.display = 'flex'; }
     function moveDoor(destination) {
         closeModal('move-menu-modal');
         const d = doors[detailDoor];
