@@ -406,7 +406,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 3.46</div>
+            <div class="app-version">Version 3.47</div>
         </div>
 
         <div class="section-title">Sort Statistics</div>
@@ -841,7 +841,7 @@
     let pendingLoanId = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '3.46';
+    const APP_VERSION = '3.47';
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Matt S", "Robert W", "Trevon C", "Victor M", "Russell H", "Fonseca J"];
@@ -865,14 +865,12 @@
 
     // --- CHANGELOG ---
     const CHANGELOG = `
-v3.46:
-- DOP Status: Added "Staffing Shortage / DOP Met" indicator.
-- Total Staff Goal now includes Unloaders + Sweeps + 1 Belt Tender.
-- Count of active staff updates in real-time.
+v3.47:
+- DOP Logic Fix: Shortage calculation now correctly excludes Belt Tender.
+- Verbiage Update: Changed "Staffing Shortage" to "Down X".
 
-v3.45:
-- Staffing Fix: "Unloader" is always auto-sort.
-- "Move" menu updated with dropdown and custom destination.
+v3.46:
+- DOP Status Indicator added to Staffing tab.
     `;
 
     // --- STATE ---
@@ -1237,10 +1235,6 @@ v3.45:
                 if(otherInput) roleVal = otherInput.value.trim();
             }
 
-            // Smart Defaults: Robert / Trevon logic removed as per request for pure logic
-            // But user asked for them to "automatically be assigned until switched" - meaning they start as Unloader (Auto) and the sort logic handles it.
-            // So default behavior is fine.
-            
             let status = 'active';
             let loanDest = null;
             let manualOverride = (roleVal !== 'Unloader');
@@ -1322,7 +1316,7 @@ v3.45:
         if(s) {
             s.status = 'loaned';
             s.loanDest = dest;
-            s.end = Date.now(); // Stops counting unloader time
+            s.end = Date.now(); 
             if (s.start !== null) s.accumulated = (s.accumulated || 0) + (Date.now() - s.start);
             s.start = null;
             
@@ -1418,8 +1412,14 @@ v3.45:
     function saveStaffRole(id, value, selectEl) {
         const s = staffing.find(x => x.id === id); 
         if (!s) return;
-        if (value === 'Auto') s.manualOverride = false;
-        else { s.manualOverride = true; s.role = value; }
+        
+        if (value === 'Auto' || value === 'Unloader') {
+            s.manualOverride = false;
+        } else { 
+            s.manualOverride = true; 
+            s.role = value; 
+        }
+        
         saveStaffing(); renderStaffingView(); updateTabBadges(); showSaveToast();
     }
 
@@ -1480,17 +1480,16 @@ v3.45:
 
         const loanStaffList = staffing.filter(s => s.status === 'loaned');
         loanStaffList.forEach(s => {
-             const div = document.createElement('div'); div.className = 'loaned-card';
+             const div = document.createElement('div'); div.className = 'log-card'; 
              div.innerHTML = `
-                <div style="display:flex; align-items:center;">
-                    <div style="font-weight:700; font-size:16px; color:#000;">${s.name}</div>
-                    <div class="loan-dest-pill"><i class="ph ph-arrow-right"></i> ${s.loanDest}</div>
+                <div class="log-info">
+                     <div class="log-header-row"><span class="log-door-pill" style="background:#000;">${s.name}</span></div>
+                     <div class="log-tags-row"><span class="log-tag tag-gray"><i class="ph ph-arrow-right"></i> ${s.loanDest}</span></div>
                 </div>
-                <div style="text-align:right;">
-                    <div style="font-size:12px; color:#999; font-weight:600;">LEFT AT</div>
-                    <div style="font-size:14px; font-weight:700; color:#000;">${new Date(s.end).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</div>
+                <div class="log-right-col">
+                    <div style="text-align:right;"><div class="log-duration" style="font-size:18px;">${new Date(s.end).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</div><div class="log-duration-label">Left At</div></div>
+                    <button class="log-mini-btn" style="color:#ff3b30; border-color:#ff3b30;" onclick="removeStaff(${s.id})"><i class="ph ph-trash"></i></button>
                 </div>
-                <button class="icon-btn" onclick="removeStaff(${s.id})" style="width:32px; height:32px; font-size:16px; color:#ff3b30; background:transparent;"><i class="ph ph-trash"></i></button>
              `;
              loanList.appendChild(div);
         });
@@ -1547,7 +1546,7 @@ v3.45:
         
         // DOP STATUS UPDATE
         const [uStr, sStr] = currentDOP.split('-');
-        const targetTotal = parseInt(uStr) + parseInt(sStr) + 1; // +1 Belt Tender
+        const targetTotal = parseInt(uStr) + parseInt(sStr);
         const missing = targetTotal - onClock;
         
         const statusBar = byId('dop-status-bar');
@@ -1556,7 +1555,7 @@ v3.45:
             statusBar.innerText = `DOP Met ✅`;
         } else {
             statusBar.className = 'dop-status dop-warn';
-            statusBar.innerText = `Staffing Shortage: Need ${missing} more`;
+            statusBar.innerText = `Down ${missing}`;
         }
     }
     
