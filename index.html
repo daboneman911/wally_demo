@@ -406,7 +406,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 3.47</div>
+            <div class="app-version">Version 3.48</div>
         </div>
 
         <div class="section-title">Sort Statistics</div>
@@ -631,26 +631,17 @@
 </div>
 <div class="modal-overlay" id="add-staff-modal">
     <div class="modal-sheet">
-        <h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Clock In Staff</h2>
+        <h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Clock In Staff <span id="staff-selection-count" style="font-size:14px; color:#8e8e93; font-weight:500; margin-left:10px;">0 Selected</span></h2>
         <div id="staff-checkbox-list" class="staff-checkbox-list"></div>
         <div style="margin: 20px 0 20px 0; border-top: 1px solid #eee; padding-top:15px;">
             <label style="font-size:12px; color:var(--text-sub); font-weight:600; display:block; margin-bottom:5px;">Add New Person</label>
             <div class="staff-item-row" style="border:none; padding:0;">
                 <input type="text" id="staff-custom-name" class="form-input" style="margin:0; flex:1; margin-right:10px;" placeholder="Name" autocapitalize="words">
-                <select class="staff-role-select" id="staff-custom-role" onchange="toggleStaffOther(this)">
+                <select class="staff-role-select" id="staff-custom-role">
                     <option value="Unloader">Auto (Unloader)</option>
                     <option value="Belt Tender">Belt Tender (Locked)</option>
                     <option value="Bulk Sweep">Bulk Sweep (Locked)</option>
-                    <option value="Small Sort">Small Sort</option>
-                    <option value="Metros">Metros</option>
-                    <option value="PS1">PS1</option>
-                    <option value="PS3">PS3</option>
-                    <option value="PS5">PS5</option>
-                    <option value="PS7">PS7</option>
-                    <option value="PS11">PS11</option>
-                    <option value="Other">Other</option>
                 </select>
-                <input type="text" id="staff-custom-other" class="staff-other-input" placeholder="Area">
             </div>
         </div>
         <button class="btn-primary" onclick="confirmAddStaff()">Clock In Selected</button><button class="btn-cancel" onclick="closeModal('add-staff-modal')">Cancel</button>
@@ -841,7 +832,7 @@
     let pendingLoanId = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '3.47';
+    const APP_VERSION = '3.48';
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Matt S", "Robert W", "Trevon C", "Victor M", "Russell H", "Fonseca J"];
@@ -865,12 +856,15 @@
 
     // --- CHANGELOG ---
     const CHANGELOG = `
-v3.47:
-- DOP Logic Fix: Shortage calculation now correctly excludes Belt Tender.
-- Verbiage Update: Changed "Staffing Shortage" to "Down X".
+v3.48:
+- Clock-In Modal: Removed loan areas (Small Sort, Metros, etc) from Role dropdown.
+- Clock-In Modal: Added "X Selected" counter to top.
+- Staffing Logic: Robert W auto-assigned Belt Tender (Locked).
+- Staffing Logic: DOP shortage calculation now ignores Belt Tenders (Target = Unloaders + Sweeps).
 
-v3.46:
-- DOP Status Indicator added to Staffing tab.
+v3.47:
+- DOP Logic Fix: Shortage calculation corrected.
+- Verbiage Update: "Down X".
     `;
 
     // --- STATE ---
@@ -1175,6 +1169,11 @@ v3.46:
             if(selectEl.value==='Other') input.focus();
         }
     }
+    
+    function updateStaffSelectionCount() {
+        const count = document.querySelectorAll('.staff-checkbox:checked').length;
+        byId('staff-selection-count').innerText = `${count} Selected`;
+    }
 
     function openAddStaffModal() {
         const container = byId('staff-checkbox-list'); container.innerHTML = '';
@@ -1185,23 +1184,16 @@ v3.46:
                 item.className = 'staff-item-row';
                 item.innerHTML = `
                     <label class="staff-check-label">
-                        <input type="checkbox" value="${n}" class="staff-checkbox">
+                        <input type="checkbox" value="${n}" class="staff-checkbox" onchange="updateStaffSelectionCount()">
                         <span>${n}</span>
                     </label>
                     <select class="staff-role-select" id="role-select-${n.replace(/\s+/g, '')}" onchange="toggleStaffOther(this)">
                         <option value="Unloader">Auto (Unloader)</option>
                         <option value="Belt Tender">Belt Tender (Locked)</option>
                         <option value="Bulk Sweep">Bulk Sweep (Locked)</option>
-                        <option value="Small Sort">Small Sort</option>
-                        <option value="Metros">Metros</option>
-                        <option value="PS1">PS1</option>
-                        <option value="PS3">PS3</option>
-                        <option value="PS5">PS5</option>
-                        <option value="PS7">PS7</option>
-                        <option value="PS11">PS11</option>
                         <option value="Other">Other</option>
                     </select>
-                    <input type="text" id="other-input-${n.replace(/\s+/g, '')}" class="staff-other-input" placeholder="Area">
+                    <input type="text" id="other-input-${n.replace(/\s+/g, '')}" class="staff-other-input" placeholder="Role">
                 `;
                 container.appendChild(item);
             }
@@ -1209,6 +1201,7 @@ v3.46:
         byId('staff-custom-name').value = ''; 
         byId('staff-custom-role').value = 'Unloader';
         byId('staff-custom-other').style.display = 'none';
+        updateStaffSelectionCount();
         byId('add-staff-modal').style.display = 'flex';
     }
 
@@ -1234,12 +1227,17 @@ v3.46:
                 const otherInput = document.getElementById(`other-input-${safeId}`);
                 if(otherInput) roleVal = otherInput.value.trim();
             }
+            
+            // SPECIFIC LOGIC FOR ROBERT W
+            if (name === "Robert W" && roleVal === 'Unloader') {
+                roleVal = 'Belt Tender';
+            }
 
             let status = 'active';
             let loanDest = null;
             let manualOverride = (roleVal !== 'Unloader');
             
-            if (LOAN_ROLES.includes(roleVal) || (roleVal !== 'Unloader' && roleVal !== 'Belt Tender' && roleVal !== 'Bulk Sweep')) {
+            if (LOAN_ROLES.includes(roleVal)) {
                  status = 'loaned';
                  loanDest = roleVal;
                  roleVal = 'Unloader'; 
@@ -1259,11 +1257,14 @@ v3.46:
         if (customName) {
             const fmtName = customName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
             let roleVal = customRoleVal;
+            
+            if (fmtName === "Robert W" && roleVal === 'Unloader') roleVal = 'Belt Tender';
+            
             let status = 'active';
             let loanDest = null;
             let manualOverride = (roleVal !== 'Unloader');
 
-             if (LOAN_ROLES.includes(roleVal) || (roleVal !== 'Unloader' && roleVal !== 'Belt Tender' && roleVal !== 'Bulk Sweep')) {
+             if (LOAN_ROLES.includes(roleVal)) {
                  status = 'loaned';
                  loanDest = roleVal;
                  roleVal = 'Unloader';
@@ -1544,10 +1545,15 @@ v3.46:
         byId('staff-belt-hours').innerText = bHours.toFixed(2);
         byId('staff-sweep-hours').innerText = sHours.toFixed(2);
         
-        // DOP STATUS UPDATE
+        // DOP STATUS UPDATE - Modified Logic
         const [uStr, sStr] = currentDOP.split('-');
         const targetTotal = parseInt(uStr) + parseInt(sStr);
-        const missing = targetTotal - onClock;
+        // Exclude Belt Tender from 'onClock' count for DOP check
+        const dopActiveCount = staffing.filter(s => 
+            (s.status === 'active' || s.status === 'paused') && s.role !== 'Belt Tender'
+        ).length;
+        
+        const missing = targetTotal - dopActiveCount;
         
         const statusBar = byId('dop-status-bar');
         if(missing <= 0) {
