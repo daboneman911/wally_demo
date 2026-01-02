@@ -206,15 +206,16 @@
         .staffing-header-card { background: #000; color: #fff; border-radius: 20px; padding: 20px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         .staffing-header-title { font-size: 14px; opacity: 0.8; font-weight: 600; text-transform: uppercase; margin-bottom: 5px; }
         .staffing-header-val { font-size: 32px; font-weight: 800; }
-        .dop-container { margin-bottom: 20px; background: #fff; border: 1px solid #e5e5ea; border-radius: 16px; padding: 15px; display: flex; flex-direction: column; gap: 12px; }
-        .dop-row { display: flex; justify-content: space-between; align-items: center; }
+        .dop-container { margin-bottom: 20px; background: #fff; border: 1px solid #e5e5ea; border-radius: 16px; padding: 10px 15px; display: flex; flex-direction:column; gap:10px; }
+        .dop-row { display:flex; justify-content:space-between; align-items:center; }
         .dop-label { font-size: 14px; font-weight: 700; color: #000; }
         .dop-select { background: #f2f2f7; border: none; padding: 8px 12px; border-radius: 8px; font-size: 14px; font-weight: 600; }
-        .dop-status { font-size: 13px; font-weight: 600; padding: 8px 12px; border-radius: 8px; text-align: center; }
-        .dop-ok { background: #d1fae5; color: #065f46; }
-        .dop-warn { background: #fee2e2; color: #991b1b; }
-        .dop-over { background: #e0f2fe; color: #0369a1; }
-
+        .dop-status { font-size: 13px; font-weight: 700; text-align:center; padding:8px; border-radius:8px; }
+        
+        .dop-ok { background:#dcfce7; color:#166534; }
+        .dop-under { background:#ffedd5; color:#9a3412; } /* Orange */
+        .dop-over { background:#fee2e2; color:#991b1b; } /* Red */
+        
         .staff-section-title { font-size: 18px; font-weight: 800; margin: 25px 0 15px 0; display: flex; justify-content: space-between; align-items: center; }
         .staff-count-badge { background: #e5e5ea; color: #000; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 700; margin-left: 8px; }
         .staff-card { background: white; border: 1px solid #e5e5ea; border-radius: 18px; padding: 16px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); transition: all 0.3s ease; }
@@ -251,7 +252,7 @@
         .tool-card.add { border: 2px dashed #ccc; background: transparent; box-shadow: none; }
         .tool-card.add .tool-icon-wrapper { background: #e5e5ea; color: #000; }
 
-        /* --- LOGS --- */
+        /* --- LOGS SECTION (REVISED) --- */
         .stats-collapse-btn { width: 100%; background: #f2f2f7; border: none; border-radius: 16px; padding: 18px; display: flex; justify-content: space-between; align-items: center; font-size: 16px; font-weight: 700; color: #000; cursor: pointer; margin-bottom: 20px; }
         .stats-content-area { background: white; border: 1px solid #e5e5ea; border-radius: 16px; padding: 20px; margin-bottom: 25px; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
         .stats-table { width: 100%; border-collapse: collapse; font-size: 15px; }
@@ -261,7 +262,7 @@
         .active-filter-display { display: flex; align-items: center; justify-content: space-between; background: #000; color: white; padding: 12px 20px; border-radius: 16px; margin-bottom: 20px; font-weight: 600; }
         .logs-list { display: flex; flex-direction: column; gap: 15px; }
         
-        /* LOG CARD STYLES */
+        /* NEW LOG CARD STYLES */
         .log-card {
             background: white; border: 1px solid #e5e5ea; border-radius: 20px; padding: 16px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.03); display: flex; justify-content: space-between; align-items: center; gap: 15px;
@@ -288,26 +289,6 @@
 
         .search-bar { width: 100%; padding: 14px; border: 1px solid #e5e5ea; border-radius: 12px; background: #f9f9f9; font-size: 16px; margin-bottom: 20px; outline: none; }
         .load-more-btn { width: 100%; padding: 15px; background: #f2f2f7; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; margin-top: 10px; color: #555; }
-
-        /* --- UPDATED: Aesthetic Option Pills --- */
-        .options-grid { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 5px; }
-        .option-toggle { flex: 1; position: relative; cursor: pointer; min-width: 80px; }
-        .option-toggle input { position: absolute; opacity: 0; width: 0; height: 0; }
-        .option-toggle span {
-            display: flex; align-items: center; justify-content: center;
-            width: 100%; padding: 12px;
-            background: #f2f2f7; color: #8e8e93;
-            border-radius: 12px; font-weight: 700; font-size: 14px;
-            transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
-            border: 1px solid transparent;
-            box-sizing: border-box;
-        }
-        .option-toggle input:checked ~ span {
-            background: #000; color: #fff;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-            transform: translateY(-1px);
-        }
-        .option-toggle:active span { transform: scale(0.96); }
 
         /* --- NAV --- */
         .tab-bar { position: fixed; bottom: 30px; left: 20px; right: 20px; background: white; border-radius: 40px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); display: flex; justify-content: space-around; align-items: center; height: 70px; z-index: 1000; padding-bottom: 0; }
@@ -407,7 +388,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 3.52</div>
+            <div class="app-version">Version 3.53</div>
         </div>
 
         <div class="section-title">Sort Statistics</div>
@@ -573,7 +554,6 @@
             <div class="settings-header">Demo</div>
             <div class="settings-group">
                 <div class="settings-row"><span class="settings-label">Demo Mode</span><div class="toggle-switch" id="switch-demo-mode" onclick="toggleSwitch('demo-mode')"></div></div>
-                <div class="settings-row"><span class="settings-label">Force Attribution (Simulate)</span><div class="toggle-switch" id="switch-sim-window" onclick="toggleSwitch('sim-window')"></div></div>
                 <div class="settings-row"><span class="settings-label">Disable hardcoded times</span><div class="toggle-switch" id="switch-disable-times" onclick="toggleSwitch('disable-times')"></div></div>
                 <div class="settings-row"><span class="settings-label">Generate Random History</span><div class="toggle-switch" id="switch-demo-random" onclick="toggleSwitch('demo-random')"></div></div>
                 <div class="settings-row"><span class="settings-label">Auto-Replenish Bays</span><div class="toggle-switch" id="switch-demo-replenish" onclick="toggleSwitch('demo-replenish')"></div></div>
@@ -639,11 +619,13 @@
             <label style="font-size:12px; color:var(--text-sub); font-weight:600; display:block; margin-bottom:5px;">Add New Person</label>
             <div class="staff-item-row" style="border:none; padding:0;">
                 <input type="text" id="staff-custom-name" class="form-input" style="margin:0; flex:1; margin-right:10px;" placeholder="Name" autocapitalize="words">
-                <select class="staff-role-select" id="staff-custom-role">
+                <select class="staff-role-select" id="staff-custom-role" onchange="toggleStaffOther(this)">
                     <option value="Unloader">Auto (Unloader)</option>
                     <option value="Belt Tender">Belt Tender (Locked)</option>
                     <option value="Bulk Sweep">Bulk Sweep (Locked)</option>
+                    <option value="Other">Other</option>
                 </select>
+                <input type="text" id="staff-custom-other" class="staff-other-input" placeholder="Area">
             </div>
         </div>
         <button class="btn-primary" onclick="confirmAddStaff()">Clock In Selected</button><button class="btn-cancel" onclick="closeModal('add-staff-modal')">Cancel</button>
@@ -834,7 +816,7 @@
     let pendingLoanId = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '3.52';
+    const APP_VERSION = '3.53';
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Matt S", "Robert W", "Trevon C", "Victor M", "Russell H", "Fonseca J"];
@@ -858,8 +840,12 @@
 
     // --- CHANGELOG ---
     const CHANGELOG = `
+v3.53:
+- DOP Color Scheme: Under is now Orange, Over is now Red.
+- Language Standardized: "DOP Under (-X)", "DOP Met", "DOP Over (+X)".
+
 v3.52:
-- DOP Status: Standardized language to "DOP Under (-X)", "DOP Met", "DOP Over (+X)".
+- DOP Status: Indicator added to Staffing tab.
 - DOP Headcount: Now strictly counts Unloaders and Bulk Sweeps (Belt Tenders excluded from the target count).
 - Bugfix: "Add" button restored on Staffing page (fixed missing selector/function errors).
 - Feature: Added selection counter to "Clock In Staff" modal.
@@ -1152,6 +1138,22 @@ v3.52:
 
     function saveDOP(val) { currentDOP = val; localStorage.setItem('ps9_dop', currentDOP); updateStaffingTimers(false); showSaveToast(); }
     
+    function toggleStaffOther(selectEl) {
+        const input = selectEl.nextElementSibling;
+        if(input && input.classList.contains('staff-other-input')) {
+            input.style.display = (selectEl.value === 'Other') ? 'block' : 'none';
+            if(selectEl.value==='Other') input.focus();
+        }
+    }
+    
+    function toggleMoveOther(selectEl) {
+        const input = byId('move-custom-other');
+        if(input) {
+            input.style.display = (selectEl.value === 'Other') ? 'block' : 'none';
+            if(selectEl.value==='Other') input.focus();
+        }
+    }
+    
     function updateStaffSelectionCount() {
         const count = document.querySelectorAll('.staff-checkbox:checked').length;
         const el = byId('staff-selection-count');
@@ -1174,13 +1176,18 @@ v3.52:
                         <option value="Unloader">Auto (Unloader)</option>
                         <option value="Belt Tender">Belt Tender (Locked)</option>
                         <option value="Bulk Sweep">Bulk Sweep (Locked)</option>
+                        <option value="Other">Other</option>
                     </select>
+                    <input type="text" id="other-input-${n.replace(/\s+/g, '')}" class="staff-other-input" placeholder="Role">
                 `;
                 container.appendChild(item);
             }
         });
         byId('staff-custom-name').value = ''; 
         byId('staff-custom-role').value = 'Unloader';
+        const otherInput = byId('staff-custom-other');
+        if(otherInput) otherInput.style.display = 'none';
+        
         updateStaffSelectionCount();
         byId('add-staff-modal').style.display = 'flex';
     }
@@ -1188,44 +1195,70 @@ v3.52:
     function confirmAddStaff() {
         const cbs = document.querySelectorAll('.staff-checkbox:checked');
         const customName = byId('staff-custom-name').value.trim();
-        const customRole = byId('staff-custom-role').value;
+        const customRoleSelect = byId('staff-custom-role');
+        let customRoleVal = customRoleSelect.value;
+        if(customRoleVal === 'Other') {
+             const customOther = byId('staff-custom-other');
+             if(customOther) customRoleVal = customOther.value.trim();
+        }
         
         if(cbs.length === 0 && !customName) return alert("Select an employee or enter a name.");
         
         const startTime = Date.now(); 
+        const LOAN_ROLES = ['Small Sort', 'Metros', 'PS1', 'PS3', 'PS5', 'PS7', 'PS11'];
 
-        // Process Checkboxes
         cbs.forEach(cb => {
             const name = cb.value;
-            const roleSelect = document.getElementById(`role-select-${name.replace(/\s+/g, '')}`);
+            const safeId = name.replace(/\s+/g, '');
+            const roleSelect = document.getElementById(`role-select-${safeId}`);
             let roleVal = roleSelect ? roleSelect.value : 'Unloader';
             
-            // Robert W Logic
-            if (name === "Robert W" && roleVal === 'Unloader') roleVal = 'Belt Tender';
+            if(roleVal === 'Other') {
+                const otherInput = document.getElementById(`other-input-${safeId}`);
+                if(otherInput) roleVal = otherInput.value.trim();
+            }
             
-            let isManual = (roleVal !== 'Unloader');
+            if (name === "Robert W" && roleVal === 'Unloader') {
+                roleVal = 'Belt Tender';
+            }
+
+            let status = 'active';
+            let loanDest = null;
+            let manualOverride = (roleVal !== 'Unloader');
+            
+            if (LOAN_ROLES.includes(roleVal)) {
+                 status = 'loaned';
+                 loanDest = roleVal;
+                 roleVal = 'Unloader'; 
+                 manualOverride = false;
+            }
 
             if(!staffing.find(s => s.name === name && s.status !== 'cut')) {
                 staffing.push({ 
-                    id: Date.now() + Math.random(), 
-                    name: name, 
-                    start: startTime, 
-                    end: null, 
-                    status: 'active', 
-                    role: roleVal, 
-                    accumulated: 0, 
-                    manualOverride: isManual 
+                    id: Date.now() + Math.random(), name: name, 
+                    start: startTime, end: (status==='loaned'?startTime:null), 
+                    status: status, role: roleVal, accumulated: 0, 
+                    manualOverride: manualOverride, loanDest: loanDest 
                 });
             }
         });
 
-        // Process Custom Name
         if (customName) {
             const fmtName = customName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-            let isManual = (customRole !== 'Unloader');
-            let roleVal = customRole;
-
+            let roleVal = customRoleVal;
+            
             if (fmtName === "Robert W" && roleVal === 'Unloader') roleVal = 'Belt Tender';
+            
+            let status = 'active';
+            let loanDest = null;
+            let manualOverride = (roleVal !== 'Unloader');
+
+             if (LOAN_ROLES.includes(roleVal)) {
+                 status = 'loaned';
+                 loanDest = roleVal;
+                 roleVal = 'Unloader';
+                 manualOverride = false;
+            }
 
             if (!teamNames.includes(fmtName)) {
                 teamNames.push(fmtName);
@@ -1239,11 +1272,12 @@ v3.52:
                      id: Date.now() + Math.random(), 
                      name: fmtName, 
                      start: startTime, 
-                     end: null, 
-                     status: 'active', 
+                     end: (status==='loaned'?startTime:null), 
+                     status: status, 
                      role: roleVal, 
                      accumulated: 0, 
-                     manualOverride: isManual 
+                     manualOverride: manualOverride, 
+                     loanDest: loanDest 
                  });
             }
         }
@@ -1264,6 +1298,27 @@ v3.52:
             if(s.role === 'Belt Tender' || s.role === 'Bulk Sweep') s.role = 'Unloader';
             saveStaffing(); renderStaffingView(); updateTabBadges(); showSaveToast();
         }
+    }
+    
+    function openLoanModal(id) {
+        pendingLoanId = id;
+        byId('loan-staff-modal').style.display='flex';
+    }
+    
+    function confirmLoanStaff() {
+        const dest = byId('loan-dest-select').value;
+        const s = staffing.find(x => x.id === pendingLoanId);
+        if(s) {
+            s.status = 'loaned';
+            s.loanDest = dest;
+            s.end = Date.now(); 
+            if (s.start !== null) s.accumulated = (s.accumulated || 0) + (Date.now() - s.start);
+            s.start = null;
+            
+            if(s.role === 'Belt Tender' || s.role === 'Bulk Sweep') s.role = 'Unloader';
+            saveStaffing(); renderStaffingView(); updateTabBadges(); showSaveToast();
+        }
+        closeModal('loan-staff-modal');
     }
 
     function removeStaff(id) {
@@ -1319,7 +1374,6 @@ v3.52:
         return Math.round(totalMs / 60000) / 60;
     }
 
-    // --- AUTOMATED STAFFING LOGIC (WITH MANUAL OVERRIDE) ---
     function autoAssignRoles() {
         const activeStaff = staffing.filter(s => s.status === 'active' || s.status === 'paused');
         activeStaff.sort((a, b) => calculateTotalHours(b) - calculateTotalHours(a));
@@ -1353,8 +1407,14 @@ v3.52:
     function saveStaffRole(id, value, selectEl) {
         const s = staffing.find(x => x.id === id); 
         if (!s) return;
-        if (value === 'Auto' || value === 'Unloader') s.manualOverride = false;
-        else { s.manualOverride = true; s.role = value; }
+        
+        if (value === 'Auto' || value === 'Unloader') {
+            s.manualOverride = false;
+        } else { 
+            s.manualOverride = true; 
+            s.role = value; 
+        }
+        
         saveStaffing(); renderStaffingView(); updateTabBadges(); showSaveToast();
     }
 
@@ -1364,7 +1424,7 @@ v3.52:
         activeList.innerHTML = ''; cutList.innerHTML = ''; loanList.innerHTML = '';
         
         const getRoleScore = (r) => { if(r==='Belt Tender') return 3; if(r==='Bulk Sweep') return 2; return 1; };
-
+        
         const activeStaff = staffing.filter(s => s.status === 'active' || s.status === 'paused')
             .sort((a,b) => {
                 const scoreA = getRoleScore(a.role);
@@ -1384,8 +1444,8 @@ v3.52:
             
             const div = document.createElement('div'); div.className = 'staff-card';
             div.dataset.id = s.id; 
-            
             if(isPaused) div.style.cssText = 'opacity:0.7; border:1px dashed #ccc;';
+            
             div.innerHTML = `
                 <div style="width:100%">
                     <div class="staff-top-row">
@@ -1498,7 +1558,7 @@ v3.52:
             statusBar.className = 'dop-status dop-over';
             statusBar.innerText = `DOP Over (+${diff})`;
         } else {
-            statusBar.className = 'dop-status dop-warn';
+            statusBar.className = 'dop-status dop-under';
             statusBar.innerText = `DOP Under (-${Math.abs(diff)})`;
         }
     }
@@ -1705,6 +1765,7 @@ v3.52:
         pendingCompletion = null;
     }
 
+    function openMoveMenu() { closeModal('active-detail-modal'); byId('move-menu-modal').style.display = 'flex'; }
     function moveDoor(destination) {
         closeModal('move-menu-modal');
         const d = doors[detailDoor];
@@ -1816,7 +1877,6 @@ v3.52:
         byId('stat-hour-wally').innerText = hw; byId('stat-last-wally').innerText = lhw;
     }
 
-    // --- RENDER DASHBOARD ---
     function renderDashboard() {
         updateStats();
         const openGrid = byId('open-bays-grid'), activeGrid = byId('active-trailers-grid');
@@ -1873,7 +1933,6 @@ v3.52:
         byId('detail-id').innerText = d.id;
         byId('detail-unloader').innerText = d.unloader || "Unassigned";
         
-        // Show Started By if different (and filter Unassigned)
         const realAssignments = (d.assignments || []).filter(a => a.name && a.name !== 'Unassigned');
         let startedBy = (realAssignments.length > 0) ? realAssignments[0].name : null;
 
@@ -2062,58 +2121,6 @@ v3.52:
         byId('cpu-inputs').style.display = t==='CPU'?'block':'none';
     }
 
-    function viewStatLogs(type) {
-        closeModal('input-modal'); closeModal('active-detail-modal');
-        activeLogFilter = { door: 'All', type: 'All', timeRange: 'All', unloader: 'All', search: '', date: 'All' };
-        if(type==='Wally'||type==='CPU') activeLogFilter.type = type;
-        else if(type==='Hour-0') { activeLogFilter.timeRange = 'ThisHour'; activeLogFilter.type = 'Wally'; }
-        else if(type==='Hour-1') { activeLogFilter.timeRange = 'LastHour'; activeLogFilter.type = 'Wally'; }
-        switchTab('logs');
-    }
-    function viewDoorLogs(n) { closeModal('input-modal'); closeModal('active-detail-modal'); setLogFilter(n); switchTab('logs'); }
-    function openFilterModal() {
-        const g = byId('filter-grid'); g.innerHTML = `<div class="filter-btn ${currentLogFilter==='All'?'active':''}" onclick="setLogFilter('All')">All</div>`;
-        for(let i=DOORS_START; i<=DOORS_END; i++) g.innerHTML += `<div class="filter-btn ${currentLogFilter==i?'active':''}" onclick="setLogFilter(${i})">Door ${i}</div>`;
-        byId('filter-unloader-select').value = activeLogFilter.unloader;
-        byId('filter-date-input').value = activeLogFilter.date !== 'All' ? activeLogFilter.date : '';
-        byId('filter-modal').style.display='flex';
-    }
-    function applyFilter() {
-        activeLogFilter.unloader = byId('filter-unloader-select').value;
-        const d = byId('filter-date-input').value; activeLogFilter.date = d || 'All';
-        closeModal('filter-modal'); renderLogs();
-    }
-    function clearLogFilter() { currentLogFilter='All'; activeLogFilter={door:'All',unloader:'All',type:'All',timeRange:'All',search:'',date:'All'}; byId('log-search').value=''; renderLogs(); }
-    function setLogFilter(v) { currentLogFilter = v; activeLogFilter.door = v; renderLogs(); }
-    
-    function toggleStats(sec) {
-        const c = byId(sec==='unloader'?'stats-content':'hourly-content'), i = byId(sec==='unloader'?'stats-caret':'hourly-caret');
-        const show = c.style.display!=='block'; c.style.display=show?'block':'none'; i.className=show?'ph ph-caret-up':'ph ph-caret-down';
-        if(show) sec==='unloader' ? calculateAndRenderStats() : calculateAndRenderHourlyStats();
-    }
-    function calculateAndRenderStats() {
-         const stats = {};
-         historyLog.forEach(l => { 
-             if(l.status === 'moved') return;
-             const n = l.unloader; if(!stats[n]) stats[n]={w:0,c:0,t:0}; if(l.type==='Wally') stats[n].w++; else stats[n].c++; stats[n].t++; 
-         });
-         const tb = byId('unloader-stats-body'); tb.innerHTML='';
-         Object.entries(stats).sort((a,b)=>b[1].t-a[1].t).forEach(([n,d])=>tb.innerHTML+=`<tr><td>${n}</td><td style="text-align:center">${d.w}</td><td style="text-align:center">${d.c}</td><td style="text-align:right">${d.t}</td></tr>`);
-    }
-    function calculateAndRenderHourlyStats() {
-        const { shiftStart } = getShiftTimeWindows(); const h = {};
-        historyLog.forEach(l => { 
-            if(l.status === 'moved') return;
-            const idx = Math.floor((l.end-(l.statOffset||0)-shiftStart.getTime())/3600000)+1; if(!h[idx]) h[idx]=0; h[idx]++; 
-        });
-        const tb = byId('hourly-stats-body'); tb.innerHTML='';
-        Object.keys(h).sort((a,b)=>a-b).forEach(k=>tb.innerHTML+=`<tr><td>${getHourText(parseInt(k))}</td><td style="text-align:center">${h[k]}</td></tr>`);
-    }
-
-    // --- OPTIMIZED RENDER LOGS ---
-    let currentVisibleLogs = 50;
-    let filteredLogsCache = []; 
-
     function renderLogs() {
         const list = byId('logs-list'); if(!list) return;
         const filterDisplay = byId('active-filter-display'), filterText = byId('filter-text-display');
@@ -2134,214 +2141,45 @@ v3.52:
             return true;
         });
 
-        const isFiltering = Object.values(activeLogFilter).some(v => v !== 'All' && v !== '');
-        if (filterDisplay) {
-            filterDisplay.style.display = isFiltering ? 'flex' : 'none';
-            if (isFiltering) {
-                const p = [];
-                if(activeLogFilter.date!=='All') p.push(activeLogFilter.date);
-                if(activeLogFilter.door!=='All') p.push("Door "+activeLogFilter.door);
-                if(activeLogFilter.unloader!=='All') p.push(activeLogFilter.unloader);
-                if(activeLogFilter.type!=='All') p.push(activeLogFilter.type);
-                if(activeLogFilter.search) p.push(`"${activeLogFilter.search}"`);
-                filterText.innerText = p.join(' + ');
-            }
-        }
-
         list.innerHTML = '';
-        currentVisibleLogs = 50; 
-        renderLogBatch();
-        
-        if(statsVisible) calculateAndRenderStats();
-        if(hourlyVisible) calculateAndRenderHourlyStats();
-    }
-
-    function renderLogBatch() {
-        const list = byId('logs-list');
-        const loadMore = byId('logs-load-more');
-        
-        if (filteredLogsCache.length === 0) {
-            list.innerHTML = '<div style="text-align:center; color:#999; margin-top:20px;">No logs found.</div>';
-            loadMore.style.display = 'none';
-            return;
-        }
-
-        const frag = document.createDocumentFragment();
-        const batch = filteredLogsCache.slice(list.children.length, currentVisibleLogs);
-        
-        batch.forEach(l => {
+        filteredLogsCache.slice(0, 50).forEach(l => {
             const card = document.createElement('div'); card.className = 'log-card';
-            const dur = Math.round(l.duration/60000);
-            
-            // Build Type String
-            let typeStr = l.type + (l.duplicate ? ' DUP' : '');
-            if (l.type === 'CPU' && l.cpuOptions && l.cpuOptions.length > 0) {
-                typeStr += ` (${l.cpuOptions.join(', ')})`;
-            }
-            
-            // Handle Moved status
-            let statusPill = '';
-            if (l.status === 'moved') {
-                statusPill = `<span class="log-tag tag-gray"><i class="ph ph-arrows-left-right"></i> ${l.moveDest}</span>`;
-            } else {
-                statusPill = `<span class="log-tag tag-black">${l.type}</span>`;
-                if(l.duplicate) statusPill += ` <span class="log-tag tag-red">DUP</span>`;
-                if (l.type === 'CPU' && l.cpuOptions && l.cpuOptions.length > 0) {
-                     l.cpuOptions.forEach(opt => { statusPill += ` <span class="log-tag tag-gray">${opt}</span>`; });
-                }
-            }
-            statusPill += `<span class="log-tag" style="background:#fff; border:1px solid #e5e5ea;">${getHourText(l.completionHour)}</span>`;
-
-            // Build User String
-            let userStr = `👤 ${l.unloader}`;
-            let startStr = "";
-            if (l.startedBy && l.startedBy !== l.unloader && l.startedBy !== 'Unassigned') {
-                startStr = ` <span style="font-size:12px; color:#999;">(via ${l.startedBy})</span>`;
-            }
-            
-            const timeRange = `${new Date(l.start).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} - ${new Date(l.end).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
-
-            card.innerHTML = `
-                <div class="log-info">
-                    <div class="log-header-row">
-                        <span class="log-door-pill" onclick="viewDoorLogs(${l.door})">Door ${l.door}</span>
-                        <div class="log-title">${l.id}<span class="log-account">${l.account ? l.account : ''}</span></div>
-                    </div>
-                    <div class="log-tags-row">${statusPill}</div>
-                    <div class="log-footer-row">
-                        <div class="log-footer-item"><i class="ph ph-user"></i> ${userStr}${startStr}</div>
-                        <div class="log-footer-item"><i class="ph ph-clock"></i> ${timeRange}</div>
-                    </div>
-                </div>
-                <div class="log-right-col">
-                    <div style="text-align:right;">
-                        <div class="log-duration">${dur}<span style="font-size:14px; font-weight:700;">m</span></div>
-                        <div class="log-duration-label">Duration</div>
-                    </div>
-                    <div class="log-actions-row">
-                         ${(Date.now()-l.end < 120000 && !demoActive) ? `<button class="log-mini-btn" onclick="revertLog(${historyLog.indexOf(l)})"><i class="ph ph-arrow-u-up-left"></i></button>` : ''}
-                        <button class="log-mini-btn" onclick="openEditLogModal(${historyLog.indexOf(l)})"><i class="ph ph-pencil-simple"></i></button>
-                    </div>
-                </div>
-            `;
-            frag.appendChild(card);
+            card.innerHTML = `<div class="log-info"><div class="log-header-row"><span class="log-door-pill">Door ${l.door}</span><div class="log-title">${l.id}</div></div><div class="log-footer-row">👤 ${l.unloader}</div></div><div class="log-right-col"><div class="log-duration">${Math.round(l.duration/60000)}m</div></div>`;
+            list.appendChild(card);
         });
-        
-        list.appendChild(frag);
-        loadMore.style.display = (currentVisibleLogs < filteredLogsCache.length) ? 'block' : 'none';
     }
 
-    function loadMoreLogs() {
-        currentVisibleLogs += 50;
-        renderLogBatch();
-    }
-
-    function revertLog(i) {
-        const l = historyLog[i];
-        if(!l || (Date.now()-l.end>120000 && !demoActive) || doors[l.door].status!=='empty') return alert("Cannot revert");
-        doors[l.door] = { 
-            status:'active', start:l.start, id:l.id, account:l.account, type:l.type, 
-            unloader:l.unloader, unavailable:false, lastCompletionTime:null, 
-            cpuOptions: l.cpuOptions || [], assignments: [{name: l.unloader, start: l.start, end: null}] 
-        };
-        historyLog.splice(i, 1); saveDoors(); saveHistory(); renderDashboard(); renderLogs(); updateTabBadges();
-    }
-
-    function openEditLogModal(i) {
-        const l = historyLog[i]; byId('edit-log-index').value = i; byId('edit-input-id').value = l.id;
-        const sel = byId('edit-select-unloader'); sel.innerHTML='<option value="">Unassigned</option>';
-        teamNamesSorted.forEach(n => { const o=document.createElement('option'); o.value=n; o.innerText=n; sel.appendChild(o); });
-        sel.value = l.unloader;
-        setEditType(l.type);
-        
-        const opts = l.cpuOptions || [];
-        byId('edit-log-chk-hott').checked = opts.includes('HOTT');
-        byId('edit-log-chk-recycle').checked = opts.includes('RECYCLE');
-        byId('edit-log-chk-gv').checked = opts.includes('GV');
-
-        byId('edit-log-modal').style.display='flex';
-    }
-
-    function confirmLogEdit() {
-        const i = parseInt(byId('edit-log-index').value), id = byId('edit-input-id').value.toUpperCase(), unl = byId('edit-select-unloader').value;
-        const type = byId('edit-log-modal').dataset.type;
-        
-        let cpuOpts = [];
-        if(type === 'CPU') {
-            if(byId('edit-log-chk-hott').checked) cpuOpts.push('HOTT');
-            if(byId('edit-log-chk-recycle').checked) cpuOpts.push('RECYCLE');
-            if(byId('edit-log-chk-gv').checked) cpuOpts.push('GV');
-        }
-
-        historyLog[i].id = id; historyLog[i].unloader = unl; historyLog[i].type = type; historyLog[i].cpuOptions = cpuOpts;
-        saveHistory(); closeModal('edit-log-modal'); renderLogs();
-    }
-
-    function openExportModal() { byId('export-modal').style.display = 'flex'; }
-    function exportLogsCSV() {
-        closeModal('export-modal');
-        let csv = "Type,ID,Account,Door,Unloader,StartedBy,Duration(mins),StartTime,EndTime,StartHour,EndHour,Duplicate,Hour,Options,Status\n";
-        historyLog.forEach(l => {
-            const opts = (l.cpuOptions || []).join(';');
-            csv += `${l.type},${l.id},${l.account||''},${l.door},${l.unloader},${l.startedBy||''},${Math.round(l.duration/60000)},${new Date(l.start).toLocaleString()},${new Date(l.end).toLocaleString()},${new Date(l.start).getHours()},${new Date(l.end).getHours()},${l.duplicate?'Yes':'No'},${l.completionHour},${opts},${l.status||'completed'}\n`
-        });
-        const a = document.createElement('a'); a.href=window.URL.createObjectURL(new Blob([csv], {type:'text/csv'})); a.download='wally-logs.csv'; a.click();
-    }
-    
-    function exportLogsPDF() {
-        closeModal('export-modal');
-        if (!window.jspdf) return alert("PDF library loading. Please wait or check connection.");
-        const doc = new window.jspdf.jsPDF(), now = new Date();
-        doc.setFontSize(18); doc.text(`PS9 Wally Tracker Report - ${now.toLocaleDateString()}`, 14, 20);
-        doc.setFontSize(12); doc.text(`Generated: ${now.toLocaleTimeString()}`, 14, 30);
-        
-        const stats={}; historyLog.forEach(l=>{ 
-            if(l.status === 'moved') return;
-            const n=l.unloader; if(!stats[n])stats[n]={w:0,c:0,t:0}; if(l.type==='Wally')stats[n].w++; else stats[n].c++; stats[n].t++; 
-        });
-        doc.autoTable({ startY: 45, head:[['Name','Wally','CPU','Total']], body:Object.entries(stats).sort((a,b)=>b[1].t-a[1].t).map(([n,d])=>[n,d.w,d.c,d.t]) });
-        
-        const logsBody = historyLog.map(l => {
-             let typeStr = l.type + (l.duplicate?' (DUP)':'');
-             if(l.status === 'moved') typeStr = `MOVED: ${l.moveDest}`;
-             else if(l.type === 'CPU' && l.cpuOptions && l.cpuOptions.length>0) typeStr += `\n${l.cpuOptions.join(',')}`;
-             
-             let uStr = l.unloader;
-             if(l.startedBy && l.startedBy !== l.unloader && l.startedBy !== 'Unassigned') uStr += `\n(Start: ${l.startedBy})`;
-
-             return [new Date(l.end).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}), l.door, typeStr, l.id, uStr, Math.round(l.duration/60000)+"m", getHourText(l.completionHour)];
-        });
-        doc.autoTable({ startY: doc.lastAutoTable.finalY+15, head:[['Time','Door','Type','ID','Unloader','Duration','Hour']], body:logsBody });
-        doc.save(`wally-report-${now.toISOString().split('T')[0]}.pdf`);
-    }
-
-    // --- PPH CALCULATOR ---
-    function openPPHModal() {
-        const hrs = calculateUnloaderHours(), inp = byId('pph-unloader-hours-input');
-        inp.value = hrs>0?hrs.toFixed(2):''; byId('pph-volume-input').value=''; byId('pph-result').innerText='0';
-        byId('pph-modal').style.display='flex';
-        setTimeout(()=>hrs>0?byId('pph-volume-input').focus():inp.focus(), 100);
-    }
-    function resetPPH() {
-        const hrs = calculateUnloaderHours(), inp = byId('pph-unloader-hours-input');
-        inp.value = hrs>0?hrs.toFixed(2):''; byId('pph-volume-input').value=''; byId('pph-result').innerText='0';
-        hrs===0?inp.focus():byId('pph-volume-input').focus();
-    }
     function calculateUnloaderHours() {
         const now = Date.now(); let t = 0;
         staffing.forEach(s => { if(s.role==='Unloader') t += (s.accumulated||0) + ((s.status==='active'&&s.start)?(now-s.start):0); });
         return t/3600000;
     }
-    function calculatePPH() {
-        const v = parseFloat(byId('pph-volume-input').value)||0, h = parseFloat(byId('pph-unloader-hours-input').value)||0;
-        byId('pph-result').innerText = h===0 ? '0' : Math.round(v/h).toLocaleString();
-    }
-    function setEditType(t) { 
-        byId('edit-opt-wally').classList.toggle('selected', t==='Wally'); 
-        byId('edit-opt-cpu').classList.toggle('selected', t==='CPU'); 
-        byId('edit-log-modal').dataset.type = t; 
-        const c = byId('edit-log-options-container');
-        if(c) c.style.display = (t === 'CPU') ? 'block' : 'none';
+
+    function updateStaffingTimers(checkRoles = true) {
+        if(!byId('tab-staffing').classList.contains('active')) return;
+        if(checkRoles) autoAssignRoles();
+        renderStaffingView();
+
+        let onClock=0, uHours=0, bHours=0, sHours=0;
+        staffing.forEach(s => {
+            let hrs = calculateTotalHours(s);
+            if(s.status==='active'||s.status==='paused') onClock++;
+            if(s.role==='Unloader') uHours+=hrs; else if(s.role==='Belt Tender') bHours+=hrs; else if(s.role==='Bulk Sweep') sHours+=hrs;
+        });
+        byId('staff-active-count').innerText = onClock;
+        byId('staff-total-hours').innerText = uHours.toFixed(2);
+        byId('staff-belt-hours').innerText = bHours.toFixed(2);
+        byId('staff-sweep-hours').innerText = sHours.toFixed(2);
+        
+        const [uStr, sStr] = currentDOP.split('-');
+        const targetTotal = parseInt(uStr) + parseInt(sStr);
+        const dopActiveCount = staffing.filter(s => (s.status === 'active' || s.status === 'paused') && s.role !== 'Belt Tender').length;
+        const diff = dopActiveCount - targetTotal;
+        const statusBar = byId('dop-status-bar');
+        
+        if (diff === 0) { statusBar.className = 'dop-status dop-ok'; statusBar.innerText = `DOP Met`; }
+        else if (diff > 0) { statusBar.className = 'dop-status dop-over'; statusBar.innerText = `DOP Over (+${diff})`; }
+        else { statusBar.className = 'dop-status dop-under'; statusBar.innerText = `DOP Under (-${Math.abs(diff)})`; }
     }
 
     init();
