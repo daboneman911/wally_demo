@@ -15,10 +15,10 @@
         :root {
             --primary: #000000;
             --bg: #ffffff;
-            --card-bg: #f5f5f5;
+            --card-bg: #f9f9f9;
             --text-main: #000000;
-            --text-sub: #757575;
-            --safe-top: max(env(safe-area-inset-top), 47px);
+            --text-sub: #8e8e93;
+            --safe-top: max(env(safe-area-inset-top), 20px);
             --safe-bottom: env(safe-area-inset-bottom);
             --tab-height: 80px;
             --bay-green: #4cd964;
@@ -213,6 +213,7 @@
         .dop-status { font-size: 13px; font-weight: 600; padding: 8px 12px; border-radius: 8px; text-align: center; }
         .dop-ok { background: #d1fae5; color: #065f46; }
         .dop-warn { background: #fee2e2; color: #991b1b; }
+        .dop-over { background: #e0f2fe; color: #0369a1; }
 
         .staff-section-title { font-size: 18px; font-weight: 800; margin: 25px 0 15px 0; display: flex; justify-content: space-between; align-items: center; }
         .staff-count-badge { background: #e5e5ea; color: #000; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 700; margin-left: 8px; }
@@ -250,7 +251,7 @@
         .tool-card.add { border: 2px dashed #ccc; background: transparent; box-shadow: none; }
         .tool-card.add .tool-icon-wrapper { background: #e5e5ea; color: #000; }
 
-        /* --- LOGS --- */
+        /* --- LOGS SECTION (REVISED) --- */
         .stats-collapse-btn { width: 100%; background: #f2f2f7; border: none; border-radius: 16px; padding: 18px; display: flex; justify-content: space-between; align-items: center; font-size: 16px; font-weight: 700; color: #000; cursor: pointer; margin-bottom: 20px; }
         .stats-content-area { background: white; border: 1px solid #e5e5ea; border-radius: 16px; padding: 20px; margin-bottom: 25px; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
         .stats-table { width: 100%; border-collapse: collapse; font-size: 15px; }
@@ -260,7 +261,7 @@
         .active-filter-display { display: flex; align-items: center; justify-content: space-between; background: #000; color: white; padding: 12px 20px; border-radius: 16px; margin-bottom: 20px; font-weight: 600; }
         .logs-list { display: flex; flex-direction: column; gap: 15px; }
         
-        /* LOG CARD STYLES */
+        /* NEW LOG CARD STYLES */
         .log-card {
             background: white; border: 1px solid #e5e5ea; border-radius: 20px; padding: 16px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.03); display: flex; justify-content: space-between; align-items: center; gap: 15px;
@@ -406,7 +407,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 3.50</div>
+            <div class="app-version">Version 3.52</div>
         </div>
 
         <div class="section-title">Sort Statistics</div>
@@ -572,7 +573,6 @@
             <div class="settings-header">Demo</div>
             <div class="settings-group">
                 <div class="settings-row"><span class="settings-label">Demo Mode</span><div class="toggle-switch" id="switch-demo-mode" onclick="toggleSwitch('demo-mode')"></div></div>
-                <div class="settings-row"><span class="settings-label">Force Attribution (Simulate)</span><div class="toggle-switch" id="switch-sim-window" onclick="toggleSwitch('sim-window')"></div></div>
                 <div class="settings-row"><span class="settings-label">Disable hardcoded times</span><div class="toggle-switch" id="switch-disable-times" onclick="toggleSwitch('disable-times')"></div></div>
                 <div class="settings-row"><span class="settings-label">Generate Random History</span><div class="toggle-switch" id="switch-demo-random" onclick="toggleSwitch('demo-random')"></div></div>
                 <div class="settings-row"><span class="settings-label">Auto-Replenish Bays</span><div class="toggle-switch" id="switch-demo-replenish" onclick="toggleSwitch('demo-replenish')"></div></div>
@@ -632,19 +632,17 @@
 </div>
 <div class="modal-overlay" id="add-staff-modal">
     <div class="modal-sheet">
-        <h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Clock In Staff <span id="staff-selection-count" style="font-size:14px; color:#8e8e93; font-weight:500; margin-left:10px;">0 Selected</span></h2>
+        <h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Clock In Staff</h2>
         <div id="staff-checkbox-list" class="staff-checkbox-list"></div>
         <div style="margin: 20px 0 20px 0; border-top: 1px solid #eee; padding-top:15px;">
             <label style="font-size:12px; color:var(--text-sub); font-weight:600; display:block; margin-bottom:5px;">Add New Person</label>
             <div class="staff-item-row" style="border:none; padding:0;">
                 <input type="text" id="staff-custom-name" class="form-input" style="margin:0; flex:1; margin-right:10px;" placeholder="Name" autocapitalize="words">
-                <select class="staff-role-select" id="staff-custom-role" onchange="toggleStaffOther(this)">
-                    <option value="Unloader">Auto (Unloader)</option>
-                    <option value="Belt Tender">Belt Tender (Locked)</option>
-                    <option value="Bulk Sweep">Bulk Sweep (Locked)</option>
-                    <option value="Other">Other</option>
+                <select class="staff-role-select" id="staff-custom-role">
+                    <option value="Unloader">Unloader</option>
+                    <option value="Belt Tender">Belt Tender</option>
+                    <option value="Bulk Sweep">Bulk Sweep</option>
                 </select>
-                <input type="text" id="staff-custom-other" class="staff-other-input" placeholder="Area">
             </div>
         </div>
         <button class="btn-primary" onclick="confirmAddStaff()">Clock In Selected</button><button class="btn-cancel" onclick="closeModal('add-staff-modal')">Cancel</button>
@@ -748,24 +746,6 @@
         <button class="btn-cancel" onclick="closeModal('move-menu-modal')">Cancel</button>
     </div>
 </div>
-<div class="modal-overlay" id="loan-staff-modal">
-    <div class="modal-sheet">
-        <h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Loan Employee</h2>
-        <p style="text-align:center; color:#757575; margin-bottom:20px;">Where is this employee going?</p>
-        <select id="loan-dest-select" class="form-input">
-            <option value="Small Sort">Small Sort</option>
-            <option value="Metros">Metros</option>
-            <option value="PS3">PS3</option>
-            <option value="PS5">PS5</option>
-            <option value="PS7">PS7</option>
-            <option value="PS11">PS11</option>
-            <option value="PS1">PS1</option>
-            <option value="Other">Other</option>
-        </select>
-        <button class="btn-primary" onclick="confirmLoanStaff()">Confirm Loan</button>
-        <button class="btn-cancel" onclick="closeModal('loan-staff-modal')">Cancel</button>
-    </div>
-</div>
 <div class="modal-overlay" id="edit-active-modal">
     <div class="modal-sheet">
         <h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Edit Active Bay</h2>
@@ -835,7 +815,7 @@
     let pendingLoanId = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '3.50';
+    const APP_VERSION = '3.52';
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Matt S", "Robert W", "Trevon C", "Victor M", "Russell H", "Fonseca J"];
@@ -859,12 +839,9 @@
 
     // --- CHANGELOG ---
     const CHANGELOG = `
-v3.50:
-- Bugfix: "Add" button restored on Staffing page (missing input fix).
-- Bugfix: "Other" dropdown logic restored.
-
-v3.49:
-- Bugfix: "Add" button missing function definition fix.
+v3.52:
+- DOP Status: Standardized language to "DOP Under (-X)", "DOP Met", "DOP Over (+X)".
+- DOP Headcount: Now strictly counts Unloaders and Bulk Sweeps (Belt Tenders excluded from the target count).
     `;
 
     // --- STATE ---
@@ -1201,9 +1178,7 @@ v3.49:
         });
         byId('staff-custom-name').value = ''; 
         byId('staff-custom-role').value = 'Unloader';
-        const otherInput = byId('staff-custom-other');
-        if(otherInput) otherInput.style.display = 'none';
-        
+        byId('staff-custom-other').style.display = 'none';
         updateStaffSelectionCount();
         byId('add-staff-modal').style.display = 'flex';
     }
@@ -1559,15 +1534,18 @@ v3.49:
             (s.status === 'active' || s.status === 'paused') && s.role !== 'Belt Tender'
         ).length;
         
-        const missing = targetTotal - dopActiveCount;
-        
+        const diff = dopActiveCount - targetTotal;
         const statusBar = byId('dop-status-bar');
-        if(missing <= 0) {
+        
+        if (diff === 0) {
             statusBar.className = 'dop-status dop-ok';
-            statusBar.innerText = `DOP Met ✅`;
+            statusBar.innerText = `DOP Met`;
+        } else if (diff > 0) {
+            statusBar.className = 'dop-status dop-over';
+            statusBar.innerText = `DOP Over (+${diff})`;
         } else {
             statusBar.className = 'dop-status dop-warn';
-            statusBar.innerText = `Down ${missing}`;
+            statusBar.innerText = `DOP Under (-${Math.abs(diff)})`;
         }
     }
     
@@ -2284,7 +2262,7 @@ v3.49:
             statusPill += `<span class="log-tag" style="background:#fff; border:1px solid #e5e5ea;">${getHourText(l.completionHour)}</span>`;
 
             // Build User String
-            let userStr = l.unloader;
+            let userStr = `👤 ${l.unloader}`;
             let startStr = "";
             if (l.startedBy && l.startedBy !== l.unloader && l.startedBy !== 'Unassigned') {
                 startStr = ` <span style="font-size:12px; color:#999;">(via ${l.startedBy})</span>`;
@@ -2300,7 +2278,7 @@ v3.49:
                     </div>
                     <div class="log-tags-row">${statusPill}</div>
                     <div class="log-footer-row">
-                        <div class="log-footer-item"><i class="ph ph-user"></i> ${userStr}${startStr}</div>
+                        <div class="log-footer-item">${userStr}${startStr}</div>
                         <div class="log-footer-item"><i class="ph ph-clock"></i> ${timeRange}</div>
                     </div>
                 </div>
