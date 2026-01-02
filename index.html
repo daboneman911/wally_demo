@@ -406,7 +406,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 3.49</div>
+            <div class="app-version">Version 3.50</div>
         </div>
 
         <div class="section-title">Sort Statistics</div>
@@ -638,12 +638,13 @@
             <label style="font-size:12px; color:var(--text-sub); font-weight:600; display:block; margin-bottom:5px;">Add New Person</label>
             <div class="staff-item-row" style="border:none; padding:0;">
                 <input type="text" id="staff-custom-name" class="form-input" style="margin:0; flex:1; margin-right:10px;" placeholder="Name" autocapitalize="words">
-                <select class="staff-role-select" id="staff-custom-role">
+                <select class="staff-role-select" id="staff-custom-role" onchange="toggleStaffOther(this)">
                     <option value="Unloader">Auto (Unloader)</option>
                     <option value="Belt Tender">Belt Tender (Locked)</option>
                     <option value="Bulk Sweep">Bulk Sweep (Locked)</option>
                     <option value="Other">Other</option>
                 </select>
+                <input type="text" id="staff-custom-other" class="staff-other-input" placeholder="Area">
             </div>
         </div>
         <button class="btn-primary" onclick="confirmAddStaff()">Clock In Selected</button><button class="btn-cancel" onclick="closeModal('add-staff-modal')">Cancel</button>
@@ -834,7 +835,7 @@
     let pendingLoanId = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '3.49';
+    const APP_VERSION = '3.50';
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Matt S", "Robert W", "Trevon C", "Victor M", "Russell H", "Fonseca J"];
@@ -858,16 +859,12 @@
 
     // --- CHANGELOG ---
     const CHANGELOG = `
-v3.49:
-- Bugfix: "Add" button on Staffing page restored (missing function definition added).
-- Checkbox counter logic fixed.
+v3.50:
+- Bugfix: "Add" button restored on Staffing page (missing input fix).
+- Bugfix: "Other" dropdown logic restored.
 
-v3.48:
-- Clock-In Upgrade:
-  - Added "X Selected" counter to top.
-  - Removed Loan Locations from role dropdown (use Loan button instead).
-  - Robert W auto-assigned Belt Tender (Locked).
-- DOP Logic: Belt Tenders excluded from shortage count.
+v3.49:
+- Bugfix: "Add" button missing function definition fix.
     `;
 
     // --- STATE ---
@@ -1204,7 +1201,9 @@ v3.48:
         });
         byId('staff-custom-name').value = ''; 
         byId('staff-custom-role').value = 'Unloader';
-        byId('staff-custom-other').style.display = 'none';
+        const otherInput = byId('staff-custom-other');
+        if(otherInput) otherInput.style.display = 'none';
+        
         updateStaffSelectionCount();
         byId('add-staff-modal').style.display = 'flex';
     }
@@ -1214,7 +1213,10 @@ v3.48:
         const customName = byId('staff-custom-name').value.trim();
         const customRoleSelect = byId('staff-custom-role');
         let customRoleVal = customRoleSelect.value;
-        if(customRoleVal === 'Other') customRoleVal = byId('staff-custom-other').value.trim();
+        if(customRoleVal === 'Other') {
+             const customOther = byId('staff-custom-other');
+             if(customOther) customRoleVal = customOther.value.trim();
+        }
         
         if(cbs.length === 0 && !customName) return alert("Select an employee or enter a name.");
         
