@@ -406,7 +406,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 3.48</div>
+            <div class="app-version">Version 3.49</div>
         </div>
 
         <div class="section-title">Sort Statistics</div>
@@ -558,6 +558,7 @@
                     </div>
                     <div class="settings-note" style="margin-top:20px; padding:0;">Allow attributing trailers completed up to <span id="attr-note-val" style="font-weight:700; color:#000;">5</span> minutes after the hour to the previous hour.</div>
                 </div>
+                <div class="settings-row"><span class="settings-label">Simulate Shift Change</span><div class="toggle-switch" id="switch-sim-window" onclick="toggleSwitch('sim-window')"></div></div>
                  <div class="settings-row"><span class="settings-label">Disable Time Attribution</span><div class="toggle-switch" id="switch-dis-window" onclick="toggleSwitch('dis-window')"></div></div>
             </div>
             <div class="settings-header">Saved Accounts</div>
@@ -641,6 +642,7 @@
                     <option value="Unloader">Auto (Unloader)</option>
                     <option value="Belt Tender">Belt Tender (Locked)</option>
                     <option value="Bulk Sweep">Bulk Sweep (Locked)</option>
+                    <option value="Other">Other</option>
                 </select>
             </div>
         </div>
@@ -832,7 +834,7 @@
     let pendingLoanId = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '3.48';
+    const APP_VERSION = '3.49';
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Matt S", "Robert W", "Trevon C", "Victor M", "Russell H", "Fonseca J"];
@@ -856,15 +858,16 @@
 
     // --- CHANGELOG ---
     const CHANGELOG = `
-v3.48:
-- Clock-In Modal: Removed loan areas (Small Sort, Metros, etc) from Role dropdown.
-- Clock-In Modal: Added "X Selected" counter to top.
-- Staffing Logic: Robert W auto-assigned Belt Tender (Locked).
-- Staffing Logic: DOP shortage calculation now ignores Belt Tenders (Target = Unloaders + Sweeps).
+v3.49:
+- Bugfix: "Add" button on Staffing page restored (missing function definition added).
+- Checkbox counter logic fixed.
 
-v3.47:
-- DOP Logic Fix: Shortage calculation corrected.
-- Verbiage Update: "Down X".
+v3.48:
+- Clock-In Upgrade:
+  - Added "X Selected" counter to top.
+  - Removed Loan Locations from role dropdown (use Loan button instead).
+  - Robert W auto-assigned Belt Tender (Locked).
+- DOP Logic: Belt Tenders excluded from shortage count.
     `;
 
     // --- STATE ---
@@ -1172,7 +1175,8 @@ v3.47:
     
     function updateStaffSelectionCount() {
         const count = document.querySelectorAll('.staff-checkbox:checked').length;
-        byId('staff-selection-count').innerText = `${count} Selected`;
+        const el = byId('staff-selection-count');
+        if(el) el.innerText = `${count} Selected`;
     }
 
     function openAddStaffModal() {
