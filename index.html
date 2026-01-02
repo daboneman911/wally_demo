@@ -15,9 +15,9 @@
         :root {
             --primary: #000000;
             --bg: #ffffff;
-            --card-bg: #f5f5f5;
+            --card-bg: #f9f9f9;
             --text-main: #000000;
-            --text-sub: #757575;
+            --text-sub: #8e8e93;
             --safe-top: max(env(safe-area-inset-top), 47px);
             --safe-bottom: env(safe-area-inset-bottom);
             --tab-height: 80px;
@@ -45,7 +45,7 @@
             display: flex;
             flex-direction: column;
             height: 100%;
-            padding-top: calc(var(--safe-top) + 40px);
+            padding-top: calc(var(--safe-top) + 20px);
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
             overscroll-behavior-y: contain;
@@ -56,88 +56,85 @@
             overflow-y: auto;
             display: none;
             padding: 0 20px;
-            padding-bottom: calc(var(--tab-height) + var(--safe-bottom) + 20px);
+            padding-bottom: calc(var(--tab-height) + var(--safe-bottom) + 40px);
             -webkit-overflow-scrolling: touch;
             overscroll-behavior-y: contain;
         }
 
         .tab-content.active { display: block; }
 
-        /* --- BUTTONS & ACTIONS --- */
-        .top-actions {
+        /* --- NEW DASHBOARD HEADER --- */
+        .dash-top-bar {
             display: flex;
-            gap: 12px;
-            padding: 10px 0 20px 0;
-            justify-content: center;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 20px;
+            padding: 0 5px;
         }
+        .dash-greeting { font-size: 14px; color: var(--text-sub); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .dash-title { font-size: 34px; font-weight: 900; margin: 0; letter-spacing: -1px; line-height: 1; }
+        .dash-date { font-size: 14px; color: #000; font-weight: 700; background: #f2f2f7; padding: 6px 12px; border-radius: 20px; }
 
-        .action-btn {
-            background: #000;
-            color: white;
-            border: none;
-            border-radius: 50px;
-            padding: 10px 20px;
-            font-size: 14px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            transition: transform 0.1s;
+        /* --- TODAY CARD --- */
+        .today-card {
+            background: #fff;
+            border: 1px solid #e5e5ea;
+            border-radius: 24px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
         }
-        .action-btn:active { transform: scale(0.96); }
-        .action-btn i { font-size: 18px; }
-
-        /* --- HEADER --- */
-        .dashboard-header {
-            background: #f2f2f7;
-            border-radius: 20px;
-            padding: 25px 20px;
-            text-align: center;
-            margin-bottom: 30px;
-            margin-top: 10px;
+        .today-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .today-title { font-size: 18px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+        .today-progress { width: 100%; height: 6px; background: #f2f2f7; border-radius: 3px; margin-top: 15px; overflow: hidden; }
+        .today-fill { height: 100%; background: #000; width: 0%; transition: width 0.3s ease; }
+        
+        .task-list { display: flex; flex-direction: column; gap: 12px; }
+        .task-item { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+        .task-check { 
+            width: 24px; height: 24px; border-radius: 6px; border: 2px solid #e5e5ea; 
+            display: flex; align-items: center; justify-content: center; color: white; transition: all 0.2s;
         }
+        .task-item.done .task-check { background: #000; border-color: #000; }
+        .task-text { font-size: 15px; font-weight: 600; color: #000; transition: color 0.2s; }
+        .task-item.done .task-text { color: #ccc; text-decoration: line-through; }
 
-        .header-bar {
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 50px;
-            margin: 20px 0 20px 0;
+        .obs-row { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 15px; border-top: 1px dashed #e5e5ea; }
+        .obs-label { font-size: 14px; font-weight: 700; color: #8e8e93; }
+        .obs-control { display: flex; align-items: center; gap: 10px; background: #f2f2f7; padding: 4px; border-radius: 12px; }
+        .obs-btn { width: 32px; height: 32px; border-radius: 8px; border: none; background: #fff; font-weight: 700; font-size: 16px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .obs-count { font-size: 16px; font-weight: 700; width: 30px; text-align: center; }
+
+        /* --- ACTION ROW --- */
+        .action-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 30px; }
+        .action-card {
+            background: #f2f2f7; border-radius: 18px; padding: 15px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+            cursor: pointer; transition: transform 0.1s; border: 1px solid transparent;
         }
-        .header-bar h1 { font-size: 24px; font-weight: 800; margin: 0; }
+        .action-card:active { transform: scale(0.96); background: #e5e5ea; }
+        .action-card i { font-size: 24px; color: #000; }
+        .action-label { font-size: 13px; font-weight: 700; }
+        .action-card.primary { background: #000; color: white; }
+        .action-card.primary i { color: white; }
 
-        .header-right { position: absolute; right: 0; display: flex; gap: 10px; }
-
-        .filter-icon-btn, .export-icon-btn {
-            width: 40px; height: 40px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 20px; cursor: pointer; transition: background 0.1s;
+        /* --- HORIZONTAL STATS --- */
+        .stats-scroller {
+            display: flex; gap: 12px; overflow-x: auto; padding-bottom: 10px; margin: 0 -20px 20px -20px; padding-left: 20px; padding-right: 20px;
+            -webkit-overflow-scrolling: touch; scrollbar-width: none;
         }
-        .filter-icon-btn { border: 2px solid #000; background: transparent; color: #000; }
-        .filter-icon-btn:active { background: #f0f0f0; }
-        .export-icon-btn { border: none; background: #f2f2f7; color: #000; }
-
-        .app-title { font-size: 32px; font-weight: 900; margin: 0; letter-spacing: -0.5px; }
-        .app-subtitle { font-size: 15px; color: var(--text-sub); margin-top: 4px; font-style: italic; }
-        .app-version { font-size: 12px; color: #bbb; margin-top: 4px; font-weight: 600; }
-
-        .section-title { font-size: 20px; font-weight: 800; margin-bottom: 20px; color: #000; text-align: center; }
-
-        /* --- STATS GRID --- */
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px; }
-        .stat-card {
-            background: var(--card-bg); border-radius: 20px; padding: 20px;
-            display: flex; flex-direction: column; justify-content: space-between;
-            min-height: 90px; cursor: pointer; transition: transform 0.1s;
+        .stats-scroller::-webkit-scrollbar { display: none; }
+        
+        .stat-pill {
+            min-width: 130px; background: white; border: 1px solid #e5e5ea; border-radius: 16px; padding: 14px;
+            display: flex; flex-direction: column; justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.02); flex-shrink: 0;
         }
-        .stat-card:active { transform: scale(0.98); background: #ebebeb; }
-        .stat-label { font-size: 13px; color: var(--text-sub); font-weight: 600; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .stat-value { font-size: 32px; font-weight: 800; color: #000; line-height: 1; }
+        .stat-pill-label { font-size: 11px; color: #8e8e93; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; }
+        .stat-pill-val { font-size: 26px; font-weight: 900; color: #000; line-height: 1; }
 
         /* --- BAYS GRID --- */
+        .section-header { font-size: 18px; font-weight: 800; margin-bottom: 15px; color: #000; display:flex; justify-content:space-between; align-items:center; }
         .bays-grid { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; margin-bottom: 40px; min-height: 60px; }
         .empty-state-text { color: var(--text-sub); font-size: 16px; font-weight: 500; text-align: center; width: 100%; padding: 20px 0; }
 
@@ -150,11 +147,8 @@
             position: relative; box-sizing: border-box;
         }
         .bay-circle:active { transform: scale(0.92); }
-
         .bay-circle.unavailable { background-color: #8e8e93 !important; opacity: 0.5; color: #666; border: none !important; }
         .bay-circle.unavailable .bay-timer { color: #666; }
-
-        /* Optimized Status Classes */
         .bay-circle.status-ok { border: 4px solid #34c759; }
         .bay-circle.status-warn { border: 4px solid #ff9500; }
         .bay-circle.status-crit { border: 4px solid #ff3b30; }
@@ -176,31 +170,19 @@
             border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.15);
         }
         .badge-w, .badge-c { background-color: #000; }
-
         .bay-timer {
             position: absolute; bottom: -5px; font-size: 9px; font-weight: 700;
             color: #000; background: rgba(255, 255, 255, 0.9);
             padding: 1px 4px; border-radius: 4px; min-width: 20px; text-align: center;
         }
 
-        /* --- ACTIVE TAB --- */
-        .active-tab-list { display: flex; flex-direction: column; gap: 15px; }
-        .active-card {
-            background: white; border: 2px solid #000; border-radius: 20px;
-            padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);
-            display: flex; justify-content: space-between; align-items: flex-start;
-        }
-        .active-card-info { display: flex; flex-direction: column; gap: 6px; flex-grow: 1; }
-        .active-card-header { display: flex; align-items: center; gap: 10px; }
-        .active-card-title { font-size: 20px; font-weight: 800; color: #000; }
-        .door-pill { background: #000; color: white; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 30px; }
-        .active-card-details { font-size: 15px; color: var(--text-sub); font-weight: 500; }
-        .active-card-time { font-size: 14px; color: #000; font-weight: 700; }
-        .active-card-actions { display: flex; flex-direction: column; gap: 12px; align-items: flex-end; }
-        .icon-btn {
-            background: #f2f2f7; border: none; width: 40px; height: 40px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center; cursor: pointer; color: #000; font-size: 20px;
-        }
+        /* --- COMMON UI --- */
+        .header-bar { position: relative; display: flex; justify-content: center; align-items: center; height: 50px; margin: 20px 0 20px 0; }
+        .header-bar h1 { font-size: 24px; font-weight: 800; margin: 0; }
+        .header-right { position: absolute; right: 0; display: flex; gap: 10px; }
+        .filter-icon-btn, .export-icon-btn { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; cursor: pointer; transition: background 0.1s; }
+        .filter-icon-btn { border: 2px solid #000; background: transparent; color: #000; }
+        .export-icon-btn { border: none; background: #f2f2f7; color: #000; }
 
         /* --- STAFFING --- */
         .staffing-header-card { background: #000; color: #fff; border-radius: 20px; padding: 20px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
@@ -214,9 +196,6 @@
         .dop-ok { background: #d1fae5; color: #065f46; }
         .dop-warn { background: #fee2e2; color: #991b1b; }
         .dop-over { background: #e0f2fe; color: #0369a1; }
-
-        .staff-section-title { font-size: 18px; font-weight: 800; margin: 25px 0 15px 0; display: flex; justify-content: space-between; align-items: center; }
-        .staff-count-badge { background: #e5e5ea; color: #000; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 700; margin-left: 8px; }
         .staff-card { background: white; border: 1px solid #e5e5ea; border-radius: 18px; padding: 16px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); transition: all 0.3s ease; }
         .staff-card.cut { opacity: 0.6; background: #f9f9f9; }
         .staff-top-row { display: flex; justify-content: space-between; align-items: center; width: 100%; }
@@ -227,45 +206,20 @@
         .role-select { width: 100%; padding: 8px; background: #f2f2f7; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; color: #000; margin-top: 4px; outline: none; }
         .breakdown-row { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.7); margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1); }
         .staff-checkbox-list { max-height: 250px; overflow-y: auto; border: 1px solid #e5e5ea; border-radius: 12px; background: #f9f9f9; padding: 5px; }
-        
         .staff-item-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 8px; border-bottom: 1px solid #e5e5ea; }
         .staff-item-row:last-child { border-bottom: none; }
         .staff-check-label { display: flex; align-items: center; gap: 12px; flex: 1; cursor: pointer; font-size: 16px; font-weight: 500; }
         .staff-check-label input { width: 20px; height: 20px; accent-color: #000; }
         .staff-role-select { background: #f2f2f7; border: none; padding: 8px; border-radius: 8px; font-size: 13px; font-weight: 600; width: 110px; color: #000; }
         .staff-other-input { background: #fff; border: 1px solid #000; padding: 8px; border-radius: 8px; font-size: 13px; width: 100px; color: #000; margin-left: 5px; display: none; }
-        
+        .staff-count-badge { background: #e5e5ea; color: #000; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 700; margin-left: 8px; }
+
         /* Loaned Staff Styling */
-        .loaned-card {
-            background: #fff; border: 1px dashed #ccc; border-radius: 18px; padding: 16px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.02); display: flex; justify-content: space-between; align-items: center;
-        }
+        .loaned-card { background: #fff; border: 1px dashed #ccc; border-radius: 18px; padding: 16px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); display: flex; justify-content: space-between; align-items: center; }
         .loan-dest-pill { background: #e5e5ea; color: #555; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; margin-left: 6px; }
 
-        /* --- TOOLS GRID --- */
-        .tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 10px 0; }
-        .tool-card { background: #fff; border-radius: 24px; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; aspect-ratio: 1 / 1; box-shadow: 0 4px 15px rgba(0,0,0,0.05); cursor: pointer; transition: transform 0.1s; }
-        .tool-card:active { transform: scale(0.96); background: #f9f9f9; }
-        .tool-icon-wrapper { width: 50px; height: 50px; background: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 24px; margin-bottom: 12px; }
-        .tool-title { font-size: 16px; font-weight: 700; color: #000; margin-bottom: 4px; }
-        .tool-card.add { border: 2px dashed #ccc; background: transparent; box-shadow: none; }
-        .tool-card.add .tool-icon-wrapper { background: #e5e5ea; color: #000; }
-
         /* --- LOGS --- */
-        .stats-collapse-btn { width: 100%; background: #f2f2f7; border: none; border-radius: 16px; padding: 18px; display: flex; justify-content: space-between; align-items: center; font-size: 16px; font-weight: 700; color: #000; cursor: pointer; margin-bottom: 20px; }
-        .stats-content-area { background: white; border: 1px solid #e5e5ea; border-radius: 16px; padding: 20px; margin-bottom: 25px; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
-        .stats-table { width: 100%; border-collapse: collapse; font-size: 15px; }
-        .stats-table th { text-align: left; color: var(--text-sub); font-weight: 600; padding-bottom: 12px; border-bottom: 1px solid #e5e5ea; }
-        .stats-table td { padding: 12px 0; border-bottom: 1px solid #f9f9f9; color: #000; font-weight: 500; }
-        .stats-table td:last-child { font-weight: 800; text-align: right; }
-        .active-filter-display { display: flex; align-items: center; justify-content: space-between; background: #000; color: white; padding: 12px 20px; border-radius: 16px; margin-bottom: 20px; font-weight: 600; }
-        .logs-list { display: flex; flex-direction: column; gap: 15px; }
-        
-        /* LOG CARD STYLES */
-        .log-card {
-            background: white; border: 1px solid #e5e5ea; border-radius: 20px; padding: 16px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.03); display: flex; justify-content: space-between; align-items: center; gap: 15px;
-        }
+        .log-card { background: white; border: 1px solid #e5e5ea; border-radius: 20px; padding: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); display: flex; justify-content: space-between; align-items: center; gap: 15px; }
         .log-info { display: flex; flex-direction: column; gap: 8px; flex-grow: 1; min-width: 0; }
         .log-header-row { display: flex; align-items: center; gap: 10px; }
         .log-door-pill { background: #000; color: #fff; font-size: 11px; font-weight: 800; padding: 6px 12px; border-radius: 8px; cursor: pointer; flex-shrink: 0; letter-spacing: 0.5px; text-transform: uppercase; }
@@ -285,29 +239,28 @@
         .log-actions-row { display: flex; gap: 8px; }
         .log-mini-btn { width: 36px; height: 36px; border-radius: 12px; border: 1px solid #e5e5ea; background: white; display: flex; align-items: center; justify-content: center; font-size: 18px; color: #000; cursor: pointer; transition: all 0.1s; }
         .log-mini-btn:active { background: #f2f2f7; transform: scale(0.95); }
-
+        .stats-collapse-btn { width: 100%; background: #f2f2f7; border: none; border-radius: 16px; padding: 18px; display: flex; justify-content: space-between; align-items: center; font-size: 16px; font-weight: 700; color: #000; cursor: pointer; margin-bottom: 20px; }
+        .stats-content-area { background: white; border: 1px solid #e5e5ea; border-radius: 16px; padding: 20px; margin-bottom: 25px; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
+        .stats-table { width: 100%; border-collapse: collapse; font-size: 15px; }
+        .stats-table th { text-align: left; color: var(--text-sub); font-weight: 600; padding-bottom: 12px; border-bottom: 1px solid #e5e5ea; }
+        .stats-table td { padding: 12px 0; border-bottom: 1px solid #f9f9f9; color: #000; font-weight: 500; }
+        .stats-table td:last-child { font-weight: 800; text-align: right; }
         .search-bar { width: 100%; padding: 14px; border: 1px solid #e5e5ea; border-radius: 12px; background: #f9f9f9; font-size: 16px; margin-bottom: 20px; outline: none; }
-        .load-more-btn { width: 100%; padding: 15px; background: #f2f2f7; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; margin-top: 10px; color: #555; }
+        .active-filter-display { display: flex; align-items: center; justify-content: space-between; background: #000; color: white; padding: 12px 20px; border-radius: 16px; margin-bottom: 20px; font-weight: 600; }
 
-        /* --- UPDATED: Aesthetic Option Pills --- */
-        .options-grid { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 5px; }
-        .option-toggle { flex: 1; position: relative; cursor: pointer; min-width: 80px; }
-        .option-toggle input { position: absolute; opacity: 0; width: 0; height: 0; }
-        .option-toggle span {
-            display: flex; align-items: center; justify-content: center;
-            width: 100%; padding: 12px;
-            background: #f2f2f7; color: #8e8e93;
-            border-radius: 12px; font-weight: 700; font-size: 14px;
-            transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
-            border: 1px solid transparent;
-            box-sizing: border-box;
-        }
-        .option-toggle input:checked ~ span {
-            background: #000; color: #fff;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-            transform: translateY(-1px);
-        }
-        .option-toggle:active span { transform: scale(0.96); }
+        /* --- SETTINGS --- */
+        .settings-header { font-size: 22px; font-weight: 800; margin: 30px 0 10px 0; color: #000; }
+        .settings-group { background: #fff; border-radius: 16px; overflow: hidden; margin-bottom: 20px; border: 1px solid #e5e5ea; }
+        .settings-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #f2f2f7; background: #fff; }
+        .settings-row:last-child { border-bottom: none; }
+        .settings-label { font-size: 16px; font-weight: 600; color: #000; }
+        .settings-input-inline { background: #f2f2f7; border: none; padding: 8px 12px; border-radius: 8px; font-size: 16px; width: 100px; text-align: right; }
+        .settings-btn-inline { background: #000; color: #fff; border: none; border-radius: 8px; padding: 6px 12px; font-weight: 600; font-size: 14px; }
+        .toggle-switch { width: 50px; height: 30px; background: #e5e5ea; border-radius: 15px; position: relative; cursor: pointer; transition: background 0.2s; }
+        .toggle-switch.checked { background: #000; }
+        .toggle-switch::after { content: ''; position: absolute; left: 2px; top: 2px; width: 26px; height: 26px; background: white; border-radius: 50%; transition: left 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .toggle-switch.checked::after { left: 22px; }
+        .settings-note { font-size: 13px; color: #8e8e93; padding: 0 10px; margin-bottom: 20px; line-height: 1.4; }
 
         /* --- NAV --- */
         .tab-bar { position: fixed; bottom: 30px; left: 20px; right: 20px; background: white; border-radius: 40px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); display: flex; justify-content: space-around; align-items: center; height: 70px; z-index: 1000; padding-bottom: 0; }
@@ -326,52 +279,31 @@
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 2000; display: none; justify-content: center; align-items: flex-end; backdrop-filter: blur(4px); }
         .modal-sheet { background: white; width: 100%; max-width: 600px; border-top-left-radius: 28px; border-top-right-radius: 28px; padding: 30px; padding-bottom: max(40px, var(--safe-bottom)); animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-
-        /* High Z-Index for Alerts to prevent freezing */
         .z-high { z-index: 3000 !important; }
-
         .form-input { width: 100%; padding: 18px; background: #f2f2f7; border: none; border-radius: 16px; font-size: 18px; margin-bottom: 15px; box-sizing: border-box; outline: none; appearance: none; color: #000; font-weight: 500; }
         .type-selector { display: flex; background: #f2f2f7; padding: 5px; border-radius: 16px; margin-bottom: 25px; }
         .type-opt { flex: 1; text-align: center; padding: 12px; border-radius: 12px; font-weight: 700; font-size: 15px; color: var(--text-sub); cursor: pointer; }
         .type-opt.selected { background: white; color: #000; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-
         .btn-primary { width: 100%; padding: 18px; border-radius: 16px; border: none; font-size: 17px; font-weight: 800; background: #000; color: white; margin-top: 10px; cursor: pointer; }
         .btn-danger { background: #ff3b30; }
         .btn-history { background: #f2f2f7; color: #000; margin-top: 10px; }
         .btn-cancel { background: transparent; color: var(--text-sub); width: 100%; padding: 15px; border: none; font-size: 16px; font-weight: 600; margin-top: 5px; cursor: pointer; }
-
-        .detail-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f2f2f7; }
-        .detail-label { color: var(--text-sub); font-weight: 600; font-size: 15px; }
-        .detail-value { font-weight: 700; color: #000; font-size: 15px; }
-        .modal-actions-row { display: flex; gap: 15px; margin-top: 10px; }
-        .modal-icon-btn { background: #f2f2f7; border: none; width: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 22px; cursor: pointer; color: #000; }
-        .filter-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
-        .filter-btn { background: #f2f2f7; padding: 15px 0; border-radius: 12px; text-align: center; font-weight: 700; font-size: 16px; cursor: pointer; }
-        .filter-btn.active { background: #000; color: white; }
-
-        /* Settings */
-        .settings-header { font-size: 22px; font-weight: 800; margin: 30px 0 10px 0; color: #000; }
-        .settings-group { background: #fff; border-radius: 16px; overflow: hidden; margin-bottom: 20px; border: 1px solid #e5e5ea; }
-        .settings-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #f2f2f7; background: #fff; }
-        .settings-row:last-child { border-bottom: none; }
-        .settings-label { font-size: 16px; font-weight: 600; color: #000; }
-        .settings-input-inline { background: #f2f2f7; border: none; padding: 8px 12px; border-radius: 8px; font-size: 16px; width: 100px; text-align: right; }
-        .settings-btn-inline { background: #000; color: #fff; border: none; border-radius: 8px; padding: 6px 12px; font-weight: 600; font-size: 14px; }
-        .toggle-switch { width: 50px; height: 30px; background: #e5e5ea; border-radius: 15px; position: relative; cursor: pointer; transition: background 0.2s; }
-        .toggle-switch.checked { background: #000; }
-        .toggle-switch::after { content: ''; position: absolute; left: 2px; top: 2px; width: 26px; height: 26px; background: white; border-radius: 50%; transition: left 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .toggle-switch.checked::after { left: 22px; }
-        .stepper { display: flex; align-items: center; background: #f2f2f7; border-radius: 8px; padding: 2px; }
-        .stepper-btn { width: 32px; height: 32px; border: none; background: transparent; font-size: 18px; font-weight: 700; cursor: pointer; color: #000; }
-        .stepper-val { font-size: 16px; font-weight: 600; width: 24px; text-align: center; }
-        .segment-control { display: flex; background: #f2f2f7; border-radius: 8px; padding: 2px; }
-        .segment-opt { padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 600; color: #8e8e93; cursor: pointer; }
-        .segment-opt.selected { background: #fff; color: #000; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .settings-note { font-size: 13px; color: #8e8e93; padding: 0 10px; margin-bottom: 20px; line-height: 1.4; }
-        .saved-accounts-list { padding: 0 20px 20px 20px; }
-        .saved-acct-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f2f2f7; font-size: 16px; font-weight: 500; }
-        .delete-acct-btn { color: #ff3b30; font-size: 20px; cursor: pointer; }
-
+        .options-grid { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 5px; }
+        .option-toggle { flex: 1; position: relative; cursor: pointer; min-width: 80px; }
+        .option-toggle input { position: absolute; opacity: 0; width: 0; height: 0; }
+        .option-toggle span { display: flex; align-items: center; justify-content: center; width: 100%; padding: 12px; background: #f2f2f7; color: #8e8e93; border-radius: 12px; font-weight: 700; font-size: 14px; transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1); border: 1px solid transparent; box-sizing: border-box; }
+        .option-toggle input:checked ~ span { background: #000; color: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.15); transform: translateY(-1px); }
+        .option-toggle:active span { transform: scale(0.96); }
+        
+        /* TOOLS GRID */
+        .tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 10px 0; }
+        .tool-card { background: #fff; border-radius: 24px; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; aspect-ratio: 1 / 1; box-shadow: 0 4px 15px rgba(0,0,0,0.05); cursor: pointer; transition: transform 0.1s; }
+        .tool-card:active { transform: scale(0.96); background: #f9f9f9; }
+        .tool-icon-wrapper { width: 50px; height: 50px; background: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 24px; margin-bottom: 12px; }
+        .tool-title { font-size: 16px; font-weight: 700; color: #000; margin-bottom: 4px; }
+        .tool-card.add { border: 2px dashed #ccc; background: transparent; box-shadow: none; }
+        .tool-card.add .tool-icon-wrapper { background: #e5e5ea; color: #000; }
+        
         /* Slider */
         .settings-slider-container { display: flex; flex-direction: column; gap: 15px; padding: 15px 20px; }
         .slider-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
@@ -398,42 +330,83 @@
 <div class="app-container">
 
     <div id="tab-dashboard" class="tab-content active">
-        <div class="top-actions">
-            <button class="action-btn" onclick="openStartSortFlow()"><i class="ph ph-play-circle"></i> Start Sort</button>
-            <button class="action-btn" onclick="openAddUnloaderModal()"><i class="ph ph-user-plus"></i> Add Unloader</button>
-            <button class="action-btn" onclick="openArrivalModal()"><i class="ph ph-truck"></i> Onboard</button>
+        <div class="dash-top-bar">
+            <div>
+                <div class="dash-greeting" id="greeting-text">Good Evening</div>
+                <h1 class="dash-title">Wally Dashboard</h1>
+            </div>
+            <div class="dash-date" id="dash-date-display">--:--</div>
         </div>
 
-        <div class="dashboard-header">
-            <h1 class="app-title">Wally Dashboard</h1>
-            <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 3.52</div>
+        <div class="today-card">
+            <div class="today-header">
+                <div class="today-title"><i class="ph ph-check-square-offset"></i> Today's Focus</div>
+            </div>
+            
+            <div class="task-list">
+                <div class="task-item" id="task-1" onclick="toggleTask(1)">
+                    <div class="task-check"><i class="ph ph-check"></i></div>
+                    <div class="task-text">Pre-Sort Safety Meeting</div>
+                </div>
+                <div class="task-item" id="task-2" onclick="toggleTask(2)">
+                    <div class="task-check"><i class="ph ph-check"></i></div>
+                    <div class="task-text">Yard Integrity Check</div>
+                </div>
+                <div class="task-item" id="task-3" onclick="toggleTask(3)">
+                    <div class="task-check"><i class="ph ph-check"></i></div>
+                    <div class="task-text">Lockout / Tagout Verify</div>
+                </div>
+            </div>
+
+            <div class="obs-row">
+                <span class="obs-label">Observations (SWM)</span>
+                <div class="obs-control">
+                    <button class="obs-btn" onclick="updateObs(-1)">−</button>
+                    <span class="obs-count" id="obs-count-val">0</span>
+                    <button class="obs-btn" onclick="updateObs(1)">+</button>
+                </div>
+            </div>
+            
+            <div class="today-progress"><div class="today-fill" id="today-progress-bar"></div></div>
         </div>
 
-        <div class="section-title">Sort Statistics</div>
-        <div class="stats-grid">
-            <div class="stat-card" onclick="viewStatLogs('Wally')">
-                <div class="stat-label">Total Wallies</div>
-                <div class="stat-value" id="stat-total-wally">0</div>
+        <div class="action-grid">
+            <div class="action-card primary" onclick="openStartSortFlow()">
+                <i class="ph ph-play-circle"></i>
+                <span class="action-label">Start Sort</span>
             </div>
-            <div class="stat-card" onclick="viewStatLogs('CPU')">
-                <div class="stat-label">Total CPUs</div>
-                <div class="stat-value" id="stat-total-cpu">0</div>
+            <div class="action-card" onclick="openAddUnloaderModal()">
+                <i class="ph ph-user-plus"></i>
+                <span class="action-label">Add Unloader</span>
             </div>
-            <div class="stat-card" onclick="viewStatLogs('Hour-0')">
-                <div class="stat-label">Wallies This Hour</div>
-                <div class="stat-value" id="stat-hour-wally">0</div>
-            </div>
-            <div class="stat-card" onclick="viewStatLogs('Hour-1')">
-                <div class="stat-label">Wallies Last Hour</div>
-                <div class="stat-value" id="stat-last-wally">0</div>
+            <div class="action-card" onclick="openArrivalModal()">
+                <i class="ph ph-truck"></i>
+                <span class="action-label">Onboard</span>
             </div>
         </div>
 
-        <div class="section-title">Active Trailers</div>
+        <div class="section-header" style="margin-bottom:10px;">Sort Statistics</div>
+        <div class="stats-scroller">
+            <div class="stat-pill" onclick="viewStatLogs('Wally')">
+                <div class="stat-pill-label">Total Wallies</div>
+                <div class="stat-pill-val" id="stat-total-wally">0</div>
+            </div>
+            <div class="stat-pill" onclick="viewStatLogs('CPU')">
+                <div class="stat-pill-label">Total CPUs</div>
+                <div class="stat-pill-val" id="stat-total-cpu">0</div>
+            </div>
+            <div class="stat-pill" onclick="viewStatLogs('Hour-0')">
+                <div class="stat-pill-label">This Hour</div>
+                <div class="stat-pill-val" id="stat-hour-wally">0</div>
+            </div>
+            <div class="stat-pill" onclick="viewStatLogs('Hour-1')">
+                <div class="stat-pill-label">Last Hour</div>
+                <div class="stat-pill-val" id="stat-last-wally">0</div>
+            </div>
+        </div>
+
+        <div class="section-header">Bay Overview</div>
         <div id="active-trailers-grid" class="bays-grid"></div>
-
-        <div class="section-title">Open Bays</div>
         <div id="open-bays-grid" class="bays-grid"></div>
         <div style="height: 100px;"></div>
     </div>
@@ -559,7 +532,6 @@
                     </div>
                     <div class="settings-note" style="margin-top:20px; padding:0;">Allow attributing trailers completed up to <span id="attr-note-val" style="font-weight:700; color:#000;">5</span> minutes after the hour to the previous hour.</div>
                 </div>
-                <div class="settings-row"><span class="settings-label">Simulate Shift Change</span><div class="toggle-switch" id="switch-sim-window" onclick="toggleSwitch('sim-window')"></div></div>
                  <div class="settings-row"><span class="settings-label">Disable Time Attribution</span><div class="toggle-switch" id="switch-dis-window" onclick="toggleSwitch('dis-window')"></div></div>
             </div>
             <div class="settings-header">Saved Accounts</div>
@@ -836,7 +808,7 @@
     let pendingLoanId = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '3.52';
+    const APP_VERSION = '3.53';
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Matt S", "Robert W", "Trevon C", "Victor M", "Russell H", "Fonseca J"];
@@ -860,12 +832,15 @@
 
     // --- CHANGELOG ---
     const CHANGELOG = `
-v3.52:
-- DOP Uniformity: Status standardized to "DOP Under (-X)", "DOP Met", "DOP Over (+X)".
+v3.53:
+- New Dashboard:
+  - "Today's Focus" card with daily tasks & observations.
+  - Stats moved to horizontal carousel.
+  - Action buttons simplified.
+- Persistence: Daily tasks reset automatically.
 
-v3.51:
-- DOP Logic: "Over DOP" status added.
-- "Add" button bug fixed.
+v3.52:
+- DOP Uniformity: Status messages standardized.
     `;
 
     // --- STATE ---
@@ -876,6 +851,13 @@ v3.51:
     let staffing = [];
     let currentDOP = '5-2';
     let teamNamesSorted = [];
+
+    // Today's Focus State
+    let todayState = {
+        date: '',
+        tasks: [false, false, false],
+        obsCount: 0
+    };
 
     let config = {
         replenish: false, randomHistory: false, doorCount: 2,
@@ -919,6 +901,9 @@ v3.51:
         const sAccts = localStorage.getItem('ps9_accounts');
         if (sAccts) savedAccounts = JSON.parse(sAccts);
         initAttributionSettings();
+        
+        // Load Today's Focus
+        loadTodayState();
 
         const sDoors = localStorage.getItem('ps9_doors');
         const sHistory = localStorage.getItem('ps9_history');
@@ -974,6 +959,7 @@ v3.51:
         updateAccountDatalist();
         populateUnloaderSelect();
         renderDashboard();
+        renderTodayCard();
 
         setTimeout(() => {
             updateAttributionUI();
@@ -982,6 +968,73 @@ v3.51:
 
         setInterval(updateTabBadges, 2000);
         updateTabBadges();
+        
+        // Update Time Display
+        setInterval(updateHeaderTime, 60000);
+        updateHeaderTime();
+    }
+    
+    function updateHeaderTime() {
+        const now = new Date();
+        byId('dash-date-display').innerText = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+        
+        const hour = now.getHours();
+        let greeting = "Good Morning";
+        if (hour >= 12 && hour < 17) greeting = "Good Afternoon";
+        else if (hour >= 17 || hour < 4) greeting = "Good Evening";
+        
+        byId('greeting-text').innerText = greeting;
+    }
+
+    // --- TODAY'S FOCUS LOGIC ---
+    function loadTodayState() {
+        const saved = localStorage.getItem('ps9_today_state');
+        const todayStr = new Date().toDateString();
+        
+        if (saved) {
+            todayState = JSON.parse(saved);
+            // Reset if day changed
+            if (todayState.date !== todayStr) {
+                todayState = { date: todayStr, tasks: [false, false, false], obsCount: 0 };
+                saveTodayState();
+            }
+        } else {
+            todayState = { date: todayStr, tasks: [false, false, false], obsCount: 0 };
+            saveTodayState();
+        }
+    }
+    
+    function saveTodayState() {
+        localStorage.setItem('ps9_today_state', JSON.stringify(todayState));
+        renderTodayCard();
+    }
+    
+    function toggleTask(idx) {
+        todayState.tasks[idx-1] = !todayState.tasks[idx-1];
+        saveTodayState();
+    }
+    
+    function updateObs(delta) {
+        todayState.obsCount = Math.max(0, todayState.obsCount + delta);
+        saveTodayState();
+    }
+    
+    function renderTodayCard() {
+        // Render Tasks
+        for(let i=0; i<3; i++) {
+            const el = byId(`task-${i+1}`);
+            if(todayState.tasks[i]) el.classList.add('done');
+            else el.classList.remove('done');
+        }
+        
+        // Render Obs
+        byId('obs-count-val').innerText = todayState.obsCount;
+        
+        // Render Progress
+        const total = 3 + 5; // 3 tasks + 5 obs goal
+        const current = todayState.tasks.filter(t=>t).length + Math.min(todayState.obsCount, 5);
+        const pct = Math.round((current / total) * 100);
+        byId('today-progress-bar').style.width = `${pct}%`;
     }
 
     // --- GRANULAR SAVING ---
@@ -1195,7 +1248,7 @@ v3.51:
                         <option value="Bulk Sweep">Bulk Sweep (Locked)</option>
                         <option value="Other">Other</option>
                     </select>
-                    <input type="text" id="other-input-${n.replace(/\s+/g, '')}" class="staff-other-input" placeholder="Role">
+                    <input type="text" id="other-input-${n.replace(/\s+/g, '')}" class="staff-other-input" placeholder="Area">
                 `;
                 container.appendChild(item);
             }
@@ -1565,7 +1618,7 @@ v3.51:
         
         if (diff === 0) {
             statusBar.className = 'dop-status dop-ok';
-            statusBar.innerText = `DOP Met`;
+            statusBar.innerText = `DOP Met ✅`;
         } else if (diff > 0) {
             statusBar.className = 'dop-status dop-over';
             statusBar.innerText = `DOP Over (+${diff})`;
