@@ -70,6 +70,7 @@
             padding: 10px 0;
         }
         .dash-title { font-size: 28px; font-weight: 900; margin: 0; letter-spacing: -0.5px; }
+        .dash-subtitle { font-size: 13px; color: var(--text-sub); margin-top: 2px; font-weight: 500; }
         
         /* --- TODAY CARD --- */
         .today-card {
@@ -82,24 +83,27 @@
         }
         .today-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .today-title { font-size: 16px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
-        .today-progress { width: 100%; height: 5px; background: #f2f2f7; border-radius: 3px; margin-top: 12px; overflow: hidden; }
-        .today-fill { height: 100%; background: #000; width: 0%; transition: width 0.3s ease; }
+        .today-empty { font-size: 13px; color: #999; text-align: center; padding: 10px 0; font-style: italic; }
         
-        .task-list { display: flex; flex-direction: column; gap: 10px; }
-        .task-item { display: flex; align-items: center; gap: 10px; cursor: pointer; }
-        .task-check { 
-            width: 20px; height: 20px; border-radius: 6px; border: 2px solid #e5e5ea; 
-            display: flex; align-items: center; justify-content: center; color: white; transition: all 0.2s;
+        .focus-list { display: flex; flex-direction: column; gap: 10px; }
+        .focus-item { 
+            display: flex; align-items: center; gap: 10px; 
+            padding-bottom: 10px; border-bottom: 1px solid #f2f2f7; 
         }
-        .task-item.done .task-check { background: #000; border-color: #000; font-size: 12px; }
-        .task-text { font-size: 14px; font-weight: 600; color: #000; transition: color 0.2s; }
-        .task-item.done .task-text { color: #ccc; text-decoration: line-through; }
-
-        .obs-row { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding-top: 10px; border-top: 1px dashed #e5e5ea; }
-        .obs-label { font-size: 13px; font-weight: 700; color: #8e8e93; }
-        .obs-control { display: flex; align-items: center; gap: 10px; background: #f2f2f7; padding: 3px; border-radius: 10px; }
-        .obs-btn { width: 28px; height: 28px; border-radius: 7px; border: none; background: #fff; font-weight: 700; font-size: 14px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .obs-count { font-size: 14px; font-weight: 700; width: 24px; text-align: center; }
+        .focus-item:last-child { border-bottom: none; padding-bottom: 0; }
+        
+        .focus-check { 
+            width: 24px; height: 24px; border-radius: 6px; border: 2px solid #e5e5ea; 
+            display: flex; align-items: center; justify-content: center; color: white; cursor: pointer; flex-shrink: 0;
+        }
+        .focus-item.done .focus-check { background: #000; border-color: #000; }
+        .focus-content { flex-grow: 1; }
+        .focus-type { font-size: 11px; font-weight: 800; color: #8e8e93; text-transform: uppercase; }
+        .focus-select { 
+            width: 100%; border: none; background: transparent; font-size: 15px; font-weight: 600; color: #000; 
+            padding: 2px 0; outline: none; -webkit-appearance: none; 
+        }
+        .focus-custom-input { width: 100%; border: 1px solid #ccc; border-radius: 4px; padding: 4px; font-size: 14px; margin-top: 2px; display: none; }
 
         /* --- ACTION ROW (2 Cols) --- */
         .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
@@ -113,6 +117,8 @@
         .action-label { font-size: 14px; font-weight: 700; }
         .action-card.primary { background: #000; color: white; border: none; }
         .action-card.primary i { color: white; }
+        .action-card.danger { background: #ffe5e5; color: #ff3b30; border-color: #ff3b30; }
+        .action-card.danger i { color: #ff3b30; }
 
         /* --- STATS GRID (TIGHT 2x2) --- */
         .section-header { font-size: 15px; font-weight: 800; margin-bottom: 10px; color: #000; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.6; }
@@ -242,7 +248,7 @@
         .search-bar { width: 100%; padding: 14px; border: 1px solid #e5e5ea; border-radius: 12px; background: #f9f9f9; font-size: 16px; margin-bottom: 20px; outline: none; }
         .active-filter-display { display: flex; align-items: center; justify-content: space-between; background: #000; color: white; padding: 12px 20px; border-radius: 16px; margin-bottom: 20px; font-weight: 600; }
 
-        /* --- SETTINGS --- */
+        /* --- SETTINGS & TOOLS --- */
         .settings-header { font-size: 22px; font-weight: 800; margin: 30px 0 10px 0; color: #000; }
         .settings-group { background: #fff; border-radius: 16px; overflow: hidden; margin-bottom: 20px; border: 1px solid #e5e5ea; }
         .settings-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #f2f2f7; background: #fff; }
@@ -310,6 +316,13 @@
         .slider-tick { width: 1px; height: 8px; background: #ccc; position: relative; }
         .slider-tick-label { position: absolute; top: 12px; font-size: 11px; color: #8e8e93; transform: translateX(-50%); white-space: nowrap; font-weight: 600; }
         #restore-file-input { display: none; }
+        
+        /* CHECKLIST IN POST SORT */
+        .checklist-item { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid #f2f2f7; cursor: pointer; }
+        .checklist-item:last-child { border-bottom: none; }
+        .checklist-box { width: 24px; height: 24px; border: 2px solid #e5e5ea; border-radius: 6px; margin-right: 12px; display: flex; align-items: center; justify-content: center; color: white; transition: all 0.2s; }
+        .checklist-item.checked .checklist-box { background: #000; border-color: #000; }
+        .checklist-label { font-size: 16px; font-weight: 600; color: #000; }
     </style>
 </head>
 <body>
@@ -326,6 +339,7 @@
     <div id="tab-dashboard" class="tab-content active">
         <div class="dash-top-bar">
             <h1 class="dash-title">Wally Dashboard</h1>
+            <div class="dash-subtitle">by Fitz Joseph</div>
         </div>
 
         <div class="today-card">
@@ -333,31 +347,9 @@
                 <div class="today-title"><i class="ph ph-check-square-offset"></i> Today's Focus</div>
             </div>
             
-            <div class="task-list">
-                <div class="task-item" id="task-1" onclick="toggleTask(1)">
-                    <div class="task-check"><i class="ph ph-check"></i></div>
-                    <div class="task-text">Pre-Sort Safety Meeting</div>
-                </div>
-                <div class="task-item" id="task-2" onclick="toggleTask(2)">
-                    <div class="task-check"><i class="ph ph-check"></i></div>
-                    <div class="task-text">Yard Integrity Check</div>
-                </div>
-                <div class="task-item" id="task-3" onclick="toggleTask(3)">
-                    <div class="task-check"><i class="ph ph-check"></i></div>
-                    <div class="task-text">Lockout / Tagout Verify</div>
-                </div>
+            <div id="today-focus-list" class="focus-list">
+                <div class="today-empty">Configure in Tools</div>
             </div>
-
-            <div class="obs-row">
-                <span class="obs-label">Observations (SWM)</span>
-                <div class="obs-control">
-                    <button class="obs-btn" onclick="updateObs(-1)">−</button>
-                    <span class="obs-count" id="obs-count-val">0</span>
-                    <button class="obs-btn" onclick="updateObs(1)">+</button>
-                </div>
-            </div>
-            
-            <div class="today-progress"><div class="today-fill" id="today-progress-bar"></div></div>
         </div>
 
         <div class="action-grid">
@@ -365,9 +357,9 @@
                 <i class="ph ph-play-circle"></i>
                 <span class="action-label">Start Sort</span>
             </div>
-            <div class="action-card" onclick="openAddUnloaderModal()">
-                <i class="ph ph-user-plus"></i>
-                <span class="action-label">Add Unloader</span>
+            <div class="action-card danger" onclick="openEndSortFlow()">
+                <i class="ph ph-stop-circle"></i>
+                <span class="action-label">End Sort</span>
             </div>
         </div>
 
@@ -484,14 +476,11 @@
              <div class="header-bar" style="margin:0;"><h1>Tools</h1></div>
         </div>
         <div class="tools-grid">
+             <div class="tool-card" onclick="openFocusConfigModal()">
+                <div class="tool-icon-wrapper"><i class="ph ph-list-checks"></i></div><div class="tool-title">Plan Daily Focus</div>
+            </div>
             <div class="tool-card" onclick="openPPHModal()">
                 <div class="tool-icon-wrapper"><i class="ph ph-calculator"></i></div><div class="tool-title">PPH Calculator</div>
-            </div>
-            <div class="tool-card" onclick="alert('Observation Corner coming soon')">
-                <div class="tool-icon-wrapper"><i class="ph ph-eye"></i></div><div class="tool-title">Observation</div>
-            </div>
-             <div class="tool-card add" onclick="alert('More tools soon')">
-                <div class="tool-icon-wrapper"><i class="ph ph-plus"></i></div><div class="tool-title">Add Tool</div>
             </div>
         </div>
     </div>
@@ -518,6 +507,7 @@
                     </div>
                     <div class="settings-note" style="margin-top:20px; padding:0;">Allow attributing trailers completed up to <span id="attr-note-val" style="font-weight:700; color:#000;">5</span> minutes after the hour to the previous hour.</div>
                 </div>
+                <div class="settings-row"><span class="settings-label">Simulate Shift Change</span><div class="toggle-switch" id="switch-sim-window" onclick="toggleSwitch('sim-window')"></div></div>
                  <div class="settings-row"><span class="settings-label">Disable Time Attribution</span><div class="toggle-switch" id="switch-dis-window" onclick="toggleSwitch('dis-window')"></div></div>
             </div>
             <div class="settings-header">Saved Accounts</div>
@@ -561,219 +551,45 @@
     <button class="tab-btn" onclick="switchTab('settings', this)" id="tab-btn-settings"><i class="ph ph-gear"></i><span>Settings</span><span class="tab-badge" id="badge-settings">0</span></button>
 </nav>
 
-<div class="modal-overlay" id="start-sort-modal-1">
+<div class="modal-overlay" id="focus-config-modal">
     <div class="modal-sheet">
-        <h2 style="text-align:center; margin-bottom:20px;">Start Sort (1/2)</h2>
-        <div style="margin-bottom:20px;"><label class="settings-label" style="display:block; margin-bottom:10px;">Shift Start Time</label><input type="time" id="start-sort-time" class="form-input" value="19:55"></div>
-        <button class="btn-primary" onclick="nextSortStep()">Next</button><button class="btn-cancel" onclick="closeModal('start-sort-modal-1')">Cancel</button>
-    </div>
-</div>
-<div class="modal-overlay" id="start-sort-modal-2">
-    <div class="modal-sheet">
-        <h2 style="text-align:center; margin-bottom:20px;">Start Sort (2/2)</h2>
-        <div style="margin-bottom:20px;"><label class="settings-label" style="display:block; margin-bottom:10px;">Daily Operating Plan</label><select id="start-sort-dop" class="form-input"><option value="5-2">5-2</option><option value="6-2">6-2</option><option value="7-2">7-2</option><option value="8-2">8-2</option></select></div>
-        <button class="btn-primary" onclick="finishStartSort()">Start Shift</button><button class="btn-cancel" onclick="closeModal('start-sort-modal-2')">Back</button>
-    </div>
-</div>
-<div class="modal-overlay" id="changelog-modal"><div class="modal-sheet"><h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Changelog</h2><div id="changelog-content" style="max-height:300px; overflow-y:auto; font-size:14px; line-height:1.5; color:#333; white-space: pre-wrap;"></div><button class="btn-cancel" onclick="closeModal('changelog-modal')" style="margin-top:20px;">Close</button></div></div>
-<div class="modal-overlay" id="pph-modal">
-    <div class="modal-sheet">
-        <h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">PPH Calculator</h2>
-        <div style="background:#f2f2f7; border-radius:16px; padding:20px; margin-bottom:20px; text-align:center;">
-            <div style="font-size:13px; color:#757575; font-weight:700; letter-spacing:0.5px; margin-bottom:5px;">TOTAL UNLOADER HOURS</div>
-            <input type="number" id="pph-unloader-hours-input" class="form-input" style="font-size:32px; font-weight:800; color:#000; text-align:center; background:transparent; border:none; width:100%; padding:0; margin:0;" oninput="calculatePPH()" placeholder="0.00">
-            <div style="font-size:12px; color:#757575; margin-top:4px;">Excludes Belt Tenders & Sweeps</div>
+        <h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Plan Daily Focus</h2>
+        <div style="margin-bottom:20px; display:flex; gap:10px;">
+             <button class="btn-primary" style="flex:1;" onclick="addFocusItem('SWM')">Add SWM</button>
+             <button class="btn-primary" style="flex:1; background:#8e8e93;" onclick="addFocusItem('OJS')">Add OJS</button>
+             <button class="btn-primary" style="flex:1; background:#000;" onclick="addFocusItem('OBS')">Add OBS</button>
         </div>
-        <div style="margin-bottom:20px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Total Volume</label><input type="number" id="pph-volume-input" class="form-input" placeholder="Enter package count" oninput="calculatePPH()"></div>
-        <div style="text-align:center; margin-bottom:30px;"><div style="font-size:14px; color:var(--text-sub); font-weight:700;">CURRENT PPH</div><div style="font-size:60px; font-weight:900; color:#000; letter-spacing:-2px;" id="pph-result">0</div></div>
-        <div style="display:flex; gap:10px;"><button class="btn-primary" onclick="resetPPH()" style="background:#e5e5ea; color:#000; flex:1;">Reset</button><button class="btn-cancel" onclick="closeModal('pph-modal')" style="flex:1; margin-top:0; border: 1px solid #e5e5ea; border-radius:16px; padding:18px;">Close</button></div>
-    </div>
-</div>
-<div class="modal-overlay" id="add-staff-modal">
-    <div class="modal-sheet">
-        <h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Clock In Staff <span id="staff-selection-count" style="font-size:14px; color:#8e8e93; font-weight:500; margin-left:10px;">0 Selected</span></h2>
-        <div id="staff-checkbox-list" class="staff-checkbox-list"></div>
-        <div style="margin: 20px 0 20px 0; border-top: 1px solid #eee; padding-top:15px;">
-            <label style="font-size:12px; color:var(--text-sub); font-weight:600; display:block; margin-bottom:5px;">Add New Person</label>
-            <div class="staff-item-row" style="border:none; padding:0;">
-                <input type="text" id="staff-custom-name" class="form-input" style="margin:0; flex:1; margin-right:10px;" placeholder="Name" autocapitalize="words">
-                <select class="staff-role-select" id="staff-custom-role" onchange="toggleStaffOther(this)">
-                    <option value="Unloader">Auto (Unloader)</option>
-                    <option value="Belt Tender">Belt Tender (Locked)</option>
-                    <option value="Bulk Sweep">Bulk Sweep (Locked)</option>
-                    <option value="Other">Other</option>
-                </select>
-                <input type="text" id="staff-custom-other" class="staff-other-input" placeholder="Area">
-            </div>
-        </div>
-        <button class="btn-primary" onclick="confirmAddStaff()">Clock In Selected</button><button class="btn-cancel" onclick="closeModal('add-staff-modal')">Cancel</button>
-    </div>
-</div>
-<div class="modal-overlay" id="edit-staff-modal"><div class="modal-sheet"><h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Edit Staff</h2><input type="hidden" id="edit-staff-id"><div style="margin-bottom:15px;"><label class="settings-label">Start Time</label><input type="time" id="edit-staff-time" class="form-input"></div><button class="btn-primary" onclick="saveStaffEdit()">Save Changes</button><button class="btn-cancel" onclick="closeModal('edit-staff-modal')">Discard</button></div></div>
-<div class="modal-overlay" id="export-modal"><div class="modal-sheet"><h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Export Data</h2><button class="btn-primary" onclick="exportLogsCSV()">Export CSV (Spreadsheet)</button><button class="btn-primary" onclick="exportLogsPDF()" style="margin-top:10px; background:#e5e5ea; color:#000;">Export PDF (Report)</button><button class="btn-cancel" onclick="closeModal('export-modal')">Cancel</button></div></div>
-<div class="modal-overlay z-high" id="hour-attribution-modal"><div class="modal-sheet"><h2 style="margin: 0 0 10px 0; font-size:24px; text-align:center;">Attribute Completion</h2><p style="text-align:center; color:#757575; margin-bottom:25px; padding: 0 10px;">This trailer was completed during the shift transition window (<span id="attribution-window-text">00-05</span>).</p><button class="btn-primary" onclick="resolveAttribution('Previous')">Previous Hour</button><button class="btn-primary" onclick="resolveAttribution('Current')" style="background:#f2f2f7; color:#000; margin-top:10px;">Current Hour</button></div></div>
-<div class="modal-overlay" id="filter-modal">
-    <div class="modal-sheet">
-        <h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Filter Logs</h2>
-        <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; display:block; margin-bottom:5px;">By Date</label><input type="date" id="filter-date-input" class="form-input" style="padding:12px;"></div>
-        <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; display:block; margin-bottom:5px;">By Door</label><div class="filter-grid" id="filter-grid"></div></div>
-        <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; display:block; margin-bottom:5px;">By Unloader</label><select id="filter-unloader-select" class="form-input"><option value="All">All Unloaders</option></select></div>
-        <button class="btn-primary" onclick="applyFilter()">Apply Filters</button><button class="btn-cancel" onclick="closeModal('filter-modal')">Cancel</button>
-    </div>
-</div>
-<div class="modal-overlay z-high" id="duplicate-wally-modal"><div class="modal-sheet"><h2 style="margin: 0 0 10px 0; font-size:24px; text-align:center;">Duplicate Wally Detected</h2><div style="background:#f9f9f9; padding:15px; border-radius:12px; margin-bottom:20px; font-size:14px; line-height:1.5;"><p style="margin:0 0 10px 0;">Wally <strong id="dup-wally-id"></strong> was already completed.</p><div style="display:flex; justify-content:space-between;"><span style="color:#757575;">Door:</span><strong id="dup-door"></strong></div><div style="display:flex; justify-content:space-between; margin-top:5px;"><span style="color:#757575;">Completed:</span><strong id="dup-time"></strong></div><div style="display:flex; justify-content:space-between; margin-top:5px;"><span style="color:#757575;">Unloader:</span><strong id="dup-unloader"></strong></div></div><button class="btn-primary" onclick="continueWithDuplicate()">Continue Anyway</button><button class="btn-cancel" onclick="closeModal('duplicate-wally-modal')" style="margin-top:10px;">Cancel</button></div></div>
-<div class="modal-overlay" id="input-modal">
-    <div class="modal-sheet">
-        <h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Onboard Door <span id="modal-door-num"></span></h2>
-        <div id="onboard-form-container">
-            <div class="type-selector"><div class="type-opt selected" id="opt-wally" onclick="setType('Wally')">Wally</div><div class="type-opt" id="opt-cpu" onclick="setType('CPU')">CPU</div></div>
-            <div id="wally-inputs"><div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Wally Number</label><input type="text" id="input-wally-id" class="form-input" placeholder="e.g. 5589" inputmode="numeric" pattern="[0-9]*" oninput="this.value = this.value.replace(/[^0-9]/g, '')"></div></div>
-            <div id="cpu-inputs" style="display:none;">
-                <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Trailer Number</label><input type="text" id="input-trailer-id" class="form-input" placeholder="e.g. TRL123" autocapitalize="characters" oninput="this.value = this.value.toUpperCase()"></div>
-                <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Account Number</label><input type="text" id="input-account-id" class="form-input" placeholder="e.g. ACCT456" autocapitalize="characters" oninput="this.value = this.value.toUpperCase()" list="saved-accounts-datalist"><datalist id="saved-accounts-datalist"></datalist></div>
-                <div style="margin-bottom:15px;">
-                     <label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:8px; display:block;">Options</label>
-                     <div class="options-grid">
-                         <label class="option-toggle"><input type="checkbox" id="chk-hott" value="HOTT"><span>HOTT</span></label>
-                         <label class="option-toggle"><input type="checkbox" id="chk-recycle" value="RECYCLE"><span>RECYCLE</span></label>
-                         <label class="option-toggle"><input type="checkbox" id="chk-gv" value="GV"><span>GV</span></label>
-                     </div>
-                </div>
-            </div>
-            <div style="margin-bottom:15px;">
-                <label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Assigned Unloader (Optional)</label>
-                <select id="select-unloader" class="form-input" onchange="checkCustomUnloader(this)"><option value="" selected>Unassigned</option></select>
-                <input type="text" id="input-custom-unloader" class="form-input" style="display:none; margin-top:10px;" placeholder="Enter Name" autocapitalize="words">
-            </div>
-            <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Start Time</label><input type="time" id="input-onboard-time" class="form-input"></div>
-            <button class="btn-primary" id="btn-start-unload" onclick="confirmArrival()">Start Unload</button>
-        </div>
-        <div id="unavailable-msg" style="display:none; text-align:center; padding: 30px 0;"><i class="ph ph-prohibit" style="font-size: 48px; color: #8e8e93; margin-bottom: 10px;"></i><div style="font-size: 18px; font-weight: 700; color: #000;">Bay Unavailable</div><div style="font-size: 14px; color: #8e8e93;">This bay is currently marked for maintenance or offline.</div></div>
-        <button class="btn-primary btn-history" onclick="viewDoorLogs(currentDoor)">View History</button>
-        <button class="btn-primary" id="btn-toggle-availability" onclick="handleAvailabilityToggle()" style="background:white; border:2px solid #e5e5ea; color:#000; margin-top:10px;">Mark Unavailable</button>
-        <button class="btn-cancel" onclick="closeModal('input-modal')">Cancel</button>
-    </div>
-</div>
-<div class="modal-overlay" id="add-unloader-modal"><div class="modal-sheet"><h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Add New Unloader</h2><div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Unloader Name</label><input type="text" id="input-new-unloader-name" class="form-input" placeholder="e.g. John Doe" autocapitalize="words"></div><button class="btn-primary" onclick="confirmAddUnloader()">Add Name</button><button class="btn-cancel" onclick="closeModal('add-unloader-modal')">Cancel</button></div></div>
-<div class="modal-overlay" id="active-detail-modal">
-    <div class="modal-sheet">
-        <h2 style="margin: 0 0 10px 0; font-size:24px; text-align:center;">Active Door <span id="detail-door-num"></span></h2>
-        <div style="margin-bottom: 20px;">
-            <div class="detail-row"><span class="detail-label">Type</span><span class="detail-value" id="detail-type"></span></div>
-            <div class="detail-row"><span class="detail-label">ID #</span><span class="detail-value" id="detail-id"></span></div>
-            <div class="detail-row" id="row-account" style="display:none;"><span class="detail-label">Account #</span><span class="detail-value" id="detail-account"></span></div>
-            <div class="detail-row" id="row-cpu-opts" style="display:none;"><span class="detail-label">Options</span><span class="detail-value" id="detail-cpu-opts"></span></div>
-            <div class="detail-row"><span class="detail-label">Unloader</span><span class="detail-value" id="detail-unloader"></span></div>
-            <div class="detail-row" id="row-started-by" style="display:none;"><span class="detail-label">Started By</span><span class="detail-value" id="detail-started-by"></span></div>
-            <div class="detail-row"><span class="detail-label">Start Time</span><span class="detail-value" id="detail-time"></span></div>
-            <div class="detail-row"><span class="detail-label">Duration</span><span class="detail-value" id="detail-duration">0m</span></div>
-        </div>
-        <button class="btn-primary btn-danger" onclick="confirmCompleteDoor()">Complete Unload</button>
-        <div class="modal-actions-row">
-            <button class="modal-icon-btn" onclick="openEditActiveModalFromDetail()" style="flex:1"><i class="ph ph-pencil-simple"></i></button>
-            <button class="modal-icon-btn" onclick="openMoveMenu()" style="flex:1; background:#fff; border:1px solid #e5e5ea;"><i class="ph ph-arrows-left-right"></i></button>
-            <button class="btn-primary btn-history" onclick="viewDoorLogs(detailDoor)" style="flex:3; margin:0;">View History</button>
-        </div>
-        <button class="btn-cancel" onclick="closeModal('active-detail-modal')">Close</button>
-    </div>
-</div>
-<div class="modal-overlay z-high" id="unloader-required-modal">
-    <div class="modal-sheet">
-        <h2 style="margin: 0 0 10px 0; font-size:24px; text-align:center;">Assign Unloader</h2>
-        <p style="text-align:center; color:#757575; margin-bottom:25px; padding: 0 10px;">Who completed this door?</p>
-        <select id="req-unloader-select" class="form-input" onchange="checkReqCustom(this)"></select>
-        <input type="text" id="req-custom-unloader" class="form-input" style="display:none; margin-top:10px;" placeholder="Enter Name" autocapitalize="words">
-        <button class="btn-primary" onclick="saveRequiredUnloader()">Confirm & Finish</button>
-        <button class="btn-cancel" onclick="closeModal('unloader-required-modal')">Cancel</button>
-    </div>
-</div>
-<div class="modal-overlay" id="move-menu-modal">
-    <div class="modal-sheet">
-        <h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Move/Transfer</h2>
-        <p style="text-align:center; color:#757575; margin-bottom:20px;">Moving a door ends the current session but does not count towards total completions.</p>
-        <select id="move-dest-select" class="form-input" onchange="toggleMoveOther(this)">
-            <option value="Small Sort">Small Sort</option>
-            <option value="Bulk Directs">Bulk Directs</option>
-            <option value="Metros">Metros</option>
-            <option value="PS1">PS1</option>
-            <option value="PS3">PS3</option>
-            <option value="PS5">PS5</option>
-            <option value="PS7">PS7</option>
-            <option value="PS11">PS11</option>
-            <option value="Other">Other</option>
-        </select>
-        <input type="text" id="move-custom-other" class="form-input" style="display:none; margin-top:10px;" placeholder="Specify Location">
-        <button class="btn-primary" onclick="confirmMoveDoor()">Confirm Move</button>
-        <button class="btn-cancel" onclick="closeModal('move-menu-modal')">Cancel</button>
-    </div>
-</div>
-<div class="modal-overlay" id="loan-staff-modal">
-    <div class="modal-sheet">
-        <h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Loan Employee</h2>
-        <p style="text-align:center; color:#757575; margin-bottom:20px;">Where is this employee going?</p>
-        <select id="loan-dest-select" class="form-input">
-            <option value="Small Sort">Small Sort</option>
-            <option value="Metros">Metros</option>
-            <option value="PS3">PS3</option>
-            <option value="PS5">PS5</option>
-            <option value="PS7">PS7</option>
-            <option value="PS11">PS11</option>
-            <option value="PS1">PS1</option>
-            <option value="Other">Other</option>
-        </select>
-        <button class="btn-primary" onclick="confirmLoanStaff()">Confirm Loan</button>
-        <button class="btn-cancel" onclick="closeModal('loan-staff-modal')">Cancel</button>
-    </div>
-</div>
-<div class="modal-overlay" id="edit-active-modal">
-    <div class="modal-sheet">
-        <h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Edit Active Bay</h2>
-        <input type="hidden" id="edit-active-original-door">
-        <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Bay Number</label><select id="edit-active-door-select" class="form-input"></select></div>
-        <div class="type-selector"><div class="type-opt selected" id="active-opt-wally" onclick="setEditActiveType('Wally')">Wally</div><div class="type-opt" id="active-opt-cpu" onclick="setEditActiveType('CPU')">CPU</div></div>
-        <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">ID / Trailer #</label><input type="text" id="edit-active-id" class="form-input" oninput="this.value = this.value.toUpperCase()"></div>
-        <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Account # (CPU only)</label><input type="text" id="edit-active-account" class="form-input" oninput="this.value = this.value.toUpperCase()"></div>
-        <div id="edit-active-options-container" style="display:none; margin-bottom:15px;">
-             <label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:8px; display:block;">Options</label>
-             <div class="options-grid">
-                 <label class="option-toggle"><input type="checkbox" id="edit-active-chk-hott" value="HOTT"><span>HOTT</span></label>
-                 <label class="option-toggle"><input type="checkbox" id="edit-active-chk-recycle" value="RECYCLE"><span>RECYCLE</span></label>
-                 <label class="option-toggle"><input type="checkbox" id="edit-active-chk-gv" value="GV"><span>GV</span></label>
-             </div>
-        </div>
-        <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Unloader</label><select id="edit-active-unloader" class="form-input" onchange="checkActiveCustomUnloader(this)"></select><input type="text" id="edit-active-custom-unloader" class="form-input" style="display:none; margin-top:10px;" placeholder="Enter Name" autocapitalize="words"></div>
-        <div id="edit-active-assist-option" style="margin-bottom:20px; display:none;">
-            <label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:8px; display:block;">Switch Type</label>
-            <div class="segment-control">
-                <div class="segment-opt selected" id="seg-replace" onclick="setSwitchType('Replacement')">Replacement</div>
-                <div class="segment-opt" id="seg-assist" onclick="setSwitchType('Assist')">Assist</div>
-            </div>
-        </div>
-        <button class="btn-primary" onclick="saveActiveEdit()">Save Changes</button><button class="btn-cancel" onclick="closeModal('edit-active-modal')">Discard</button>
-    </div>
-</div>
-<div class="modal-overlay" id="edit-log-modal">
-    <div class="modal-sheet">
-        <h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Edit Log Entry</h2>
-        <input type="hidden" id="edit-log-index">
-        <div class="type-selector"><div class="type-opt selected" id="edit-opt-wally" onclick="setEditType('Wally')">Wally</div><div class="type-opt" id="edit-opt-cpu" onclick="setEditType('CPU')">CPU</div></div>
-        <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">ID / Trailer #</label><input type="text" id="edit-input-id" class="form-input" oninput="this.value = this.value.toUpperCase()"></div>
-        <div id="edit-log-options-container" style="display:none; margin-bottom:15px;">
-             <label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:8px; display:block;">Options</label>
-             <div class="options-grid">
-                 <label class="option-toggle"><input type="checkbox" id="edit-log-chk-hott" value="HOTT"><span>HOTT</span></label>
-                 <label class="option-toggle"><input type="checkbox" id="edit-log-chk-recycle" value="RECYCLE"><span>RECYCLE</span></label>
-                 <label class="option-toggle"><input type="checkbox" id="edit-log-chk-gv" value="GV"><span>GV</span></label>
-             </div>
-        </div>
-        <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Unloader</label><select id="edit-select-unloader" class="form-input"></select></div>
-        <button class="btn-primary" onclick="confirmLogEdit()">Save Changes</button><button class="btn-cancel" onclick="closeModal('edit-log-modal')">Discard</button>
+        <div id="focus-config-list" style="display:flex; flex-direction:column; gap:10px;"></div>
+        <button class="btn-cancel" onclick="closeModal('focus-config-modal')">Done</button>
     </div>
 </div>
 
-<script src="https://unpkg.com/@phosphor-icons/web"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+<div class="modal-overlay" id="post-sort-modal">
+    <div class="modal-sheet">
+        <h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Post Sort Checklist</h2>
+        <div id="post-sort-list"></div>
+        <button class="btn-primary" onclick="closeModal('post-sort-modal')">Complete Shift</button>
+    </div>
+</div>
+
+<div class="modal-overlay" id="start-sort-modal-1"><div class="modal-sheet"><h2 style="text-align:center; margin-bottom:20px;">Start Sort (1/2)</h2><div style="margin-bottom:20px;"><label class="settings-label" style="display:block; margin-bottom:10px;">Shift Start Time</label><input type="time" id="start-sort-time" class="form-input" value="19:55"></div><button class="btn-primary" onclick="nextSortStep()">Next</button><button class="btn-cancel" onclick="closeModal('start-sort-modal-1')">Cancel</button></div></div>
+<div class="modal-overlay" id="start-sort-modal-2"><div class="modal-sheet"><h2 style="text-align:center; margin-bottom:20px;">Start Sort (2/2)</h2><div style="margin-bottom:20px;"><label class="settings-label" style="display:block; margin-bottom:10px;">Daily Operating Plan</label><select id="start-sort-dop" class="form-input"><option value="5-2">5-2</option><option value="6-2">6-2</option><option value="7-2">7-2</option><option value="8-2">8-2</option></select></div><button class="btn-primary" onclick="finishStartSort()">Start Shift</button><button class="btn-cancel" onclick="closeModal('start-sort-modal-2')">Back</button></div></div>
+<div class="modal-overlay" id="changelog-modal"><div class="modal-sheet"><h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Changelog</h2><div id="changelog-content" style="max-height:300px; overflow-y:auto; font-size:14px; line-height:1.5; color:#333; white-space: pre-wrap;"></div><button class="btn-cancel" onclick="closeModal('changelog-modal')" style="margin-top:20px;">Close</button></div></div>
+<div class="modal-overlay" id="pph-modal"><div class="modal-sheet"><h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">PPH Calculator</h2><div style="background:#f2f2f7; border-radius:16px; padding:20px; margin-bottom:20px; text-align:center;"><div style="font-size:13px; color:#757575; font-weight:700; letter-spacing:0.5px; margin-bottom:5px;">TOTAL UNLOADER HOURS</div><input type="number" id="pph-unloader-hours-input" class="form-input" style="font-size:32px; font-weight:800; color:#000; text-align:center; background:transparent; border:none; width:100%; padding:0; margin:0;" oninput="calculatePPH()" placeholder="0.00"><div style="font-size:12px; color:#757575; margin-top:4px;">Excludes Belt Tenders & Sweeps</div></div><div style="margin-bottom:20px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Total Volume</label><input type="number" id="pph-volume-input" class="form-input" placeholder="Enter package count" oninput="calculatePPH()"></div><div style="text-align:center; margin-bottom:30px;"><div style="font-size:14px; color:var(--text-sub); font-weight:700;">CURRENT PPH</div><div style="font-size:60px; font-weight:900; color:#000; letter-spacing:-2px;" id="pph-result">0</div></div><div style="display:flex; gap:10px;"><button class="btn-primary" onclick="resetPPH()" style="background:#e5e5ea; color:#000; flex:1;">Reset</button><button class="btn-cancel" onclick="closeModal('pph-modal')" style="flex:1; margin-top:0; border: 1px solid #e5e5ea; border-radius:16px; padding:18px;">Close</button></div></div></div>
+<div class="modal-overlay" id="add-staff-modal"><div class="modal-sheet"><h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Clock In Staff <span id="staff-selection-count" style="font-size:14px; color:#8e8e93; font-weight:500; margin-left:10px;">0 Selected</span></h2><div id="staff-checkbox-list" class="staff-checkbox-list"></div><div style="margin: 20px 0 20px 0; border-top: 1px solid #eee; padding-top:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; display:block; margin-bottom:5px;">Add New Person</label><div class="staff-item-row" style="border:none; padding:0;"><input type="text" id="staff-custom-name" class="form-input" style="margin:0; flex:1; margin-right:10px;" placeholder="Name" autocapitalize="words"><select class="staff-role-select" id="staff-custom-role" onchange="toggleStaffOther(this)"><option value="Unloader">Auto (Unloader)</option><option value="Belt Tender">Belt Tender (Locked)</option><option value="Bulk Sweep">Bulk Sweep (Locked)</option><option value="Other">Other</option></select><input type="text" id="staff-custom-other" class="staff-other-input" placeholder="Area"></div></div><button class="btn-primary" onclick="confirmAddStaff()">Clock In Selected</button><button class="btn-cancel" onclick="closeModal('add-staff-modal')">Cancel</button></div></div>
+<div class="modal-overlay" id="edit-staff-modal"><div class="modal-sheet"><h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Edit Staff</h2><input type="hidden" id="edit-staff-id"><div style="margin-bottom:15px;"><label class="settings-label">Start Time</label><input type="time" id="edit-staff-time" class="form-input"></div><button class="btn-primary" onclick="saveStaffEdit()">Save Changes</button><button class="btn-cancel" onclick="closeModal('edit-staff-modal')">Discard</button></div></div>
+<div class="modal-overlay" id="export-modal"><div class="modal-sheet"><h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Export Data</h2><button class="btn-primary" onclick="exportLogsCSV()">Export CSV (Spreadsheet)</button><button class="btn-primary" onclick="exportLogsPDF()" style="margin-top:10px; background:#e5e5ea; color:#000;">Export PDF (Report)</button><button class="btn-cancel" onclick="closeModal('export-modal')">Cancel</button></div></div>
+<div class="modal-overlay z-high" id="hour-attribution-modal"><div class="modal-sheet"><h2 style="margin: 0 0 10px 0; font-size:24px; text-align:center;">Attribute Completion</h2><p style="text-align:center; color:#757575; margin-bottom:25px; padding: 0 10px;">This trailer was completed during the shift transition window (<span id="attribution-window-text">00-05</span>).</p><button class="btn-primary" onclick="resolveAttribution('Previous')">Previous Hour</button><button class="btn-primary" onclick="resolveAttribution('Current')" style="background:#f2f2f7; color:#000; margin-top:10px;">Current Hour</button></div></div>
+<div class="modal-overlay" id="filter-modal"><div class="modal-sheet"><h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Filter Logs</h2><div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; display:block; margin-bottom:5px;">By Date</label><input type="date" id="filter-date-input" class="form-input" style="padding:12px;"></div><div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; display:block; margin-bottom:5px;">By Door</label><div class="filter-grid" id="filter-grid"></div></div><div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; display:block; margin-bottom:5px;">By Unloader</label><select id="filter-unloader-select" class="form-input"><option value="All">All Unloaders</option></select></div><button class="btn-primary" onclick="applyFilter()">Apply Filters</button><button class="btn-cancel" onclick="closeModal('filter-modal')">Cancel</button></div></div>
+<div class="modal-overlay z-high" id="duplicate-wally-modal"><div class="modal-sheet"><h2 style="margin: 0 0 10px 0; font-size:24px; text-align:center;">Duplicate Wally Detected</h2><div style="background:#f9f9f9; padding:15px; border-radius:12px; margin-bottom:20px; font-size:14px; line-height:1.5;"><p style="margin:0 0 10px 0;">Wally <strong id="dup-wally-id"></strong> was already completed.</p><div style="display:flex; justify-content:space-between;"><span style="color:#757575;">Door:</span><strong id="dup-door"></strong></div><div style="display:flex; justify-content:space-between; margin-top:5px;"><span style="color:#757575;">Completed:</span><strong id="dup-time"></strong></div><div style="display:flex; justify-content:space-between; margin-top:5px;"><span style="color:#757575;">Unloader:</span><strong id="dup-unloader"></strong></div></div><button class="btn-primary" onclick="continueWithDuplicate()">Continue Anyway</button><button class="btn-cancel" onclick="closeModal('duplicate-wally-modal')" style="margin-top:10px;">Cancel</button></div></div>
+<div class="modal-overlay" id="input-modal"><div class="modal-sheet"><h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Onboard Door <span id="modal-door-num"></span></h2><div id="onboard-form-container"><div class="type-selector"><div class="type-opt selected" id="opt-wally" onclick="setType('Wally')">Wally</div><div class="type-opt" id="opt-cpu" onclick="setType('CPU')">CPU</div></div><div id="wally-inputs"><div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Wally Number</label><input type="text" id="input-wally-id" class="form-input" placeholder="e.g. 5589" inputmode="numeric" pattern="[0-9]*" oninput="this.value = this.value.replace(/[^0-9]/g, '')"></div></div><div id="cpu-inputs" style="display:none;"><div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Trailer Number</label><input type="text" id="input-trailer-id" class="form-input" placeholder="e.g. TRL123" autocapitalize="characters" oninput="this.value = this.value.toUpperCase()"></div><div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Account Number</label><input type="text" id="input-account-id" class="form-input" placeholder="e.g. ACCT456" autocapitalize="characters" oninput="this.value = this.value.toUpperCase()" list="saved-accounts-datalist"><datalist id="saved-accounts-datalist"></datalist></div><div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:8px; display:block;">Options</label><div class="options-grid"><label class="option-toggle"><input type="checkbox" id="chk-hott" value="HOTT"><span>HOTT</span></label><label class="option-toggle"><input type="checkbox" id="chk-recycle" value="RECYCLE"><span>RECYCLE</span></label><label class="option-toggle"><input type="checkbox" id="chk-gv" value="GV"><span>GV</span></label></div></div></div><div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Assigned Unloader (Optional)</label><select id="select-unloader" class="form-input" onchange="checkCustomUnloader(this)"><option value="" selected>Unassigned</option></select><input type="text" id="input-custom-unloader" class="form-input" style="display:none; margin-top:10px;" placeholder="Enter Name" autocapitalize="words"></div><div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Start Time</label><input type="time" id="input-onboard-time" class="form-input"></div><button class="btn-primary" id="btn-start-unload" onclick="confirmArrival()">Start Unload</button></div><div id="unavailable-msg" style="display:none; text-align:center; padding: 30px 0;"><i class="ph ph-prohibit" style="font-size: 48px; color: #8e8e93; margin-bottom: 10px;"></i><div style="font-size: 18px; font-weight: 700; color: #000;">Bay Unavailable</div><div style="font-size: 14px; color: #8e8e93;">This bay is currently marked for maintenance or offline.</div></div><button class="btn-primary btn-history" onclick="viewDoorLogs(currentDoor)">View History</button><button class="btn-primary" id="btn-toggle-availability" onclick="handleAvailabilityToggle()" style="background:white; border:2px solid #e5e5ea; color:#000; margin-top:10px;">Mark Unavailable</button><button class="btn-cancel" onclick="closeModal('input-modal')">Cancel</button></div></div>
+<div class="modal-overlay" id="add-unloader-modal"><div class="modal-sheet"><h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Add New Unloader</h2><div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Unloader Name</label><input type="text" id="input-new-unloader-name" class="form-input" placeholder="e.g. John Doe" autocapitalize="words"></div><button class="btn-primary" onclick="confirmAddUnloader()">Add Name</button><button class="btn-cancel" onclick="closeModal('add-unloader-modal')">Cancel</button></div></div>
+<div class="modal-overlay" id="active-detail-modal"><div class="modal-sheet"><h2 style="margin: 0 0 10px 0; font-size:24px; text-align:center;">Active Door <span id="detail-door-num"></span></h2><div style="margin-bottom: 20px;"><div class="detail-row"><span class="detail-label">Type</span><span class="detail-value" id="detail-type"></span></div><div class="detail-row"><span class="detail-label">ID #</span><span class="detail-value" id="detail-id"></span></div><div class="detail-row" id="row-account" style="display:none;"><span class="detail-label">Account #</span><span class="detail-value" id="detail-account"></span></div><div class="detail-row" id="row-cpu-opts" style="display:none;"><span class="detail-label">Options</span><span class="detail-value" id="detail-cpu-opts"></span></div><div class="detail-row"><span class="detail-label">Unloader</span><span class="detail-value" id="detail-unloader"></span></div><div class="detail-row" id="row-started-by" style="display:none;"><span class="detail-label">Started By</span><span class="detail-value" id="detail-started-by"></span></div><div class="detail-row"><span class="detail-label">Start Time</span><span class="detail-value" id="detail-time"></span></div><div class="detail-row"><span class="detail-label">Duration</span><span class="detail-value" id="detail-duration">0m</span></div></div><button class="btn-primary btn-danger" onclick="confirmCompleteDoor()">Complete Unload</button><div class="modal-actions-row"><button class="modal-icon-btn" onclick="openEditActiveModalFromDetail()" style="flex:1"><i class="ph ph-pencil-simple"></i></button><button class="modal-icon-btn" onclick="openMoveMenu()" style="flex:1; background:#fff; border:1px solid #e5e5ea;"><i class="ph ph-arrows-left-right"></i></button><button class="btn-primary btn-history" onclick="viewDoorLogs(detailDoor)" style="flex:3; margin:0;">View History</button></div><button class="btn-cancel" onclick="closeModal('active-detail-modal')">Close</button></div></div>
+<div class="modal-overlay z-high" id="unloader-required-modal"><div class="modal-sheet"><h2 style="margin: 0 0 10px 0; font-size:24px; text-align:center;">Assign Unloader</h2><p style="text-align:center; color:#757575; margin-bottom:25px; padding: 0 10px;">Who completed this door?</p><select id="req-unloader-select" class="form-input" onchange="checkReqCustom(this)"></select><input type="text" id="req-custom-unloader" class="form-input" style="display:none; margin-top:10px;" placeholder="Enter Name" autocapitalize="words"><button class="btn-primary" onclick="saveRequiredUnloader()">Confirm & Finish</button><button class="btn-cancel" onclick="closeModal('unloader-required-modal')">Cancel</button></div></div>
+<div class="modal-overlay" id="move-menu-modal"><div class="modal-sheet"><h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Move/Transfer</h2><p style="text-align:center; color:#757575; margin-bottom:20px;">Moving a door ends the current session but does not count towards total completions.</p><select id="move-dest-select" class="form-input" onchange="toggleMoveOther(this)"><option value="Small Sort">Small Sort</option><option value="Bulk Directs">Bulk Directs</option><option value="Metros">Metros</option><option value="PS1">PS1</option><option value="PS3">PS3</option><option value="PS5">PS5</option><option value="PS7">PS7</option><option value="PS11">PS11</option><option value="Other">Other</option></select><input type="text" id="move-custom-other" class="form-input" style="display:none; margin-top:10px;" placeholder="Specify Location"><button class="btn-primary" onclick="confirmMoveDoor()">Confirm Move</button><button class="btn-cancel" onclick="closeModal('move-menu-modal')">Cancel</button></div></div>
+<div class="modal-overlay" id="loan-staff-modal"><div class="modal-sheet"><h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Loan Employee</h2><p style="text-align:center; color:#757575; margin-bottom:20px;">Where is this employee going?</p><select id="loan-dest-select" class="form-input"><option value="Small Sort">Small Sort</option><option value="Metros">Metros</option><option value="PS3">PS3</option><option value="PS5">PS5</option><option value="PS7">PS7</option><option value="PS11">PS11</option><option value="PS1">PS1</option><option value="Other">Other</option></select><button class="btn-primary" onclick="confirmLoanStaff()">Confirm Loan</button><button class="btn-cancel" onclick="closeModal('loan-staff-modal')">Cancel</button></div></div>
+<div class="modal-overlay" id="edit-active-modal"><div class="modal-sheet"><h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Edit Active Bay</h2><input type="hidden" id="edit-active-original-door"><div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Bay Number</label><select id="edit-active-door-select" class="form-input"></select></div><div class="type-selector"><div class="type-opt selected" id="active-opt-wally" onclick="setEditActiveType('Wally')">Wally</div><div class="type-opt" id="active-opt-cpu" onclick="setEditActiveType('CPU')">CPU</div></div><div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">ID / Trailer #</label><input type="text" id="edit-active-id" class="form-input" oninput="this.value = this.value.toUpperCase()"></div><div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Account # (CPU only)</label><input type="text" id="edit-active-account" class="form-input" oninput="this.value = this.value.toUpperCase()"></div><div id="edit-active-options-container" style="display:none; margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:8px; display:block;">Options</label><div class="options-grid"><label class="option-toggle"><input type="checkbox" id="edit-active-chk-hott" value="HOTT"><span>HOTT</span></label><label class="option-toggle"><input type="checkbox" id="edit-active-chk-recycle" value="RECYCLE"><span>RECYCLE</span></label><label class="option-toggle"><input type="checkbox" id="edit-active-chk-gv" value="GV"><span>GV</span></label></div></div><div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Unloader</label><select id="edit-active-unloader" class="form-input" onchange="checkActiveCustomUnloader(this)"></select><input type="text" id="edit-active-custom-unloader" class="form-input" style="display:none; margin-top:10px;" placeholder="Enter Name" autocapitalize="words"></div><div id="edit-active-assist-option" style="margin-bottom:20px; display:none;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:8px; display:block;">Switch Type</label><div class="segment-control"><div class="segment-opt selected" id="seg-replace" onclick="setSwitchType('Replacement')">Replacement</div><div class="segment-opt" id="seg-assist" onclick="setSwitchType('Assist')">Assist</div></div></div><button class="btn-primary" onclick="saveActiveEdit()">Save Changes</button><button class="btn-cancel" onclick="closeModal('edit-active-modal')">Discard</button></div></div>
+<div class="modal-overlay" id="edit-log-modal"><div class="modal-sheet"><h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Edit Log Entry</h2><input type="hidden" id="edit-log-index"><div class="type-selector"><div class="type-opt selected" id="edit-opt-wally" onclick="setEditType('Wally')">Wally</div><div class="type-opt" id="edit-opt-cpu" onclick="setEditType('CPU')">CPU</div></div><div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">ID / Trailer #</label><input type="text" id="edit-input-id" class="form-input" oninput="this.value = this.value.toUpperCase()"></div><div id="edit-log-options-container" style="display:none; margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:8px; display:block;">Options</label><div class="options-grid"><label class="option-toggle"><input type="checkbox" id="edit-log-chk-hott" value="HOTT"><span>HOTT</span></label><label class="option-toggle"><input type="checkbox" id="edit-log-chk-recycle" value="RECYCLE"><span>RECYCLE</span></label><label class="option-toggle"><input type="checkbox" id="edit-log-chk-gv" value="GV"><span>GV</span></label></div></div><div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Unloader</label><select id="edit-select-unloader" class="form-input"></select></div><button class="btn-primary" onclick="confirmLogEdit()">Save Changes</button><button class="btn-cancel" onclick="closeModal('edit-log-modal')">Discard</button></div></div>
 
 <script>
     // --- GLOBAL VARIABLES ---
@@ -794,7 +610,7 @@
     let pendingLoanId = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '3.54';
+    const APP_VERSION = '3.55';
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Matt S", "Robert W", "Trevon C", "Victor M", "Russell H", "Fonseca J"];
@@ -818,15 +634,14 @@
 
     // --- CHANGELOG ---
     const CHANGELOG = `
-v3.54:
-- "At-a-Glance" Dashboard:
-  - Removed Good Evening/Time.
-  - Removed Onboard button.
-  - Stats reverted to compact 2x2 grid.
-  - Today Card optimized.
+v3.55:
+- Dashboard Overhaul: Added 'Today's Focus' with dynamic tasks.
+- Tools: Added 'Plan Daily Focus' to configure tasks.
+- Action Buttons: Replaced 'Add Unloader' with 'End Sort'.
+- End Sort: Generates shift summary + Checklist.
 
-v3.53:
-- Initial Dashboard Redesign.
+v3.54:
+- Compact Layout: Optimized spacing.
     `;
 
     // --- STATE ---
@@ -837,13 +652,13 @@ v3.53:
     let staffing = [];
     let currentDOP = '5-2';
     let teamNamesSorted = [];
-
-    // Today's Focus State
-    let todayState = {
-        date: '',
-        tasks: [false, false, false],
-        obsCount: 0
-    };
+    
+    // Today's Focus
+    let focusItems = [
+        { id: 1, type: 'SWM', label: 'Safety Methods', assignedTo: null, completed: false },
+        { id: 2, type: 'OJS', label: 'On Job Supervision', assignedTo: null, completed: false },
+        { id: 3, type: 'OBS', label: 'General Observation', assignedTo: null, completed: false }
+    ];
 
     let config = {
         replenish: false, randomHistory: false, doorCount: 2,
@@ -853,7 +668,6 @@ v3.53:
 
     let attributionConfig = { minutes: 5, enabled: true };
     let pendingCompletion = null;
-    let tempSortStartTime = "";
 
     function getHourText(hour) {
         if(hour===1) return "1st hour"; if(hour===2) return "2nd hour"; if(hour===3) return "3rd hour";
@@ -867,7 +681,7 @@ v3.53:
     function init() {
         console.log(`Wally Dashboard v${APP_VERSION} initialized`);
 
-        // Event Delegation for Grids
+        // Event Delegation
         byId('active-trailers-grid').addEventListener('click', (e) => {
             const btn = e.target.closest('.bay-circle');
             if(btn) openActiveDetails(parseInt(btn.dataset.door));
@@ -877,7 +691,7 @@ v3.53:
              if(btn) openArrivalModal(parseInt(btn.dataset.door));
         });
 
-        // Debounced Search
+        // Search
         const searchInput = byId('log-search');
         if(searchInput) {
             searchInput.addEventListener('input', debounce(() => renderLogs(), 300));
@@ -888,123 +702,192 @@ v3.53:
         if (sAccts) savedAccounts = JSON.parse(sAccts);
         initAttributionSettings();
         
-        // Load Today's Focus
-        loadTodayState();
-
-        const sDoors = localStorage.getItem('ps9_doors');
-        const sHistory = localStorage.getItem('ps9_history');
-        const sTeam = localStorage.getItem('ps9_team');
+        // Load Focus
+        const savedFocus = localStorage.getItem('ps9_focus_items');
+        if (savedFocus) focusItems = JSON.parse(savedFocus);
+        
+        // Load Staff
         const sStaff = localStorage.getItem('ps9_staffing');
-        const sDop = localStorage.getItem('ps9_dop');
-        const shiftStart = localStorage.getItem('ps9_shift_start') || "19:55";
-
-        lastSortStartTime = localStorage.getItem('ps9_last_sort_start');
-        isFirstOnboard = localStorage.getItem('ps9_is_first_onboard') === 'true';
-
+        if(sStaff) staffing = JSON.parse(sStaff);
+        
+        // Load Doors
+        const sDoors = localStorage.getItem('ps9_doors');
         if (sDoors) doors = JSON.parse(sDoors);
         else {
             for(let i=DOORS_START; i<=DOORS_END; i++) {
                 doors[i] = { status: 'empty', start: 0, id: '', type: '', unloader: '', unavailable: false, lastCompletionTime: null, assignments: [] };
             }
         }
-
-        // Migration: Ensure 'assignments' array exists
+        // Migration
         for(let i=DOORS_START; i<=DOORS_END; i++) {
             if(doors[i].status === 'active' && (!doors[i].assignments || doors[i].assignments.length===0)) {
                 doors[i].assignments = [{ name: doors[i].unloader || "Unassigned", start: doors[i].start, end: null }];
             }
         }
 
+        const sHistory = localStorage.getItem('ps9_history');
         if (sHistory) historyLog = JSON.parse(sHistory);
-        if (Array.isArray(historyLog)) {
-            historyLog.forEach(l => {
-                if (!l.dateKey) l.dateKey = dateKeyFromTs(l.end);
-                if (!l.completionHour) l.completionHour = getCompletionHour(l.end - (l.statOffset || 0));
-                if (!l.cpuOptions) l.cpuOptions = []; 
-                if (!l.status) l.status = 'completed'; 
-            });
-        }
 
+        const sTeam = localStorage.getItem('ps9_team');
         if (sTeam) teamNames = JSON.parse(sTeam); else teamNames = [...DEFAULT_TEAM];
         refreshTeamNamesSorted();
-
-        if (sStaff) staffing = JSON.parse(sStaff);
-        if (sDop) currentDOP = sDop;
-
-        staffing.forEach(s => {
-            if (!s.role) s.role = 'Unloader';
-            if (!s.accumulated) s.accumulated = 0;
-        });
-
-        const startInput = byId('setting-shift-start');
-        if(startInput) startInput.value = shiftStart;
-        const dopSelect = byId('dop-select');
-        if(dopSelect) dopSelect.value = currentDOP;
+        
+        const sDop = localStorage.getItem('ps9_dop');
+        if(sDop) currentDOP = sDop;
 
         renderSavedAccounts();
         updateAccountDatalist();
         populateUnloaderSelect();
         renderDashboard();
-        renderTodayCard();
-
-        setTimeout(() => {
-            updateAttributionUI();
-            setupAttributionSlider();
-        }, 100);
-
+        renderFocusCard();
+        
         setInterval(updateTabBadges, 2000);
         updateTabBadges();
     }
     
-    // --- TODAY'S FOCUS LOGIC ---
-    function loadTodayState() {
-        const saved = localStorage.getItem('ps9_today_state');
-        const todayStr = new Date().toDateString();
+    // --- FOCUS LOGIC ---
+    function renderFocusCard() {
+        const list = byId('today-focus-list');
+        list.innerHTML = '';
         
-        if (saved) {
-            todayState = JSON.parse(saved);
-            // Reset if day changed
-            if (todayState.date !== todayStr) {
-                todayState = { date: todayStr, tasks: [false, false, false], obsCount: 0 };
-                saveTodayState();
-            }
+        if (focusItems.length === 0) {
+            list.innerHTML = '<div class="today-empty">No items planned. Configure in Tools.</div>';
+            return;
+        }
+        
+        focusItems.forEach((item, index) => {
+             const div = document.createElement('div');
+             div.className = `focus-item ${item.completed ? 'done' : ''}`;
+             
+             // Create Employee Select Options
+             let options = '<option value="">Assign Staff...</option>';
+             teamNamesSorted.forEach(n => {
+                 const sel = item.assignedTo === n ? 'selected' : '';
+                 options += `<option value="${n}" ${sel}>${n}</option>`;
+             });
+             options += `<option value="Custom" ${item.assignedTo && !teamNames.includes(item.assignedTo) ? 'selected' : ''}>Custom Name</option>`;
+             
+             div.innerHTML = `
+                <div class="focus-check" onclick="toggleFocusComplete(${index})"><i class="ph ph-check"></i></div>
+                <div class="focus-content">
+                    <div class="focus-type">${item.type}</div>
+                    <select class="focus-select" onchange="updateFocusAssignee(${index}, this)">
+                        ${options}
+                    </select>
+                    <input type="text" class="focus-custom-input" placeholder="Name" 
+                           value="${(item.assignedTo && !teamNames.includes(item.assignedTo)) ? item.assignedTo : ''}"
+                           style="display: ${item.assignedTo === 'Custom' || (item.assignedTo && !teamNames.includes(item.assignedTo)) ? 'block' : 'none'};"
+                           onchange="updateFocusCustomName(${index}, this)">
+                </div>
+                ${item.completed ? '<i class="ph ph-check-circle" style="color:#000;"></i>' : ''}
+             `;
+             list.appendChild(div);
+        });
+    }
+    
+    function toggleFocusComplete(idx) {
+        focusItems[idx].completed = !focusItems[idx].completed;
+        saveFocus();
+    }
+    
+    function updateFocusAssignee(idx, select) {
+        if (select.value === 'Custom') {
+            focusItems[idx].assignedTo = 'Custom'; // Marker
+            select.nextElementSibling.style.display = 'block';
+            select.nextElementSibling.focus();
         } else {
-            todayState = { date: todayStr, tasks: [false, false, false], obsCount: 0 };
-            saveTodayState();
+            focusItems[idx].assignedTo = select.value;
+            select.nextElementSibling.style.display = 'none';
+        }
+        saveFocus();
+    }
+    
+    function updateFocusCustomName(idx, input) {
+        focusItems[idx].assignedTo = input.value;
+        saveFocus();
+    }
+    
+    function saveFocus() {
+        localStorage.setItem('ps9_focus_items', JSON.stringify(focusItems));
+        renderFocusCard();
+    }
+    
+    function openFocusConfigModal() {
+        renderFocusConfigList();
+        byId('focus-config-modal').style.display = 'flex';
+    }
+    
+    function addFocusItem(type) {
+        focusItems.push({ id: Date.now(), type: type, label: type, assignedTo: null, completed: false });
+        renderFocusConfigList();
+        saveFocus();
+    }
+    
+    function removeFocusItem(idx) {
+        focusItems.splice(idx, 1);
+        renderFocusConfigList();
+        saveFocus();
+    }
+    
+    function renderFocusConfigList() {
+        const list = byId('focus-config-list');
+        list.innerHTML = '';
+        focusItems.forEach((item, idx) => {
+            const div = document.createElement('div');
+            div.style.cssText = "display:flex; justify-content:space-between; align-items:center; background:#f9f9f9; padding:10px; border-radius:12px;";
+            div.innerHTML = `<strong>${item.type}</strong> <button class="icon-btn" style="color:#ff3b30;" onclick="removeFocusItem(${idx})"><i class="ph ph-trash"></i></button>`;
+            list.appendChild(div);
+        });
+    }
+
+    // --- END SORT FLOW ---
+    function openEndSortFlow() {
+        const totalW = byId('stat-total-wally').innerText;
+        const totalC = byId('stat-total-cpu').innerText;
+        const pph = calculatePPHValue(); // Helper
+        
+        const summary = `
+Wally Dashboard - Shift Summary
+Date: ${new Date().toLocaleDateString()}
+Total Wallies: ${totalW}
+Total CPUs: ${totalC}
+Est. PPH: ${pph}
+
+[Generated by WallyTracker]
+        `;
+        
+        if (navigator.share) {
+            navigator.share({
+                title: 'Wally Shift Summary',
+                text: summary
+            }).then(() => openPostSortChecklist()).catch(() => openPostSortChecklist());
+        } else {
+            // Fallback: Copy to clipboard
+            navigator.clipboard.writeText(summary);
+            alert("Summary copied to clipboard!");
+            openPostSortChecklist();
         }
     }
     
-    function saveTodayState() {
-        localStorage.setItem('ps9_today_state', JSON.stringify(todayState));
-        renderTodayCard();
+    function calculatePPHValue() {
+        // Basic calculation based on visible stats
+        const hrs = calculateUnloaderHours();
+        const vol = 0; // Requires volume input actually, return placeholder if unknown
+        return "N/A (Input Vol)"; 
     }
     
-    function toggleTask(idx) {
-        todayState.tasks[idx-1] = !todayState.tasks[idx-1];
-        saveTodayState();
-    }
-    
-    function updateObs(delta) {
-        todayState.obsCount = Math.max(0, todayState.obsCount + delta);
-        saveTodayState();
-    }
-    
-    function renderTodayCard() {
-        // Render Tasks
-        for(let i=0; i<3; i++) {
-            const el = byId(`task-${i+1}`);
-            if(todayState.tasks[i]) el.classList.add('done');
-            else el.classList.remove('done');
-        }
-        
-        // Render Obs
-        byId('obs-count-val').innerText = todayState.obsCount;
-        
-        // Render Progress
-        const total = 3 + 5; // 3 tasks + 5 obs goal
-        const current = todayState.tasks.filter(t=>t).length + Math.min(todayState.obsCount, 5);
-        const pct = Math.round((current / total) * 100);
-        byId('today-progress-bar').style.width = `${pct}%`;
+    function openPostSortChecklist() {
+        const list = byId('post-sort-list');
+        const items = ["Check Slide", "Check Payroll", "Walk Wall", "Enter Obs/OJS/SWM", "Return Scanner", "Sign Walk-off", "Return Gear", "Add Numbers on Board"];
+        list.innerHTML = '';
+        items.forEach(i => {
+            const div = document.createElement('div');
+            div.className = 'checklist-item';
+            div.onclick = function() { this.classList.toggle('checked'); };
+            div.innerHTML = `<div class="checklist-box"><i class="ph ph-check"></i></div><div class="checklist-label">${i}</div>`;
+            list.appendChild(div);
+        });
+        byId('post-sort-modal').style.display = 'flex';
     }
 
     // --- GRANULAR SAVING ---
@@ -1258,7 +1141,6 @@ v3.53:
                 if(otherInput) roleVal = otherInput.value.trim();
             }
             
-            // SPECIFIC LOGIC FOR ROBERT W
             if (name === "Robert W" && roleVal === 'Unloader') {
                 roleVal = 'Belt Tender';
             }
