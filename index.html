@@ -213,6 +213,7 @@
         .dop-status { font-size: 13px; font-weight: 600; padding: 8px 12px; border-radius: 8px; text-align: center; }
         .dop-ok { background: #d1fae5; color: #065f46; }
         .dop-warn { background: #fee2e2; color: #991b1b; }
+        .dop-over { background: #e0f2fe; color: #0369a1; }
 
         .staff-section-title { font-size: 18px; font-weight: 800; margin: 25px 0 15px 0; display: flex; justify-content: space-between; align-items: center; }
         .staff-count-badge { background: #e5e5ea; color: #000; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 700; margin-left: 8px; }
@@ -406,7 +407,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 3.50</div>
+            <div class="app-version">Version 3.51</div>
         </div>
 
         <div class="section-title">Sort Statistics</div>
@@ -1559,15 +1560,18 @@ v3.49:
             (s.status === 'active' || s.status === 'paused') && s.role !== 'Belt Tender'
         ).length;
         
-        const missing = targetTotal - dopActiveCount;
-        
+        const diff = dopActiveCount - targetTotal;
         const statusBar = byId('dop-status-bar');
-        if(missing <= 0) {
+        
+        if (diff === 0) {
             statusBar.className = 'dop-status dop-ok';
             statusBar.innerText = `DOP Met ✅`;
+        } else if (diff > 0) {
+            statusBar.className = 'dop-status dop-over';
+            statusBar.innerText = `Over DOP (+${diff})`;
         } else {
             statusBar.className = 'dop-status dop-warn';
-            statusBar.innerText = `Down ${missing}`;
+            statusBar.innerText = `Down ${Math.abs(diff)}`;
         }
     }
     
