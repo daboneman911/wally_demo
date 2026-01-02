@@ -407,7 +407,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 3.51</div>
+            <div class="app-version">Version 3.52</div>
         </div>
 
         <div class="section-title">Sort Statistics</div>
@@ -836,7 +836,7 @@
     let pendingLoanId = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '3.50';
+    const APP_VERSION = '3.52';
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Matt S", "Robert W", "Trevon C", "Victor M", "Russell H", "Fonseca J"];
@@ -860,12 +860,12 @@
 
     // --- CHANGELOG ---
     const CHANGELOG = `
-v3.50:
-- Bugfix: "Add" button restored on Staffing page (missing input fix).
-- Bugfix: "Other" dropdown logic restored.
+v3.52:
+- DOP Uniformity: Status standardized to "DOP Under (-X)", "DOP Met", "DOP Over (+X)".
 
-v3.49:
-- Bugfix: "Add" button missing function definition fix.
+v3.51:
+- DOP Logic: "Over DOP" status added.
+- "Add" button bug fixed.
     `;
 
     // --- STATE ---
@@ -1565,13 +1565,13 @@ v3.49:
         
         if (diff === 0) {
             statusBar.className = 'dop-status dop-ok';
-            statusBar.innerText = `DOP Met ✅`;
+            statusBar.innerText = `DOP Met`;
         } else if (diff > 0) {
             statusBar.className = 'dop-status dop-over';
-            statusBar.innerText = `Over DOP (+${diff})`;
+            statusBar.innerText = `DOP Over (+${diff})`;
         } else {
             statusBar.className = 'dop-status dop-warn';
-            statusBar.innerText = `Down ${Math.abs(diff)}`;
+            statusBar.innerText = `DOP Under (-${Math.abs(diff)})`;
         }
     }
     
