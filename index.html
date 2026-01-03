@@ -212,7 +212,7 @@
         .dop-select { background: #f2f2f7; border: none; padding: 8px 12px; border-radius: 8px; font-size: 14px; font-weight: 600; }
         .dop-status { font-size: 13px; font-weight: 700; padding: 8px 12px; border-radius: 8px; text-align: center; }
         
-        /* Version 3.52 Standardized Colors */
+        /* Version 3.52 Standardized Verbiage & Colors */
         .dop-ok { background: #d1fae5; color: #065f46; } /* Green */
         .dop-under { background: #ffedd5; color: #9a3412; } /* Orange */
         .dop-over { background: #fee2e2; color: #991b1b; } /* Red */
@@ -317,7 +317,62 @@
         .tab-btn i { font-size: 26px; }
         .tab-btn.active { color: #000; }
         .tab-badge { position: absolute; top: -4px; right: 0; background: #ff3b30; color: white; font-size: 10px; font-weight: 800; min-width: 18px; height: 18px; border-radius: 9px; display: flex; align-items: center; justify-content: center; padding: 0 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); border: 2px solid white; }
-        .tab-badge.zero { display: none; }
+        .tab-badge.zero { background: #e5e5ea; color: #8e8e93; }
+        .tab-badge.warning { background: #ff9500; }
+        .tab-badge.success { background: #34c759; }
+
+        .save-toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; z-index: 3000; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+        .save-toast.visible { opacity: 1; }
+
+        /* --- MODALS --- */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 2000; display: none; justify-content: center; align-items: flex-end; backdrop-filter: blur(4px); }
+        .modal-sheet { background: white; width: 100%; max-width: 600px; border-top-left-radius: 28px; border-top-right-radius: 28px; padding: 30px; padding-bottom: max(40px, var(--safe-bottom)); animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+        /* High Z-Index for Alerts to prevent freezing */
+        .z-high { z-index: 3000 !important; }
+
+        .form-input { width: 100%; padding: 18px; background: #f2f2f7; border: none; border-radius: 16px; font-size: 18px; margin-bottom: 15px; box-sizing: border-box; outline: none; appearance: none; color: #000; font-weight: 500; }
+        .type-selector { display: flex; background: #f2f2f7; padding: 5px; border-radius: 16px; margin-bottom: 25px; }
+        .type-opt { flex: 1; text-align: center; padding: 12px; border-radius: 12px; font-weight: 700; font-size: 15px; color: var(--text-sub); cursor: pointer; }
+        .type-opt.selected { background: white; color: #000; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+
+        .btn-primary { width: 100%; padding: 18px; border-radius: 16px; border: none; font-size: 17px; font-weight: 800; background: #000; color: white; margin-top: 10px; cursor: pointer; }
+        .btn-danger { background: #ff3b30; }
+        .btn-history { background: #f2f2f7; color: #000; margin-top: 10px; }
+        .btn-cancel { background: transparent; color: var(--text-sub); width: 100%; padding: 15px; border: none; font-size: 16px; font-weight: 600; margin-top: 5px; cursor: pointer; }
+
+        .detail-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f2f2f7; }
+        .detail-label { color: var(--text-sub); font-weight: 600; font-size: 15px; }
+        .detail-value { font-weight: 700; color: #000; font-size: 15px; }
+        .modal-actions-row { display: flex; gap: 15px; margin-top: 10px; }
+        .modal-icon-btn { background: #f2f2f7; border: none; width: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 22px; cursor: pointer; color: #000; }
+        .filter-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+        .filter-btn { background: #f2f2f7; padding: 15px 0; border-radius: 12px; text-align: center; font-weight: 700; font-size: 16px; cursor: pointer; }
+        .filter-btn.active { background: #000; color: white; }
+
+        /* Settings */
+        .settings-header { font-size: 22px; font-weight: 800; margin: 30px 0 10px 0; color: #000; }
+        .settings-group { background: #fff; border-radius: 16px; overflow: hidden; margin-bottom: 20px; border: 1px solid #e5e5ea; }
+        .settings-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #f2f2f7; background: #fff; }
+        .settings-row:last-child { border-bottom: none; }
+        .settings-label { font-size: 16px; font-weight: 600; color: #000; }
+        .settings-input-inline { background: #f2f2f7; border: none; padding: 8px 12px; border-radius: 8px; font-size: 16px; width: 100px; text-align: right; }
+        .settings-btn-inline { background: #000; color: #fff; border: none; border-radius: 8px; padding: 6px 12px; font-weight: 600; font-size: 14px; }
+        .toggle-switch { width: 50px; height: 30px; background: #e5e5ea; border-radius: 15px; position: relative; cursor: pointer; transition: background 0.2s; }
+        .toggle-switch.checked { background: #000; }
+        .toggle-switch::after { content: ''; position: absolute; left: 2px; top: 2px; width: 26px; height: 26px; background: white; border-radius: 50%; transition: left 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .toggle-switch.checked::after { left: 22px; }
+        .stepper { display: flex; align-items: center; background: #f2f2f7; border-radius: 8px; padding: 2px; }
+        .stepper-btn { width: 32px; height: 32px; border: none; background: transparent; font-size: 18px; font-weight: 700; cursor: pointer; color: #000; }
+        .stepper-val { font-size: 16px; font-weight: 600; width: 24px; text-align: center; }
+        .segment-control { display: flex; background: #f2f2f7; border-radius: 8px; padding: 2px; }
+        .segment-opt { padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 600; color: #8e8e93; cursor: pointer; }
+        .segment-opt.selected { background: #fff; color: #000; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .settings-note { font-size: 13px; color: #8e8e93; padding: 0 10px; margin-bottom: 20px; line-height: 1.4; }
+        .saved-accounts-list { padding: 0 20px 20px 20px; }
+        .saved-acct-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f2f2f7; font-size: 16px; font-weight: 500; }
+        .delete-acct-btn { color: #ff3b30; font-size: 20px; cursor: pointer; }
 
         /* Slider */
         .settings-slider-container { display: flex; flex-direction: column; gap: 15px; padding: 15px 20px; }
@@ -455,7 +510,6 @@
                 <div><div class="staffing-header-title">Active Staff</div><div class="staffing-header-val" id="staff-active-count">0</div></div>
                 <div style="text-align:right;"><div class="staffing-header-title">Unloader Hours</div><div class="staffing-header-val" id="staff-total-hours">0.0</div></div>
             </div>
-            <div class="breakdown-row"><span>Belt Hours: <span id="staff-belt-hours">0.0</span></span><span>Sweep Hours: <span id="staff-sweep-hours">0.0</span></span></div>
         </div>
 
         <div class="staff-section-title">On Clock <span class="staff-count-badge" id="badge-on-clock">0</span></div>
@@ -545,7 +599,7 @@
     <button class="tab-btn" onclick="switchTab('logs', this)" id="tab-btn-logs"><i class="ph ph-list-dashes"></i><span>Logs</span></button>
     <button class="tab-btn" onclick="switchTab('staffing', this)" id="tab-btn-staffing"><i class="ph ph-users"></i><span>Staffing</span><span class="tab-badge" id="badge-staffing">0</span></button>
     <button class="tab-btn" onclick="switchTab('tools', this)" id="tab-btn-tools"><i class="ph ph-toolbox"></i><span>Tools</span></button>
-    <button class="tab-btn" onclick="switchTab('settings', this)" id="tab-btn-settings"><i class="ph ph-gear"></i><span>Settings</span></button>
+    <button class="tab-btn" onclick="switchTab('settings', this)" id="tab-btn-settings"><i class="ph ph-gear"></i><span>Settings</span><span class="tab-badge" id="badge-settings">0</span></button>
 </nav>
 
 <div class="modal-overlay" id="add-staff-modal">
@@ -805,10 +859,15 @@
     // --- CHANGELOG ---
     const CHANGELOG = `
 v3.52:
-- DOP Status: Standardized language to "DOP Under (-X)", "DOP Met", "DOP Over (+X)".
+- DOP Color Scheme: Under is now Orange, Over is now Red.
+- Language Standardized: "DOP Under (-X)", "DOP Met", "DOP Over (+X)".
 - DOP Headcount: Now strictly counts Unloaders and Bulk Sweeps (Belt Tenders excluded from the target count).
 - Bugfix: "Add" button restored on Staffing page (fixed missing selector/function errors).
 - Feature: Added selection counter to "Clock In Staff" modal.
+
+v3.50:
+- Bugfix: "Add" button restored on Staffing page (missing input fix).
+- Bugfix: "Other" dropdown logic restored.
     `;
 
     // --- STATE ---
@@ -1139,14 +1198,16 @@ v3.52:
                         <option value="Bulk Sweep">Bulk Sweep (Locked)</option>
                         <option value="Other">Other</option>
                     </select>
-                    <input type="text" id="other-input-${n.replace(/\s+/g, '')}" class="staff-other-input" placeholder="Role">
+                    <input type="text" id="other-input-${n.replace(/\s+/g, '')}" class="staff-other-input" placeholder="Area">
                 `;
                 container.appendChild(item);
             }
         });
         byId('staff-custom-name').value = ''; 
         byId('staff-custom-role').value = 'Unloader';
-        byId('staff-custom-other').style.display = 'none';
+        const otherInput = byId('staff-custom-other');
+        if(otherInput) otherInput.style.display = 'none';
+        
         updateStaffSelectionCount();
         byId('add-staff-modal').style.display = 'flex';
     }
@@ -1177,7 +1238,6 @@ v3.52:
                 if(otherInput) roleVal = otherInput.value.trim();
             }
             
-            // Robert W Default logic
             if (name === "Robert W" && roleVal === 'Unloader') {
                 roleVal = 'Belt Tender';
             }
@@ -1320,7 +1380,7 @@ v3.52:
         const s = staffing.find(x => x.id === id);
         if (s && s.status === 'paused') {
             s.status = 'active'; s.start = Date.now();
-            saveStaffing(); renderStaffingView(); updateStaffingTimers(); updateTabBadges();
+            saveStaffing(); renderStaffingView(); updateTabBadges();
         }
     }
 
@@ -1421,8 +1481,8 @@ v3.52:
                              <select class="role-select" onchange="saveStaffRole(${s.id}, this.value, this)" style="background:${isManual ? '#e5e5ea' : '#f2f2f7'}; border:${isManual ? '1px solid #ccc' : 'none'};">
                                 <option value="Auto" ${!isManual ? 'selected' : ''}>Auto (${s.role})</option>
                                 <option value="Unloader" ${isManual && s.role==='Unloader'?'selected':''}>Unloader</option>
-                                <option value="Belt Tender" ${isManual && s.role==='Belt Tender'?'selected':''}>Belt Tender</option>
-                                <option value="Bulk Sweep" ${isManual && s.role==='Bulk Sweep'?'selected':''}>Bulk Sweep</option>
+                                <option value="Belt Tender" ${s.role==='Belt Tender'?'selected':''}>Belt Tender</option>
+                                <option value="Bulk Sweep" ${s.role==='Bulk Sweep'?'selected':''}>Bulk Sweep</option>
                             </select>
                         </div>
                     </div>
@@ -1461,7 +1521,25 @@ v3.52:
     }
 
     function updateStaffingTimers(checkRoles = true) {
-        if(checkRoles) { const changed = autoAssignRoles(); if(changed) renderStaffingView(); }
+        if(!byId('tab-staffing').classList.contains('active')) return;
+        
+        if(checkRoles) { const changed = autoAssignRoles(); if(changed) { renderStaffingView(); return; } }
+
+        const currentOrder = Array.from(document.querySelectorAll('.staff-card:not(.cut)')).map(el => parseFloat(el.dataset.id));
+        const getRoleScore = (r) => { if(r==='Belt Tender') return 3; if(r==='Bulk Sweep') return 2; return 1; };
+        const newSorted = staffing.filter(s => s.status!=='cut' && s.status!=='loaned' && (s.status==='active'||s.status==='paused'))
+                                  .sort((a,b) => {
+                                      const scoreA = getRoleScore(a.role);
+                                      const scoreB = getRoleScore(b.role);
+                                      if(scoreA !== scoreB) return scoreB - scoreA;
+                                      return calculateTotalHours(b) - calculateTotalHours(a);
+                                  });
+        const newOrder = newSorted.map(s => s.id);
+        
+        if(currentOrder.length !== newOrder.length || JSON.stringify(currentOrder) !== JSON.stringify(newOrder)) {
+            renderStaffingView();
+            return;
+        }
 
         let onClock=0, uHours=0, bHours=0, sHours=0;
         staffing.forEach(s => {
@@ -1475,7 +1553,7 @@ v3.52:
         byId('staff-active-count').innerText = onClock;
         byId('staff-total-hours').innerText = uHours.toFixed(2);
         
-        // DOP STATUS UPDATE - Modified Logic (Unloaders + Bulk Sweeps only)
+        // DOP STATUS UPDATE - Standardized Logic (Unloaders + Bulk Sweeps only)
         const [uStr, sStr] = currentDOP.split('-');
         const targetTotal = parseInt(uStr) + parseInt(sStr);
         
