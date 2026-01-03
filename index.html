@@ -80,11 +80,14 @@
             font-size: 14px;
             font-weight: 700;
             display: flex;
-            align-items: center; gap: 8px; cursor: pointer;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             transition: transform 0.1s;
         }
         .action-btn:active { transform: scale(0.96); }
+        .action-btn i { font-size: 18px; }
 
         /* --- HEADER --- */
         .dashboard-header {
@@ -114,6 +117,7 @@
             font-size: 20px; cursor: pointer; transition: background 0.1s;
         }
         .filter-icon-btn { border: 2px solid #000; background: transparent; color: #000; }
+        .filter-icon-btn:active { background: #f0f0f0; }
         .export-icon-btn { border: none; background: #f2f2f7; color: #000; }
 
         .app-title { font-size: 32px; font-weight: 900; margin: 0; letter-spacing: -0.5px; }
@@ -146,6 +150,11 @@
             position: relative; box-sizing: border-box;
         }
         .bay-circle:active { transform: scale(0.92); }
+
+        .bay-circle.unavailable { background-color: #8e8e93 !important; opacity: 0.5; color: #666; border: none !important; }
+        .bay-circle.unavailable .bay-timer { color: #666; }
+
+        /* Optimized Status Classes */
         .bay-circle.status-ok { border: 4px solid #34c759; }
         .bay-circle.status-warn { border: 4px solid #ff9500; }
         .bay-circle.status-crit { border: 4px solid #ff3b30; }
@@ -159,66 +168,182 @@
         .bay-15 { background-color: var(--bay-orange); }
         .bay-16 { background-color: var(--bay-orange); }
 
-        .type-badge { position: absolute; bottom: -2px; right: -2px; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; color: white; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.15); background: #000; }
+        .type-badge {
+            position: absolute; bottom: -2px; right: -2px;
+            width: 24px; height: 24px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 11px; font-weight: 900; color: white;
+            border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+        }
+        .badge-w, .badge-c { background-color: #000; }
+
+        .bay-timer {
+            position: absolute; bottom: -5px; font-size: 9px; font-weight: 700;
+            color: #000; background: rgba(255, 255, 255, 0.9);
+            padding: 1px 4px; border-radius: 4px; min-width: 20px; text-align: center;
+        }
+
+        /* --- ACTIVE TAB --- */
+        .active-tab-list { display: flex; flex-direction: column; gap: 15px; }
+        .active-card {
+            background: white; border: 2px solid #000; border-radius: 20px;
+            padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            display: flex; justify-content: space-between; align-items: flex-start;
+        }
+        .active-card-info { display: flex; flex-direction: column; gap: 6px; flex-grow: 1; }
+        .active-card-header { display: flex; align-items: center; gap: 10px; }
+        .active-card-title { font-size: 20px; font-weight: 800; color: #000; }
+        .door-pill { background: #000; color: white; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 30px; }
+        .active-card-details { font-size: 15px; color: var(--text-sub); font-weight: 500; }
+        .active-card-time { font-size: 14px; color: #000; font-weight: 700; }
+        .active-card-actions { display: flex; flex-direction: column; gap: 12px; align-items: flex-end; }
+        .icon-btn {
+            background: #f2f2f7; border: none; width: 40px; height: 40px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; cursor: pointer; color: #000; font-size: 20px;
+        }
 
         /* --- STAFFING --- */
         .staffing-header-card { background: #000; color: #fff; border-radius: 20px; padding: 20px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         .staffing-header-title { font-size: 14px; opacity: 0.8; font-weight: 600; text-transform: uppercase; margin-bottom: 5px; }
         .staffing-header-val { font-size: 32px; font-weight: 800; }
-        .dop-container { margin-bottom: 20px; background: #fff; border: 1px solid #e5e5ea; border-radius: 16px; padding: 10px 15px; display: flex; flex-direction: column; gap: 10px; }
+        .dop-container { margin-bottom: 20px; background: #fff; border: 1px solid #e5e5ea; border-radius: 16px; padding: 10px 15px; display: flex; flex-direction: column; gap: 12px; }
         .dop-row { display: flex; justify-content: space-between; align-items: center; }
         .dop-label { font-size: 14px; font-weight: 700; color: #000; }
         .dop-select { background: #f2f2f7; border: none; padding: 8px 12px; border-radius: 8px; font-size: 14px; font-weight: 600; }
-        .dop-status { font-size: 13px; font-weight: 700; text-align: center; padding: 8px; border-radius: 8px; }
+        .dop-status { font-size: 13px; font-weight: 700; padding: 8px 12px; border-radius: 8px; text-align: center; }
         
-        .dop-ok { background: #dcfce7; color: #166534; }
-        .dop-under { background: #ffedd5; color: #9a3412; }
-        .dop-over { background: #fee2e2; color: #991b1b; }
+        /* Version 3.52 Standardized Colors */
+        .dop-ok { background: #d1fae5; color: #065f46; } /* Green */
+        .dop-under { background: #ffedd5; color: #9a3412; } /* Orange */
+        .dop-over { background: #fee2e2; color: #991b1b; } /* Red */
 
         .staff-section-title { font-size: 18px; font-weight: 800; margin: 25px 0 15px 0; display: flex; justify-content: space-between; align-items: center; }
         .staff-count-badge { background: #e5e5ea; color: #000; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 700; margin-left: 8px; }
-        .staff-card { background: white; border: 1px solid #e5e5ea; border-radius: 18px; padding: 16px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
-        .staff-name { font-size: 17px; font-weight: 700; color: #000; }
+        .staff-card { background: white; border: 1px solid #e5e5ea; border-radius: 18px; padding: 16px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); transition: all 0.3s ease; }
+        .staff-card.cut { opacity: 0.6; background: #f9f9f9; }
+        .staff-top-row { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+        .staff-name { font-size: 17px; font-weight: 700; color: #000; display: flex; align-items: center; gap: 6px; }
+        .staff-time { font-size: 13px; color: var(--text-sub); margin-top: 2px; }
         .staff-hours { font-size: 16px; font-weight: 800; color: #000; font-variant-numeric: tabular-nums; }
+        .staff-action-btn { background: #ffe5e5; color: #ff3b30; border: none; padding: 6px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; }
         .role-select { width: 100%; padding: 8px; background: #f2f2f7; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; color: #000; margin-top: 4px; outline: none; }
+        .breakdown-row { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.7); margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1); }
         .staff-checkbox-list { max-height: 250px; overflow-y: auto; border: 1px solid #e5e5ea; border-radius: 12px; background: #f9f9f9; padding: 5px; }
+        
         .staff-item-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 8px; border-bottom: 1px solid #e5e5ea; }
+        .staff-item-row:last-child { border-bottom: none; }
         .staff-check-label { display: flex; align-items: center; gap: 12px; flex: 1; cursor: pointer; font-size: 16px; font-weight: 500; }
+        .staff-check-label input { width: 20px; height: 20px; accent-color: #000; }
+        .staff-role-select { background: #f2f2f7; border: none; padding: 8px; border-radius: 8px; font-size: 13px; font-weight: 600; width: 110px; color: #000; }
         .staff-other-input { background: #fff; border: 1px solid #000; padding: 8px; border-radius: 8px; font-size: 13px; width: 100px; color: #000; margin-left: 5px; display: none; }
+        
+        /* Loaned Staff Styling */
+        .loaned-card {
+            background: #fff; border: 1px dashed #ccc; border-radius: 18px; padding: 16px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02); display: flex; justify-content: space-between; align-items: center;
+        }
+        .loan-dest-pill { background: #e5e5ea; color: #555; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; margin-left: 6px; }
+
+        /* --- TOOLS GRID --- */
+        .tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 10px 0; }
+        .tool-card { background: #fff; border-radius: 24px; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; aspect-ratio: 1 / 1; box-shadow: 0 4px 15px rgba(0,0,0,0.05); cursor: pointer; transition: transform 0.1s; }
+        .tool-card:active { transform: scale(0.96); background: #f9f9f9; }
+        .tool-icon-wrapper { width: 50px; height: 50px; background: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 24px; margin-bottom: 12px; }
+        .tool-title { font-size: 16px; font-weight: 700; color: #000; margin-bottom: 4px; }
+        .tool-card.add { border: 2px dashed #ccc; background: transparent; box-shadow: none; }
+        .tool-card.add .tool-icon-wrapper { background: #e5e5ea; color: #000; }
+
+        /* --- LOGS SECTION (REVISED) --- */
+        .stats-collapse-btn { width: 100%; background: #f2f2f7; border: none; border-radius: 16px; padding: 18px; display: flex; justify-content: space-between; align-items: center; font-size: 16px; font-weight: 700; color: #000; cursor: pointer; margin-bottom: 20px; }
+        .stats-content-area { background: white; border: 1px solid #e5e5ea; border-radius: 16px; padding: 20px; margin-bottom: 25px; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
+        .stats-table { width: 100%; border-collapse: collapse; font-size: 15px; }
+        .stats-table th { text-align: left; color: var(--text-sub); font-weight: 600; padding-bottom: 12px; border-bottom: 1px solid #e5e5ea; }
+        .stats-table td { padding: 12px 0; border-bottom: 1px solid #f9f9f9; color: #000; font-weight: 500; }
+        .stats-table td:last-child { font-weight: 800; text-align: right; }
+        .active-filter-display { display: flex; align-items: center; justify-content: space-between; background: #000; color: white; padding: 12px 20px; border-radius: 16px; margin-bottom: 20px; font-weight: 600; }
+        .logs-list { display: flex; flex-direction: column; gap: 15px; }
+        
+        /* NEW LOG CARD STYLES */
+        .log-card {
+            background: white; border: 1px solid #e5e5ea; border-radius: 20px; padding: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03); display: flex; justify-content: space-between; align-items: center; gap: 15px;
+        }
+        .log-info { display: flex; flex-direction: column; gap: 8px; flex-grow: 1; min-width: 0; }
+        .log-header-row { display: flex; align-items: center; gap: 10px; }
+        .log-door-pill { background: #000; color: #fff; font-size: 11px; font-weight: 800; padding: 6px 12px; border-radius: 8px; cursor: pointer; flex-shrink: 0; letter-spacing: 0.5px; text-transform: uppercase; }
+        .log-title { font-size: 20px; font-weight: 900; color: #000; line-height: 1; letter-spacing: -0.5px; }
+        .log-account { color: #8e8e93; font-weight: 500; font-size: 14px; margin-left: 6px; }
+        .log-tags-row { display: flex; flex-wrap: wrap; gap: 6px; }
+        .log-tag { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 6px; background: #f2f2f7; color: #000; display: inline-flex; align-items: center; gap: 4px; }
+        .tag-black { background: #000; color: white; }
+        .tag-red { background: #ff3b30; color: white; }
+        .tag-gray { background: #e5e5ea; color: #555; }
+        .log-footer-row { display: flex; align-items: center; gap: 15px; color: var(--text-sub); font-size: 13px; font-weight: 500; margin-top: 2px; }
+        .log-footer-item { display: flex; align-items: center; gap: 5px; }
+        .log-footer-item i { font-size: 16px; color: #000; }
+        .log-right-col { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; min-width: 90px; }
+        .log-duration { font-size: 24px; font-weight: 900; color: #000; line-height: 1; }
+        .log-duration-label { font-size: 10px; text-transform: uppercase; color: #8e8e93; font-weight: 700; margin-top: 2px; }
+        .log-actions-row { display: flex; gap: 8px; }
+        .log-mini-btn { width: 36px; height: 36px; border-radius: 12px; border: 1px solid #e5e5ea; background: white; display: flex; align-items: center; justify-content: center; font-size: 18px; color: #000; cursor: pointer; transition: all 0.1s; }
+        .log-mini-btn:active { background: #f2f2f7; transform: scale(0.95); }
+
+        .search-bar { width: 100%; padding: 14px; border: 1px solid #e5e5ea; border-radius: 12px; background: #f9f9f9; font-size: 16px; margin-bottom: 20px; outline: none; }
+        .load-more-btn { width: 100%; padding: 15px; background: #f2f2f7; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; margin-top: 10px; color: #555; }
+
+        /* --- UPDATED: Aesthetic Option Pills --- */
+        .options-grid { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 5px; }
+        .option-toggle { flex: 1; position: relative; cursor: pointer; min-width: 80px; }
+        .option-toggle input { position: absolute; opacity: 0; width: 0; height: 0; }
+        .option-toggle span {
+            display: flex; align-items: center; justify-content: center;
+            width: 100%; padding: 12px;
+            background: #f2f2f7; color: #8e8e93;
+            border-radius: 12px; font-weight: 700; font-size: 14px;
+            transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+            border: 1px solid transparent;
+            box-sizing: border-box;
+        }
+        .option-toggle input:checked ~ span {
+            background: #000; color: #fff;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            transform: translateY(-1px);
+        }
+        .option-toggle:active span { transform: scale(0.96); }
 
         /* --- NAV --- */
         .tab-bar { position: fixed; bottom: 30px; left: 20px; right: 20px; background: white; border-radius: 40px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); display: flex; justify-content: space-around; align-items: center; height: 70px; z-index: 1000; padding-bottom: 0; }
         .tab-btn { background: none; border: none; display: flex; flex-direction: column; align-items: center; color: #ccc; font-size: 11px; font-weight: 600; width: 60px; cursor: pointer; gap: 4px; position: relative; }
         .tab-btn i { font-size: 26px; }
         .tab-btn.active { color: #000; }
-        .tab-badge { position: absolute; top: -4px; right: 0; background: #ff3b30; color: white; font-size: 10px; font-weight: 800; min-width: 18px; height: 18px; border-radius: 9px; display: flex; align-items: center; justify-content: center; padding: 0 4px; border: 2px solid white; }
+        .tab-badge { position: absolute; top: -4px; right: 0; background: #ff3b30; color: white; font-size: 10px; font-weight: 800; min-width: 18px; height: 18px; border-radius: 9px; display: flex; align-items: center; justify-content: center; padding: 0 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); border: 2px solid white; }
         .tab-badge.zero { display: none; }
 
-        .save-toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; z-index: 3000; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
-        .save-toast.visible { opacity: 1; }
-
-        /* --- MODALS --- */
-        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 2000; display: none; justify-content: center; align-items: flex-end; backdrop-filter: blur(4px); }
-        .modal-sheet { background: white; width: 100%; max-width: 600px; border-top-left-radius: 28px; border-top-right-radius: 28px; padding: 30px; padding-bottom: max(40px, var(--safe-bottom)); animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        .form-input { width: 100%; padding: 18px; background: #f2f2f7; border: none; border-radius: 16px; font-size: 18px; margin-bottom: 15px; box-sizing: border-box; outline: none; }
-        .btn-primary { width: 100%; padding: 18px; border-radius: 16px; border: none; font-size: 17px; font-weight: 800; background: #000; color: white; margin-top: 10px; cursor: pointer; }
-        .btn-cancel { background: transparent; color: var(--text-sub); width: 100%; padding: 15px; border: none; font-size: 16px; font-weight: 600; margin-top: 5px; cursor: pointer; }
-        
-        .icon-btn { background: #f2f2f7; border: none; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #000; font-size: 20px; }
-        .log-card { background: white; border: 1px solid #e5e5ea; border-radius: 20px; padding: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); display: flex; justify-content: space-between; align-items: center; gap: 15px; margin-bottom: 10px; }
-        .log-door-pill { background: #000; color: #fff; font-size: 11px; font-weight: 800; padding: 6px 12px; border-radius: 8px; }
-        .log-title { font-size: 20px; font-weight: 900; color: #000; }
-        .log-duration { font-size: 24px; font-weight: 900; color: #000; }
+        /* Slider */
+        .settings-slider-container { display: flex; flex-direction: column; gap: 15px; padding: 15px 20px; }
+        .slider-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .slider-value { font-size: 16px; font-weight: 700; color: #000; background: #f2f2f7; padding: 4px 10px; border-radius: 8px; min-width: 60px; text-align: center; }
+        .slider-wrapper { position: relative; width: 100%; height: 40px; display: flex; align-items: center; }
+        .slider-track { position: absolute; width: 100%; height: 6px; background: #e5e5ea; border-radius: 3px; z-index: 1; }
+        .slider-fill { position: absolute; height: 6px; background: #000; border-radius: 3px; z-index: 2; transition: width 0.1s; }
+        .slider-thumb { position: absolute; width: 30px; height: 30px; background: #000; border-radius: 15px; z-index: 3; transform: translateX(-50%); box-shadow: 0 2px 8px rgba(0,0,0,0.2); cursor: pointer; touch-action: none; }
+        .slider-ticks { display: flex; justify-content: space-between; position: absolute; width: 100%; top: 25px; pointer-events: none; }
+        .slider-tick { width: 1px; height: 8px; background: #ccc; position: relative; }
+        .slider-tick-label { position: absolute; top: 12px; font-size: 11px; color: #8e8e93; transform: translateX(-50%); white-space: nowrap; font-weight: 600; }
+        #restore-file-input { display: none; }
     </style>
 </head>
 <body>
 
-<input type="file" id="restore-file-input" accept=".json" onchange="restoreData(this)" style="display:none">
+<input type="file" id="restore-file-input" accept=".json" onchange="restoreData(this)">
 
-<div id="save-toast" class="save-toast"><i class="ph ph-check-circle"></i> <span>Saved</span></div>
+<div id="save-toast" class="save-toast">
+    <i class="ph ph-check-circle" style="color:#4cd964; font-size:16px;"></i>
+    <span>Saved</span>
+</div>
 
 <div class="app-container">
+
     <div id="tab-dashboard" class="tab-content active">
         <div class="top-actions">
             <button class="action-btn" onclick="openStartSortFlow()"><i class="ph ph-play-circle"></i> Start Sort</button>
@@ -228,34 +353,98 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 3.54</div>
+            <div class="app-version">Version 3.52</div>
         </div>
 
+        <div class="section-title">Sort Statistics</div>
         <div class="stats-grid">
-            <div class="stat-card" onclick="switchTab('logs')"><div class="stat-label">Wallies</div><div class="stat-value" id="stat-total-wally">0</div></div>
-            <div class="stat-card" onclick="switchTab('logs')"><div class="stat-label">CPUs</div><div class="stat-value" id="stat-total-cpu">0</div></div>
-            <div class="stat-card" onclick="switchTab('logs')"><div class="stat-label">This Hour</div><div class="stat-value" id="stat-hour-wally">0</div></div>
-            <div class="stat-card" onclick="switchTab('logs')"><div class="stat-label">Last Hour</div><div class="stat-value" id="stat-last-wally">0</div></div>
+            <div class="stat-card" onclick="viewStatLogs('Wally')">
+                <div class="stat-label">Total Wallies</div>
+                <div class="stat-value" id="stat-total-wally">0</div>
+            </div>
+            <div class="stat-card" onclick="viewStatLogs('CPU')">
+                <div class="stat-label">Total CPUs</div>
+                <div class="stat-value" id="stat-total-cpu">0</div>
+            </div>
+            <div class="stat-card" onclick="viewStatLogs('Hour-0')">
+                <div class="stat-label">Wallies This Hour</div>
+                <div class="stat-value" id="stat-hour-wally">0</div>
+            </div>
+            <div class="stat-card" onclick="viewStatLogs('Hour-1')">
+                <div class="stat-label">Wallies Last Hour</div>
+                <div class="stat-value" id="stat-last-wally">0</div>
+            </div>
         </div>
 
         <div class="section-title">Active Trailers</div>
         <div id="active-trailers-grid" class="bays-grid"></div>
+
         <div class="section-title">Open Bays</div>
         <div id="open-bays-grid" class="bays-grid"></div>
         <div style="height: 100px;"></div>
     </div>
 
+    <div id="tab-active" class="tab-content">
+        <div class="header-bar"><h1>Active Details</h1></div>
+        <div id="active-tab-list" class="active-tab-list"></div>
+    </div>
+
+    <div id="tab-logs" class="tab-content">
+        <div class="header-bar">
+            <h1>Logs</h1>
+            <div class="header-right">
+                <button class="filter-icon-btn" onclick="openFilterModal()"><i class="ph ph-faders"></i></button>
+                <button class="export-icon-btn" onclick="openExportModal()"><i class="ph ph-export"></i></button>
+            </div>
+        </div>
+
+        <input type="text" id="log-search" class="search-bar" placeholder="Search by Wally ID or Trailer...">
+
+        <button class="stats-collapse-btn" onclick="toggleStats('unloader')">
+            Unloader Statistics <i class="ph ph-caret-down" id="stats-caret"></i>
+        </button>
+        <div id="stats-content" class="stats-content-area">
+            <table class="stats-table">
+                <thead><tr><th>Name</th><th style="text-align:center">Wally</th><th style="text-align:center">CPU</th><th style="text-align:right">Total</th></tr></thead>
+                <tbody id="unloader-stats-body"></tbody>
+            </table>
+        </div>
+
+        <button class="stats-collapse-btn" onclick="toggleStats('hourly')">
+            Hourly Breakdown <i class="ph ph-caret-down" id="hourly-caret"></i>
+        </button>
+        <div id="hourly-content" class="stats-content-area">
+            <table class="stats-table">
+                <thead><tr><th>Hour</th><th style="text-align:center">Count</th></tr></thead>
+                <tbody id="hourly-stats-body"></tbody>
+            </table>
+        </div>
+
+        <div id="active-filter-display" class="active-filter-display" style="display:none;">
+            <span>Filtering: <span id="filter-text-display"></span></span>
+            <i class="ph ph-x" style="cursor:pointer" onclick="clearLogFilter()"></i>
+        </div>
+
+        <div id="logs-list" class="logs-list"></div>
+        <button id="logs-load-more" class="load-more-btn" style="display:none" onclick="loadMoreLogs()">Load More</button>
+    </div>
+
     <div id="tab-staffing" class="tab-content">
         <div class="header-bar">
             <h1>Staffing</h1>
-            <div class="header-right"><button class="icon-btn" onclick="openAddStaffModal()"><i class="ph ph-plus"></i></button></div>
+            <div class="header-right">
+                <button class="action-btn" style="padding: 10px 16px; border-radius:20px; height:40px; font-size:14px;" onclick="openAddStaffModal()"><i class="ph ph-plus"></i> Add</button>
+            </div>
         </div>
 
         <div class="dop-container">
             <div class="dop-row">
-                 <span class="dop-label">Operating Plan</span>
+                 <span class="dop-label">Daily Operating Plan</span>
                  <select id="dop-select" class="dop-select" onchange="saveDOP(this.value)">
-                    <option value="5-2">5-2</option><option value="6-2">6-2</option><option value="7-2">7-2</option><option value="8-2">8-2</option>
+                    <option value="5-2">5-2</option>
+                    <option value="6-2">6-2</option>
+                    <option value="7-2">7-2</option>
+                    <option value="8-2">8-2</option>
                 </select>
             </div>
             <div id="dop-status-bar" class="dop-status">Checking...</div>
@@ -266,8 +455,10 @@
                 <div><div class="staffing-header-title">Active Staff</div><div class="staffing-header-val" id="staff-active-count">0</div></div>
                 <div style="text-align:right;"><div class="staffing-header-title">Unloader Hours</div><div class="staffing-header-val" id="staff-total-hours">0.0</div></div>
             </div>
+            <div class="breakdown-row"><span>Belt Hours: <span id="staff-belt-hours">0.0</span></span><span>Sweep Hours: <span id="staff-sweep-hours">0.0</span></span></div>
         </div>
 
+        <div class="staff-section-title">On Clock <span class="staff-count-badge" id="badge-on-clock">0</span></div>
         <div id="staff-list-active"></div>
         <div class="staff-section-title" style="margin-top:40px; opacity:0.6;">Loaned Out <span class="staff-count-badge" id="badge-loaned">0</span></div>
         <div id="staff-list-loaned"></div>
@@ -275,111 +466,687 @@
         <div id="staff-list-cut"></div>
     </div>
 
-    <div id="tab-logs" class="tab-content">
-        <div class="header-bar"><h1>Logs</h1></div>
-        <div id="logs-list"></div>
+    <div id="tab-tools" class="tab-content" style="background:#f2f2f7;">
+        <div style="background:white; padding: 20px 20px 10px 20px; border-bottom:1px solid #e5e5ea; margin: -20px -20px 20px -20px;">
+             <div class="header-bar" style="margin:0;"><h1>Tools</h1></div>
+        </div>
+        <div class="tools-grid">
+            <div class="tool-card" onclick="openPPHModal()">
+                <div class="tool-icon-wrapper"><i class="ph ph-calculator"></i></div><div class="tool-title">PPH Calculator</div>
+            </div>
+            <div class="tool-card" onclick="alert('Observation Corner coming soon')">
+                <div class="tool-icon-wrapper"><i class="ph ph-eye"></i></div><div class="tool-title">Observation</div>
+            </div>
+             <div class="tool-card add" onclick="alert('More tools soon')">
+                <div class="tool-icon-wrapper"><i class="ph ph-plus"></i></div><div class="tool-title">Add Tool</div>
+            </div>
+        </div>
     </div>
-    
-    <div id="tab-tools" class="tab-content"><div class="header-bar"><h1>Tools</h1></div><button class="btn-primary" onclick="openPPHModal()">PPH Calculator</button></div>
-    <div id="tab-settings" class="tab-content"><div class="header-bar"><h1>Settings</h1></div><button class="btn-primary" onclick="resetData()">Factory Reset</button></div>
+
+    <div id="tab-settings" class="tab-content" style="background:#f2f2f7; padding:0;">
+        <div style="background:white; padding: 20px 20px 10px 20px; border-bottom:1px solid #e5e5ea;">
+            <div class="header-bar" style="margin:0;"><h1>Settings</h1></div>
+        </div>
+        <div style="padding: 20px 20px 120px 20px;">
+            <div class="settings-header">Data Management</div>
+            <div class="settings-group">
+                <div class="settings-row" onclick="backupData('full')" style="cursor:pointer;"><span class="settings-label">Save Full Backup File</span><i class="ph ph-download-simple" style="color:#000; font-size:20px;"></i></div>
+                 <div class="settings-row" onclick="backupData('logs')" style="cursor:pointer;"><span class="settings-label">Backup Logs Only</span><i class="ph ph-file-text" style="color:#000; font-size:20px;"></i></div>
+                <div class="settings-row" onclick="triggerRestore()" style="cursor:pointer;"><span class="settings-label">Restore from Backup</span><i class="ph ph-upload-simple" style="color:#000; font-size:20px;"></i></div>
+            </div>
+            <div class="settings-header">Shift Configuration</div>
+            <div class="settings-group">
+                <div class="settings-row"><span class="settings-label">Shift Start Time</span><input type="time" id="setting-shift-start" class="settings-input-inline" onchange="saveShiftStart(this.value)"></div>
+                <div class="settings-slider-container" style="border-top:1px solid #f2f2f7;">
+                    <div class="slider-header"><span class="settings-label">Attribution Window</span><span class="slider-value" id="attribution-value">5m</span></div>
+                    <div class="slider-wrapper">
+                        <div class="slider-track"></div><div class="slider-fill" id="slider-fill"></div><div class="slider-thumb" id="slider-thumb"></div>
+                        <div class="slider-ticks"><div class="slider-tick" style="left: 0%"><div class="slider-tick-label">0</div></div><div class="slider-tick" style="left: 50%"><div class="slider-tick-label">5</div></div><div class="slider-tick" style="left: 100%"><div class="slider-tick-label">10</div></div></div>
+                    </div>
+                    <div class="settings-note" style="margin-top:20px; padding:0;">Allow attributing trailers completed up to <span id="attr-note-val" style="font-weight:700; color:#000;">5</span> minutes after the hour to the previous hour.</div>
+                </div>
+                 <div class="settings-row"><span class="settings-label">Force Attribution (Simulate)</span><div class="toggle-switch" id="switch-sim-window" onclick="toggleSwitch('sim-window')"></div></div>
+                 <div class="settings-row"><span class="settings-label">Disable Time Attribution</span><div class="toggle-switch" id="switch-dis-window" onclick="toggleSwitch('dis-window')"></div></div>
+            </div>
+            <div class="settings-header">Saved Accounts</div>
+            <div class="settings-group">
+                <div class="settings-row">
+                    <input type="text" id="new-account-input" class="form-input" style="margin:0; padding:10px; background:#f2f2f7; width:65%;" placeholder="New Account Number" autocapitalize="characters" oninput="this.value = this.value.toUpperCase()">
+                    <button class="settings-btn-inline" onclick="addSavedAccount()">Add</button>
+                </div>
+                <div id="saved-accounts-list" class="saved-accounts-list"><div style="padding:15px 0; color:#8e8e93; text-align:center;">No saved accounts</div></div>
+            </div>
+            <div class="settings-header">Demo</div>
+            <div class="settings-group">
+                <div class="settings-row"><span class="settings-label">Demo Mode</span><div class="toggle-switch" id="switch-demo-mode" onclick="toggleSwitch('demo-mode')"></div></div>
+                <div class="settings-row"><span class="settings-label">Disable hardcoded times</span><div class="toggle-switch" id="switch-disable-times" onclick="toggleSwitch('disable-times')"></div></div>
+                <div class="settings-row"><span class="settings-label">Generate Random History</span><div class="toggle-switch" id="switch-demo-random" onclick="toggleSwitch('demo-random')"></div></div>
+                <div class="settings-row"><span class="settings-label">Auto-Replenish Bays</span><div class="toggle-switch" id="switch-demo-replenish" onclick="toggleSwitch('demo-replenish')"></div></div>
+                <div class="settings-row">
+                    <span class="settings-label">Number of Doors</span>
+                    <div class="stepper"><button class="stepper-btn" onclick="stepDoor(-1)">−</button><span class="stepper-val" id="demo-door-val">2</span><button class="stepper-btn" onclick="stepDoor(1)">+</button></div>
+                </div>
+                <div class="settings-row"><span class="settings-label">Mix Trailer Types</span><div class="toggle-switch" id="switch-mixed-types" onclick="toggleSwitch('mixed-types')"></div></div>
+                <div class="settings-row" style="justify-content:center; background:#f9f9f9;">
+                    <div class="segment-control"><div class="segment-opt selected" id="seg-wally" onclick="setDemoType('Wally')">Wally</div><div class="segment-opt" id="seg-cpu" onclick="setDemoType('CPU')">CPU</div></div>
+                </div>
+                <div style="padding:15px;"><button class="btn-primary" style="background:#000; color:#fff;" onclick="startDemo()">Auto-Onboard</button></div>
+            </div>
+            <div class="settings-header">Changelog</div>
+            <div class="settings-group"><div class="settings-row" onclick="viewChangelog()" style="cursor:pointer;"><span class="settings-label">View Version History</span><i class="ph ph-caret-right" style="color:#ccc;"></i></div></div>
+            <button class="btn-primary" onclick="resetData()" style="background:#ff3b30; margin-bottom:100px;">Reset All Data</button>
+        </div>
+    </div>
 </div>
 
 <nav class="tab-bar">
-    <button class="tab-btn active" onclick="switchTab('dashboard', this)"><i class="ph ph-chart-pie-slice"></i><span>Home</span></button>
-    <button class="tab-btn" onclick="switchTab('staffing', this)"><i class="ph ph-users"></i><span>Staffing</span><span class="tab-badge" id="badge-staffing">0</span></button>
-    <button class="tab-btn" onclick="switchTab('logs', this)"><i class="ph ph-list-dashes"></i><span>Logs</span></button>
-    <button class="tab-btn" onclick="switchTab('tools', this)"><i class="ph ph-toolbox"></i><span>Tools</span></button>
-    <button class="tab-btn" onclick="switchTab('settings', this)"><i class="ph ph-gear"></i><span>Settings</span></button>
+    <button class="tab-btn active" onclick="switchTab('dashboard', this)" id="tab-btn-dashboard"><i class="ph ph-chart-pie-slice"></i><span>Home</span></button>
+    <button class="tab-btn" onclick="switchTab('active', this)" id="tab-btn-active"><i class="ph ph-truck-trailer"></i><span>Active</span><span class="tab-badge" id="badge-active">0</span></button>
+    <button class="tab-btn" onclick="switchTab('logs', this)" id="tab-btn-logs"><i class="ph ph-list-dashes"></i><span>Logs</span></button>
+    <button class="tab-btn" onclick="switchTab('staffing', this)" id="tab-btn-staffing"><i class="ph ph-users"></i><span>Staffing</span><span class="tab-badge" id="badge-staffing">0</span></button>
+    <button class="tab-btn" onclick="switchTab('tools', this)" id="tab-btn-tools"><i class="ph ph-toolbox"></i><span>Tools</span></button>
+    <button class="tab-btn" onclick="switchTab('settings', this)" id="tab-btn-settings"><i class="ph ph-gear"></i><span>Settings</span></button>
 </nav>
 
 <div class="modal-overlay" id="add-staff-modal">
     <div class="modal-sheet">
-        <h2 style="text-align:center;">Clock In Staff <span id="staff-selection-count" style="font-size:14px; color:#8e8e93; font-weight:500; margin-left:10px;">0 Selected</span></h2>
+        <h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Clock In Staff <span id="staff-selection-count" style="font-size:14px; color:#8e8e93; font-weight:500; margin-left:10px;">0 Selected</span></h2>
         <div id="staff-checkbox-list" class="staff-checkbox-list"></div>
-        <div style="margin-top:15px; padding-top:10px; border-top: 1px solid #eee;">
-            <input type="text" id="staff-custom-name" class="form-input" placeholder="Custom Name">
-            <select id="staff-custom-role" class="form-input"><option value="Unloader">Unloader</option><option value="Belt Tender">Belt Tender</option><option value="Bulk Sweep">Bulk Sweep</option></select>
+        <div style="margin: 20px 0 20px 0; border-top: 1px solid #eee; padding-top:15px;">
+            <label style="font-size:12px; color:var(--text-sub); font-weight:600; display:block; margin-bottom:5px;">Add New Person</label>
+            <div class="staff-item-row" style="border:none; padding:0;">
+                <input type="text" id="staff-custom-name" class="form-input" style="margin:0; flex:1; margin-right:10px;" placeholder="Name" autocapitalize="words">
+                <select class="staff-role-select" id="staff-custom-role">
+                    <option value="Unloader">Auto (Unloader)</option>
+                    <option value="Belt Tender">Belt Tender (Locked)</option>
+                    <option value="Bulk Sweep">Bulk Sweep (Locked)</option>
+                </select>
+            </div>
         </div>
-        <button class="btn-primary" onclick="confirmAddStaff()">Clock In</button>
-        <button class="btn-cancel" onclick="closeModal('add-staff-modal')">Cancel</button>
+        <button class="btn-primary" onclick="confirmAddStaff()">Clock In Selected</button><button class="btn-cancel" onclick="closeModal('add-staff-modal')">Cancel</button>
     </div>
 </div>
 
+<div class="modal-overlay" id="start-sort-modal-1">
+    <div class="modal-sheet">
+        <h2 style="text-align:center; margin-bottom:20px;">Start Sort (1/2)</h2>
+        <div style="margin-bottom:20px;"><label class="settings-label" style="display:block; margin-bottom:10px;">Shift Start Time</label><input type="time" id="start-sort-time" class="form-input" value="19:55"></div>
+        <button class="btn-primary" onclick="nextSortStep()">Next</button><button class="btn-cancel" onclick="closeModal('start-sort-modal-1')">Cancel</button>
+    </div>
+</div>
+<div class="modal-overlay" id="start-sort-modal-2">
+    <div class="modal-sheet">
+        <h2 style="text-align:center; margin-bottom:20px;">Start Sort (2/2)</h2>
+        <div style="margin-bottom:20px;"><label class="settings-label" style="display:block; margin-bottom:10px;">Daily Operating Plan</label><select id="start-sort-dop" class="form-input"><option value="5-2">5-2</option><option value="6-2">6-2</option><option value="7-2">7-2</option><option value="8-2">8-2</option></select></div>
+        <button class="btn-primary" onclick="finishStartSort()">Start Shift</button><button class="btn-cancel" onclick="closeModal('start-sort-modal-2')">Back</button>
+    </div>
+</div>
+<div class="modal-overlay" id="changelog-modal"><div class="modal-sheet"><h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Changelog</h2><div id="changelog-content" style="max-height:300px; overflow-y:auto; font-size:14px; line-height:1.5; color:#333; white-space: pre-wrap;"></div><button class="btn-cancel" onclick="closeModal('changelog-modal')" style="margin-top:20px;">Close</button></div></div>
 <div class="modal-overlay" id="pph-modal">
     <div class="modal-sheet">
-        <h2>PPH Calculator</h2>
-        <input type="number" id="pph-volume-input" class="form-input" placeholder="Total Volume" oninput="calculatePPH()">
-        <div style="text-align:center; padding:20px;"><div style="font-size:14px; color:#757575;">Current PPH</div><div style="font-size:48px; font-weight:900;" id="pph-result">0</div></div>
-        <button class="btn-cancel" onclick="closeModal('pph-modal')">Close</button>
+        <h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">PPH Calculator</h2>
+        <div style="background:#f2f2f7; border-radius:16px; padding:20px; margin-bottom:20px; text-align:center;">
+            <div style="font-size:13px; color:#757575; font-weight:700; letter-spacing:0.5px; margin-bottom:5px;">TOTAL UNLOADER HOURS</div>
+            <input type="number" id="pph-unloader-hours-input" class="form-input" style="font-size:32px; font-weight:800; color:#000; text-align:center; background:transparent; border:none; width:100%; padding:0; margin:0;" oninput="calculatePPH()" placeholder="0.00">
+            <div style="font-size:12px; color:#757575; margin-top:4px;">Excludes Belt Tenders & Sweeps</div>
+        </div>
+        <div style="margin-bottom:20px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Total Volume</label><input type="number" id="pph-volume-input" class="form-input" placeholder="Enter package count" oninput="calculatePPH()"></div>
+        <div style="text-align:center; margin-bottom:30px;"><div style="font-size:14px; color:var(--text-sub); font-weight:700;">CURRENT PPH</div><div style="font-size:60px; font-weight:900; color:#000; letter-spacing:-2px;" id="pph-result">0</div></div>
+        <div style="display:flex; gap:10px;"><button class="btn-primary" onclick="resetPPH()" style="background:#e5e5ea; color:#000; flex:1;">Reset</button><button class="btn-cancel" onclick="closeModal('pph-modal')" style="flex:1; margin-top:0; border: 1px solid #e5e5ea; border-radius:16px; padding:18px;">Close</button></div>
     </div>
 </div>
-
+<div class="modal-overlay" id="edit-staff-modal"><div class="modal-sheet"><h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Edit Staff</h2><input type="hidden" id="edit-staff-id"><div style="margin-bottom:15px;"><label class="settings-label">Start Time</label><input type="time" id="edit-staff-time" class="form-input"></div><button class="btn-primary" onclick="saveStaffEdit()">Save Changes</button><button class="btn-cancel" onclick="closeModal('edit-staff-modal')">Discard</button></div></div>
+<div class="modal-overlay" id="export-modal"><div class="modal-sheet"><h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Export Data</h2><button class="btn-primary" onclick="exportLogsCSV()">Export CSV (Spreadsheet)</button><button class="btn-primary" onclick="exportLogsPDF()" style="margin-top:10px; background:#e5e5ea; color:#000;">Export PDF (Report)</button><button class="btn-cancel" onclick="closeModal('export-modal')">Cancel</button></div></div>
+<div class="modal-overlay z-high" id="hour-attribution-modal"><div class="modal-sheet"><h2 style="margin: 0 0 10px 0; font-size:24px; text-align:center;">Attribute Completion</h2><p style="text-align:center; color:#757575; margin-bottom:25px; padding: 0 10px;">This trailer was completed during the shift transition window (<span id="attribution-window-text">00-05</span>).</p><button class="btn-primary" onclick="resolveAttribution('Previous')">Previous Hour</button><button class="btn-primary" onclick="resolveAttribution('Current')" style="background:#f2f2f7; color:#000; margin-top:10px;">Current Hour</button></div></div>
+<div class="modal-overlay" id="filter-modal">
+    <div class="modal-sheet">
+        <h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Filter Logs</h2>
+        <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; display:block; margin-bottom:5px;">By Date</label><input type="date" id="filter-date-input" class="form-input" style="padding:12px;"></div>
+        <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; display:block; margin-bottom:5px;">By Door</label><div class="filter-grid" id="filter-grid"></div></div>
+        <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; display:block; margin-bottom:5px;">By Unloader</label><select id="filter-unloader-select" class="form-input"><option value="All">All Unloaders</option></select></div>
+        <button class="btn-primary" onclick="applyFilter()">Apply Filters</button><button class="btn-cancel" onclick="closeModal('filter-modal')">Cancel</button>
+    </div>
+</div>
+<div class="modal-overlay z-high" id="duplicate-wally-modal"><div class="modal-sheet"><h2 style="margin: 0 0 10px 0; font-size:24px; text-align:center;">Duplicate Wally Detected</h2><div style="background:#f9f9f9; padding:15px; border-radius:12px; margin-bottom:20px; font-size:14px; line-height:1.5;"><p style="margin:0 0 10px 0;">Wally <strong id="dup-wally-id"></strong> was already completed.</p><div style="display:flex; justify-content:space-between;"><span style="color:#757575;">Door:</span><strong id="dup-door"></strong></div><div style="display:flex; justify-content:space-between; margin-top:5px;"><span style="color:#757575;">Completed:</span><strong id="dup-time"></strong></div><div style="display:flex; justify-content:space-between; margin-top:5px;"><span style="color:#757575;">Unloader:</span><strong id="dup-unloader"></strong></div></div><button class="btn-primary" onclick="continueWithDuplicate()">Continue Anyway</button><button class="btn-cancel" onclick="closeModal('duplicate-wally-modal')" style="margin-top:10px;">Cancel</button></div></div>
 <div class="modal-overlay" id="input-modal">
     <div class="modal-sheet">
-        <h2>Onboard Bay <span id="modal-door-num"></span></h2>
-        <input type="text" id="input-arrival-id" class="form-input" placeholder="ID #">
-        <button class="btn-primary" onclick="confirmArrival()">Start Unload</button>
+        <h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Onboard Door <span id="modal-door-num"></span></h2>
+        <div id="onboard-form-container">
+            <div class="type-selector"><div class="type-opt selected" id="opt-wally" onclick="setType('Wally')">Wally</div><div class="type-opt" id="opt-cpu" onclick="setType('CPU')">CPU</div></div>
+            <div id="wally-inputs"><div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Wally Number</label><input type="text" id="input-wally-id" class="form-input" placeholder="e.g. 5589" inputmode="numeric" pattern="[0-9]*" oninput="this.value = this.value.replace(/[^0-9]/g, '')"></div></div>
+            <div id="cpu-inputs" style="display:none;">
+                <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Trailer Number</label><input type="text" id="input-trailer-id" class="form-input" placeholder="e.g. TRL123" autocapitalize="characters" oninput="this.value = this.value.toUpperCase()"></div>
+                <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Account Number</label><input type="text" id="input-account-id" class="form-input" placeholder="e.g. ACCT456" autocapitalize="characters" oninput="this.value = this.value.toUpperCase()" list="saved-accounts-datalist"><datalist id="saved-accounts-datalist"></datalist></div>
+                <div style="margin-bottom:15px;">
+                     <label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:8px; display:block;">Options</label>
+                     <div class="options-grid">
+                         <label class="option-toggle"><input type="checkbox" id="chk-hott" value="HOTT"><span>HOTT</span></label>
+                         <label class="option-toggle"><input type="checkbox" id="chk-recycle" value="RECYCLE"><span>RECYCLE</span></label>
+                         <label class="option-toggle"><input type="checkbox" id="chk-gv" value="GV"><span>GV</span></label>
+                     </div>
+                </div>
+            </div>
+            <div style="margin-bottom:15px;">
+                <label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Assigned Unloader (Optional)</label>
+                <select id="select-unloader" class="form-input" onchange="checkCustomUnloader(this)"><option value="" selected>Unassigned</option></select>
+                <input type="text" id="input-custom-unloader" class="form-input" style="display:none; margin-top:10px;" placeholder="Enter Name" autocapitalize="words">
+            </div>
+            <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Start Time</label><input type="time" id="input-onboard-time" class="form-input"></div>
+            <button class="btn-primary" id="btn-start-unload" onclick="confirmArrival()">Start Unload</button>
+        </div>
+        <div id="unavailable-msg" style="display:none; text-align:center; padding: 30px 0;"><i class="ph ph-prohibit" style="font-size: 48px; color: #8e8e93; margin-bottom: 10px;"></i><div style="font-size: 18px; font-weight: 700; color: #000;">Bay Unavailable</div><div style="font-size: 14px; color: #8e8e93;">This bay is currently marked for maintenance or offline.</div></div>
+        <button class="btn-primary btn-history" onclick="viewDoorLogs(currentDoor)">View History</button>
+        <button class="btn-primary" id="btn-toggle-availability" onclick="handleAvailabilityToggle()" style="background:white; border:2px solid #e5e5ea; color:#000; margin-top:10px;">Mark Unavailable</button>
         <button class="btn-cancel" onclick="closeModal('input-modal')">Cancel</button>
+    </div>
+</div>
+<div class="modal-overlay" id="add-unloader-modal"><div class="modal-sheet"><h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Add New Unloader</h2><div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Unloader Name</label><input type="text" id="input-new-unloader-name" class="form-input" placeholder="e.g. John Doe" autocapitalize="words"></div><button class="btn-primary" onclick="confirmAddUnloader()">Add Name</button><button class="btn-cancel" onclick="closeModal('add-unloader-modal')">Cancel</button></div></div>
+<div class="modal-overlay" id="active-detail-modal">
+    <div class="modal-sheet">
+        <h2 style="margin: 0 0 10px 0; font-size:24px; text-align:center;">Active Door <span id="detail-door-num"></span></h2>
+        <div style="margin-bottom: 20px;">
+            <div class="detail-row"><span class="detail-label">Type</span><span class="detail-value" id="detail-type"></span></div>
+            <div class="detail-row"><span class="detail-label">ID #</span><span class="detail-value" id="detail-id"></span></div>
+            <div class="detail-row" id="row-account" style="display:none;"><span class="detail-label">Account #</span><span class="detail-value" id="detail-account"></span></div>
+            <div class="detail-row" id="row-cpu-opts" style="display:none;"><span class="detail-label">Options</span><span class="detail-value" id="detail-cpu-opts"></span></div>
+            <div class="detail-row"><span class="detail-label">Unloader</span><span class="detail-value" id="detail-unloader"></span></div>
+            <div class="detail-row" id="row-started-by" style="display:none;"><span class="detail-label">Started By</span><span class="detail-value" id="detail-started-by"></span></div>
+            <div class="detail-row"><span class="detail-label">Start Time</span><span class="detail-value" id="detail-time"></span></div>
+            <div class="detail-row"><span class="detail-label">Duration</span><span class="detail-value" id="detail-duration">0m</span></div>
+        </div>
+        <button class="btn-primary btn-danger" onclick="confirmCompleteDoor()">Complete Unload</button>
+        <div class="modal-actions-row">
+            <button class="modal-icon-btn" onclick="openEditActiveModalFromDetail()" style="flex:1"><i class="ph ph-pencil-simple"></i></button>
+            <button class="modal-icon-btn" onclick="openMoveMenu()" style="flex:1; background:#fff; border:1px solid #e5e5ea;"><i class="ph ph-arrows-left-right"></i></button>
+            <button class="btn-primary btn-history" onclick="viewDoorLogs(detailDoor)" style="flex:3; margin:0;">View History</button>
+        </div>
+        <button class="btn-cancel" onclick="closeModal('active-detail-modal')">Close</button>
+    </div>
+</div>
+<div class="modal-overlay z-high" id="unloader-required-modal">
+    <div class="modal-sheet">
+        <h2 style="margin: 0 0 10px 0; font-size:24px; text-align:center;">Assign Unloader</h2>
+        <p style="text-align:center; color:#757575; margin-bottom:25px; padding: 0 10px;">Who completed this door?</p>
+        <select id="req-unloader-select" class="form-input" onchange="checkReqCustom(this)"></select>
+        <input type="text" id="req-custom-unloader" class="form-input" style="display:none; margin-top:10px;" placeholder="Enter Name" autocapitalize="words">
+        <button class="btn-primary" onclick="saveRequiredUnloader()">Confirm & Finish</button>
+        <button class="btn-cancel" onclick="closeModal('unloader-required-modal')">Cancel</button>
+    </div>
+</div>
+<div class="modal-overlay" id="move-menu-modal">
+    <div class="modal-sheet">
+        <h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Move/Transfer</h2>
+        <p style="text-align:center; color:#757575; margin-bottom:20px;">Moving a door ends the current session but does not count towards total completions.</p>
+        <select id="move-dest-select" class="form-input" onchange="toggleMoveOther(this)">
+            <option value="Small Sort">Small Sort</option>
+            <option value="Bulk Directs">Bulk Directs</option>
+            <option value="Metros">Metros</option>
+            <option value="PS1">PS1</option>
+            <option value="PS3">PS3</option>
+            <option value="PS5">PS5</option>
+            <option value="PS7">PS7</option>
+            <option value="PS11">PS11</option>
+            <option value="Other">Other</option>
+        </select>
+        <input type="text" id="move-custom-other" class="form-input" style="display:none; margin-top:10px;" placeholder="Specify Location">
+        <button class="btn-primary" onclick="confirmMoveDoor()">Confirm Move</button>
+        <button class="btn-cancel" onclick="closeModal('move-menu-modal')">Cancel</button>
+    </div>
+</div>
+<div class="modal-overlay" id="loan-staff-modal">
+    <div class="modal-sheet">
+        <h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Loan Employee</h2>
+        <p style="text-align:center; color:#757575; margin-bottom:20px;">Where is this employee going?</p>
+        <select id="loan-dest-select" class="form-input">
+            <option value="Small Sort">Small Sort</option>
+            <option value="Metros">Metros</option>
+            <option value="PS3">PS3</option>
+            <option value="PS5">PS5</option>
+            <option value="PS7">PS7</option>
+            <option value="PS11">PS11</option>
+            <option value="PS1">PS1</option>
+            <option value="Other">Other</option>
+        </select>
+        <button class="btn-primary" onclick="confirmLoanStaff()">Confirm Loan</button>
+        <button class="btn-cancel" onclick="closeModal('loan-staff-modal')">Cancel</button>
+    </div>
+</div>
+<div class="modal-overlay" id="edit-active-modal">
+    <div class="modal-sheet">
+        <h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Edit Active Bay</h2>
+        <input type="hidden" id="edit-active-original-door">
+        <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Bay Number</label><select id="edit-active-door-select" class="form-input"></select></div>
+        <div class="type-selector"><div class="type-opt selected" id="active-opt-wally" onclick="setEditActiveType('Wally')">Wally</div><div class="type-opt" id="active-opt-cpu" onclick="setEditActiveType('CPU')">CPU</div></div>
+        <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">ID / Trailer #</label><input type="text" id="edit-active-id" class="form-input" oninput="this.value = this.value.toUpperCase()"></div>
+        <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Account # (CPU only)</label><input type="text" id="edit-active-account" class="form-input" oninput="this.value = this.value.toUpperCase()"></div>
+        <div id="edit-active-options-container" style="display:none; margin-bottom:15px;">
+             <label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:8px; display:block;">Options</label>
+             <div class="options-grid">
+                 <label class="option-toggle"><input type="checkbox" id="edit-active-chk-hott" value="HOTT"><span>HOTT</span></label>
+                 <label class="option-toggle"><input type="checkbox" id="edit-active-chk-recycle" value="RECYCLE"><span>RECYCLE</span></label>
+                 <label class="option-toggle"><input type="checkbox" id="edit-active-chk-gv" value="GV"><span>GV</span></label>
+             </div>
+        </div>
+        <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Unloader</label><select id="edit-active-unloader" class="form-input" onchange="checkActiveCustomUnloader(this)"></select><input type="text" id="edit-active-custom-unloader" class="form-input" style="display:none; margin-top:10px;" placeholder="Enter Name" autocapitalize="words"></div>
+        <div id="edit-active-assist-option" style="margin-bottom:20px; display:none;">
+            <label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:8px; display:block;">Switch Type</label>
+            <div class="segment-control">
+                <div class="segment-opt selected" id="seg-replace" onclick="setSwitchType('Replacement')">Replacement</div>
+                <div class="segment-opt" id="seg-assist" onclick="setSwitchType('Assist')">Assist</div>
+            </div>
+        </div>
+        <button class="btn-primary" onclick="saveActiveEdit()">Save Changes</button><button class="btn-cancel" onclick="closeModal('edit-active-modal')">Discard</button>
+    </div>
+</div>
+<div class="modal-overlay" id="edit-log-modal">
+    <div class="modal-sheet">
+        <h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Edit Log Entry</h2>
+        <input type="hidden" id="edit-log-index">
+        <div class="type-selector"><div class="type-opt selected" id="edit-opt-wally" onclick="setEditType('Wally')">Wally</div><div class="type-opt" id="edit-opt-cpu" onclick="setEditType('CPU')">CPU</div></div>
+        <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">ID / Trailer #</label><input type="text" id="edit-input-id" class="form-input" oninput="this.value = this.value.toUpperCase()"></div>
+        <div id="edit-log-options-container" style="display:none; margin-bottom:15px;">
+             <label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:8px; display:block;">Options</label>
+             <div class="options-grid">
+                 <label class="option-toggle"><input type="checkbox" id="edit-log-chk-hott" value="HOTT"><span>HOTT</span></label>
+                 <label class="option-toggle"><input type="checkbox" id="edit-log-chk-recycle" value="RECYCLE"><span>RECYCLE</span></label>
+                 <label class="option-toggle"><input type="checkbox" id="edit-log-chk-gv" value="GV"><span>GV</span></label>
+             </div>
+        </div>
+        <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Unloader</label><select id="edit-select-unloader" class="form-input"></select></div>
+        <button class="btn-primary" onclick="confirmLogEdit()">Save Changes</button><button class="btn-cancel" onclick="closeModal('edit-log-modal')">Discard</button>
     </div>
 </div>
 
 <script src="https://unpkg.com/@phosphor-icons/web"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+
 <script>
-    // --- GLOBAL STATE ---
-    let doors = {}, historyLog = [], teamNames = [], staffing = [], currentDOP = '5-2', currentDoor = null;
-    const DOORS_START = 9, DOORS_END = 16;
+    // --- GLOBAL VARIABLES ---
+    let demoActive = false;
+    let duplicateWallyFlag = false;
+    let pendingWallyDuplicate = null;
+    let currentDoor = null;
+    let currentType = 'Wally';
+    let detailDoor = null;
+    let currentLogFilter = 'All';
+    let activeLogFilter = { door: 'All', unloader: 'All', type: 'All', timeRange: 'All', search: '', date: 'All' };
+    let statsVisible = false;
+    let hourlyVisible = false;
+    let lastSortStartTime = null;
+    let isFirstOnboard = false;
+    let staffingInterval = null;
+    let currentSwitchType = 'Replacement';
+    let pendingLoanId = null;
+
+    // --- CONFIG ---
+    const APP_VERSION = '3.52';
+    const DOORS_START = 9;
+    const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Matt S", "Robert W", "Trevon C", "Victor M", "Russell H", "Fonseca J"];
 
-    // --- UTILS ---
+    // --- HELPER FUNCTIONS ---
     const byId = (id) => document.getElementById(id);
-    function showToast() { const t = byId('save-toast'); t.classList.add('visible'); setTimeout(() => t.classList.remove('visible'), 2000); }
-    function closeModal(id) { byId(id).style.display = 'none'; }
-    function getShiftTimeWindows() {
-        const now = new Date(); let start = new Date(now); start.setHours(19, 55, 0, 0);
-        if (now < start) start.setDate(start.getDate() - 1);
-        return { thisHourStart: start };
+    function dateKeyFromTs(ts) {
+        const d = new Date(ts);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+    }
+    function debounce(func, wait) {
+        let timeout;
+        return function(...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), wait);
+        };
+    }
+
+    // --- CHANGELOG ---
+    const CHANGELOG = `
+v3.52:
+- DOP Status: Standardized language to "DOP Under (-X)", "DOP Met", "DOP Over (+X)".
+- DOP Headcount: Now strictly counts Unloaders and Bulk Sweeps (Belt Tenders excluded from the target count).
+- Bugfix: "Add" button restored on Staffing page (fixed missing selector/function errors).
+- Feature: Added selection counter to "Clock In Staff" modal.
+    `;
+
+    // --- STATE ---
+    let doors = {};
+    let historyLog = [];
+    let teamNames = [];
+    let savedAccounts = [];
+    let staffing = [];
+    let currentDOP = '5-2';
+    let teamNamesSorted = [];
+
+    let config = {
+        replenish: false, randomHistory: false, doorCount: 2,
+        mixedTypes: false, demoType: 'Wally', disableTimes: false,
+        simulateWindow: false, disableWindow: false
+    };
+
+    let attributionConfig = { minutes: 5, enabled: true };
+    let pendingCompletion = null;
+    let tempSortStartTime = "";
+
+    function getHourText(hour) {
+        if(hour===1) return "1st hour"; if(hour===2) return "2nd hour"; if(hour===3) return "3rd hour";
+        if(hour===4) return "4th hour"; if(hour===5) return "5th hour"; if(hour===6) return "6th hour";
+        if(hour===7) return "7th hour"; if(hour===8) return "8th hour"; if(hour===9) return "9th hour";
+        if(hour===10) return "10th hour"; if(hour===11) return "11th hour"; if(hour===12) return "12th hour";
+        return `${hour}th hour`;
     }
 
     // --- INIT ---
     function init() {
-        if(localStorage.getItem('ps9_doors')) doors = JSON.parse(localStorage.getItem('ps9_doors'));
-        else for(let i=DOORS_START; i<=DOORS_END; i++) doors[i] = { status: 'empty', start: 0, id: '', type: 'Wally' };
-        
-        if(localStorage.getItem('ps9_history')) historyLog = JSON.parse(localStorage.getItem('ps9_history'));
-        if(localStorage.getItem('ps9_team')) teamNames = JSON.parse(localStorage.getItem('ps9_team')); else teamNames = [...DEFAULT_TEAM];
-        if(localStorage.getItem('ps9_staffing')) staffing = JSON.parse(localStorage.getItem('ps9_staffing'));
-        if(localStorage.getItem('ps9_dop')) currentDOP = localStorage.getItem('ps9_dop');
+        console.log(`Wally Dashboard v${APP_VERSION} initialized`);
 
+        // Event Delegation for Grids
+        byId('active-trailers-grid').addEventListener('click', (e) => {
+            const btn = e.target.closest('.bay-circle');
+            if(btn) openActiveDetails(parseInt(btn.dataset.door));
+        });
+        byId('open-bays-grid').addEventListener('click', (e) => {
+             const btn = e.target.closest('.bay-circle');
+             if(btn) openArrivalModal(parseInt(btn.dataset.door));
+        });
+
+        // Debounced Search
+        const searchInput = byId('log-search');
+        if(searchInput) {
+            searchInput.addEventListener('input', debounce(() => renderLogs(), 300));
+        }
+
+        // Load Data
+        const sAccts = localStorage.getItem('ps9_accounts');
+        if (sAccts) savedAccounts = JSON.parse(sAccts);
+        initAttributionSettings();
+
+        const sDoors = localStorage.getItem('ps9_doors');
+        const sHistory = localStorage.getItem('ps9_history');
+        const sTeam = localStorage.getItem('ps9_team');
+        const sStaff = localStorage.getItem('ps9_staffing');
+        const sDop = localStorage.getItem('ps9_dop');
+        const shiftStart = localStorage.getItem('ps9_shift_start') || "19:55";
+
+        lastSortStartTime = localStorage.getItem('ps9_last_sort_start');
+        isFirstOnboard = localStorage.getItem('ps9_is_first_onboard') === 'true';
+
+        if (sDoors) doors = JSON.parse(sDoors);
+        else {
+            for(let i=DOORS_START; i<=DOORS_END; i++) {
+                doors[i] = { status: 'empty', start: 0, id: '', type: '', unloader: '', unavailable: false, lastCompletionTime: null, assignments: [] };
+            }
+        }
+
+        // Migration: Ensure 'assignments' array exists
+        for(let i=DOORS_START; i<=DOORS_END; i++) {
+            if(doors[i].status === 'active' && (!doors[i].assignments || doors[i].assignments.length===0)) {
+                doors[i].assignments = [{ name: doors[i].unloader || "Unassigned", start: doors[i].start, end: null }];
+            }
+        }
+
+        if (sHistory) historyLog = JSON.parse(sHistory);
+        if (Array.isArray(historyLog)) {
+            historyLog.forEach(l => {
+                if (!l.dateKey) l.dateKey = dateKeyFromTs(l.end);
+                if (!l.completionHour) l.completionHour = getCompletionHour(l.end - (l.statOffset || 0));
+                if (!l.cpuOptions) l.cpuOptions = []; 
+                if (!l.status) l.status = 'completed'; 
+            });
+        }
+
+        if (sTeam) teamNames = JSON.parse(sTeam); else teamNames = [...DEFAULT_TEAM];
+        refreshTeamNamesSorted();
+
+        if (sStaff) staffing = JSON.parse(sStaff);
+        if (sDop) currentDOP = sDop;
+
+        staffing.forEach(s => {
+            if (!s.role) s.role = 'Unloader';
+            if (!s.accumulated) s.accumulated = 0;
+        });
+
+        const startInput = byId('setting-shift-start');
+        if(startInput) startInput.value = shiftStart;
+        const dopSelect = byId('dop-select');
+        if(dopSelect) dopSelect.value = currentDOP;
+
+        renderSavedAccounts();
+        updateAccountDatalist();
+        populateUnloaderSelect();
         renderDashboard();
-        updateStaffingTimers(); // Start DOP Logic immediately
-        setInterval(updateStaffingTimers, 5000);
+
+        setTimeout(() => {
+            updateAttributionUI();
+            setupAttributionSlider();
+            updateStaffingTimers(); // Immediate DOP update
+        }, 100);
+
+        setInterval(updateTabBadges, 2000);
         updateTabBadges();
     }
 
-    // --- LOGIC ---
-    function switchTab(id, btn) {
-        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-        byId(`tab-${id}`).classList.add('active');
-        if(btn) btn.classList.add('active');
-        if(id === 'staffing') updateStaffingTimers();
-        if(id === 'logs') renderLogs();
+    // --- GRANULAR SAVING ---
+    function saveDoors() { localStorage.setItem('ps9_doors', JSON.stringify(doors)); }
+    function saveHistory() { localStorage.setItem('ps9_history', JSON.stringify(historyLog)); }
+    function saveTeam() { localStorage.setItem('ps9_team', JSON.stringify(teamNames)); }
+    function saveStaffing() { localStorage.setItem('ps9_staffing', JSON.stringify(staffing)); }
+    function saveAccounts() { localStorage.setItem('ps9_accounts', JSON.stringify(savedAccounts)); }
+    
+    function saveData() { 
+        saveDoors(); saveHistory(); saveTeam(); saveStaffing(); saveAccounts();
+        localStorage.setItem('ps9_dop', currentDOP);
     }
 
-    function saveDOP(val) { currentDOP = val; localStorage.setItem('ps9_dop', currentDOP); updateStaffingTimers(); showToast(); }
+    function refreshTeamNamesSorted() { teamNamesSorted = [...teamNames].sort((a, b) => a.localeCompare(b)); }
 
+    function resetData() {
+        if(confirm("Reset all data? This will preserve saved account numbers.")) {
+            const savedAccountsBackup = [...savedAccounts];
+            localStorage.clear();
+            if (savedAccountsBackup.length > 0) {
+                localStorage.setItem('ps9_accounts', JSON.stringify(savedAccountsBackup));
+            }
+            localStorage.setItem('ps9_shift_start', "19:55");
+            location.reload();
+        }
+    }
+
+    // --- BACKUP & RESTORE ---
+    function backupData(mode) {
+        const data = {};
+        if (mode === 'logs') {
+             data['ps9_history'] = localStorage.getItem('ps9_history');
+        } else {
+             for(let i=0; i<localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if(key.startsWith('ps9_')) data[key] = localStorage.getItem(key);
+            }
+        }
+        const blob = new Blob([JSON.stringify(data, null, 2)], {type : 'application/json'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `wally-${mode}-backup-${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        showSaveToast();
+    }
+
+    function triggerRestore() { byId('restore-file-input').click(); }
+    function restoreData(input) {
+        const file = input.files[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = JSON.parse(e.target.result);
+                if(!data || Object.keys(data).length === 0) throw new Error("Empty file");
+                if(confirm("Overwrite current data with backup?")) {
+                    Object.keys(data).forEach(k => localStorage.setItem(k, data[k]));
+                    alert("Data restored!"); location.reload();
+                }
+            } catch(err) { alert("Error: " + err.message); }
+        };
+        reader.readAsText(file);
+        input.value = '';
+    }
+    function showSaveToast() {
+        const t = byId('save-toast'); t.classList.add('visible');
+        setTimeout(() => t.classList.remove('visible'), 2000);
+    }
+    function viewChangelog() {
+        byId('changelog-content').textContent = CHANGELOG;
+        byId('changelog-modal').style.display = 'flex';
+    }
+
+    // --- LOGIC ---
+    function openStartSortFlow() {
+        byId('start-sort-time').value = localStorage.getItem('ps9_shift_start') || "19:55";
+        byId('start-sort-modal-1').style.display = 'flex';
+    }
+    function nextSortStep() {
+        const t = byId('start-sort-time').value;
+        if(!t) return alert("Please select a time");
+        tempSortStartTime = t;
+        byId('start-sort-dop').value = currentDOP;
+        closeModal('start-sort-modal-1');
+        byId('start-sort-modal-2').style.display = 'flex';
+    }
+    function finishStartSort() {
+        const d = byId('start-sort-dop').value;
+        saveShiftStart(tempSortStartTime);
+        saveDOP(d);
+        lastSortStartTime = tempSortStartTime;
+        localStorage.setItem('ps9_last_sort_start', lastSortStartTime);
+        isFirstOnboard = true;
+        localStorage.setItem('ps9_is_first_onboard', 'true');
+        closeModal('start-sort-modal-2');
+        showSaveToast();
+        renderDashboard();
+    }
+
+    function initAttributionSettings() {
+        const saved = localStorage.getItem('ps9_attribution_config_v2');
+        if (saved) attributionConfig = JSON.parse(saved);
+        updateAttributionUI();
+    }
+    function updateAttributionUI() {
+        const val = attributionConfig.minutes;
+        byId('attribution-value').textContent = val + "m";
+        const note = byId('attr-note-val'); if(note) note.textContent = val;
+        byId('slider-fill').style.width = `${(val/10)*100}%`;
+        byId('slider-thumb').style.left = `${(val/10)*100}%`;
+    }
+    function saveAttributionSetting() {
+        localStorage.setItem('ps9_attribution_config_v2', JSON.stringify(attributionConfig));
+        showSaveToast();
+    }
+    function setupAttributionSlider() {
+        const track = document.querySelector('.slider-track');
+        const thumb = byId('slider-thumb');
+        if (!track || !thumb) return;
+        let isDragging = false, saveTimer = null;
+        function updateSlider(clientX, persist) {
+            const rect = track.getBoundingClientRect();
+            let pct = ((clientX - rect.left) / rect.width) * 100;
+            pct = Math.max(0, Math.min(100, pct));
+            const minVal = Math.round((pct / 100) * 10);
+            if (minVal === attributionConfig.minutes) return;
+            attributionConfig.minutes = minVal;
+            updateAttributionUI();
+            if (persist) saveAttributionSetting();
+            else { clearTimeout(saveTimer); saveTimer = setTimeout(saveAttributionSetting, 200); }
+        }
+        thumb.addEventListener('touchstart', (e)=>{isDragging=true;e.preventDefault();});
+        document.addEventListener('touchmove', (e)=>{if(!isDragging)return; updateSlider(e.touches[0].clientX, false);},{passive:false});
+        document.addEventListener('touchend', ()=>{if(!isDragging)return; isDragging=false; saveAttributionSetting();});
+        thumb.addEventListener('mousedown', (e)=>{isDragging=true;e.preventDefault();});
+        document.addEventListener('mousemove', (e)=>{if(!isDragging)return; updateSlider(e.clientX, false);});
+        document.addEventListener('mouseup', ()=>{if(!isDragging)return; isDragging=false; saveAttributionSetting();});
+        track.addEventListener('click', (e)=>updateSlider(e.clientX, true));
+    }
+
+    function updateTabBadges() {
+        let activeCount = 0;
+        for(let i=DOORS_START; i<=DOORS_END; i++) if(doors[i].status === 'active') activeCount++;
+        updateBadge('active', activeCount, 'activeTrailers');
+        let staffCount = staffing.filter(s => s.status === 'active' || s.status === 'paused').length;
+        updateBadge('staffing', staffCount, 'activeStaff');
+        updateBadge('tools', 0, 'default');
+        updateBadge('settings', demoActive ? 1 : 0, 'demo');
+    }
+
+    function updateBadge(tabId, count, type) {
+        const badge = byId(`badge-${tabId}`);
+        if (!badge) return;
+        if (tabId === 'logs') { badge.style.display = 'none'; return; }
+        if (count === 0) {
+            badge.textContent = '0'; badge.classList.add('zero');
+            badge.classList.remove('warning', 'success'); badge.style.display = 'none';
+        } else {
+            badge.textContent = count > 99 ? '99+' : count.toString();
+            badge.classList.remove('zero');
+            if (type === 'activeTrailers' || type === 'activeStaff') {
+                if ((type==='activeTrailers' && count>=6) || (type==='activeStaff' && count>=8)) badge.classList.add('warning');
+                else if ((type==='activeTrailers' && count>=3) || (type==='activeStaff' && count>=4)) badge.classList.add('success');
+                else badge.classList.remove('warning', 'success');
+            } else if (type === 'demo') badge.classList.add('warning');
+            else badge.classList.remove('warning', 'success');
+            badge.style.display = 'flex';
+        }
+    }
+
+    function saveDOP(val) { currentDOP = val; localStorage.setItem('ps9_dop', currentDOP); updateStaffingTimers(false); showSaveToast(); }
+    
+    function toggleStaffOther(selectEl) {
+        const input = selectEl.nextElementSibling;
+        if(input && input.classList.contains('staff-other-input')) {
+            input.style.display = (selectEl.value === 'Other') ? 'block' : 'none';
+            if(selectEl.value==='Other') input.focus();
+        }
+    }
+    
+    function toggleMoveOther(selectEl) {
+        const input = byId('move-custom-other');
+        if(input) {
+            input.style.display = (selectEl.value === 'Other') ? 'block' : 'none';
+            if(selectEl.value==='Other') input.focus();
+        }
+    }
+    
     function updateStaffSelectionCount() {
         const count = document.querySelectorAll('.staff-checkbox:checked').length;
-        byId('staff-selection-count').innerText = `${count} Selected`;
+        const el = byId('staff-selection-count');
+        if(el) el.innerText = `${count} Selected`;
     }
 
     function openAddStaffModal() {
         const container = byId('staff-checkbox-list'); container.innerHTML = '';
-        teamNames.sort().forEach(n => {
-            if(!staffing.find(s => s.name === n && s.status !== 'cut')) {
-                container.innerHTML += `<div class="staff-item-row"><label class="staff-check-label"><input type="checkbox" value="${n}" class="staff-checkbox" onchange="updateStaffSelectionCount()"> ${n}</label></div>`;
+        teamNamesSorted.forEach(n => {
+            const isActive = staffing.find(s => s.name === n && (s.status === 'active' || s.status === 'paused' || s.status === 'loaned'));
+            if(!isActive) {
+                const item = document.createElement('div');
+                item.className = 'staff-item-row';
+                item.innerHTML = `
+                    <label class="staff-check-label">
+                        <input type="checkbox" value="${n}" class="staff-checkbox" onchange="updateStaffSelectionCount()">
+                        <span>${n}</span>
+                    </label>
+                    <select class="staff-role-select" id="role-select-${n.replace(/\s+/g, '')}" onchange="toggleStaffOther(this)">
+                        <option value="Unloader">Auto (Unloader)</option>
+                        <option value="Belt Tender">Belt Tender (Locked)</option>
+                        <option value="Bulk Sweep">Bulk Sweep (Locked)</option>
+                        <option value="Other">Other</option>
+                    </select>
+                    <input type="text" id="other-input-${n.replace(/\s+/g, '')}" class="staff-other-input" placeholder="Role">
+                `;
+                container.appendChild(item);
             }
         });
+        byId('staff-custom-name').value = ''; 
+        byId('staff-custom-role').value = 'Unloader';
+        byId('staff-custom-other').style.display = 'none';
         updateStaffSelectionCount();
         byId('add-staff-modal').style.display = 'flex';
     }
@@ -387,107 +1154,430 @@
     function confirmAddStaff() {
         const cbs = document.querySelectorAll('.staff-checkbox:checked');
         const customName = byId('staff-custom-name').value.trim();
-        cbs.forEach(cb => {
-            let role = (cb.value === "Robert W") ? "Belt Tender" : "Unloader";
-            staffing.push({ id: Date.now()+Math.random(), name: cb.value, status: 'active', role: role, start: Date.now(), manualOverride: (role==="Belt Tender"), accumulated: 0 });
-        });
-        if(customName) staffing.push({ id: Date.now()+Math.random(), name: customName, status: 'active', role: byId('staff-custom-role').value, start: Date.now(), manualOverride: true, accumulated: 0 });
-        localStorage.setItem('ps9_staffing', JSON.stringify(staffing));
-        closeModal('add-staff-modal'); renderStaffingView(); updateStaffingTimers(); updateTabBadges();
-    }
+        const customRoleSelect = byId('staff-custom-role');
+        let customRoleVal = customRoleSelect.value;
+        if(customRoleVal === 'Other') {
+             const customOther = byId('staff-custom-other');
+             if(customOther) customRoleVal = customOther.value.trim();
+        }
+        
+        if(cbs.length === 0 && !customName) return alert("Select an employee or enter a name.");
+        
+        const startTime = Date.now(); 
+        const LOAN_ROLES = ['Small Sort', 'Metros', 'PS1', 'PS3', 'PS5', 'PS7', 'PS11'];
 
-    function renderStaffingView() {
-        autoAssignRoles();
-        const list = byId('staff-list-active'); list.innerHTML = '';
-        const active = staffing.filter(s => s.status === 'active' || s.status === 'paused');
-        active.forEach(s => {
-            const div = document.createElement('div'); div.className = 'staff-card';
-            div.innerHTML = `<div class="staff-top-row"><div class="staff-name">${s.name} • ${s.role}</div><div class="staff-hours" id="hrs-${s.id}">${calculateTotalHours(s).toFixed(2)}h</div><button class="staff-action-btn" onclick="cutStaff(${s.id})">CUT</button></div>`;
-            list.appendChild(div);
+        cbs.forEach(cb => {
+            const name = cb.value;
+            const safeId = name.replace(/\s+/g, '');
+            const roleSelect = document.getElementById(`role-select-${safeId}`);
+            let roleVal = roleSelect ? roleSelect.value : 'Unloader';
+            
+            if(roleVal === 'Other') {
+                const otherInput = document.getElementById(`other-input-${safeId}`);
+                if(otherInput) roleVal = otherInput.value.trim();
+            }
+            
+            // Robert W Default logic
+            if (name === "Robert W" && roleVal === 'Unloader') {
+                roleVal = 'Belt Tender';
+            }
+
+            let status = 'active';
+            let loanDest = null;
+            let manualOverride = (roleVal !== 'Unloader');
+            
+            if (LOAN_ROLES.includes(roleVal)) {
+                 status = 'loaned';
+                 loanDest = roleVal;
+                 roleVal = 'Unloader'; 
+                 manualOverride = false;
+            }
+
+            if(!staffing.find(s => s.name === name && s.status !== 'cut')) {
+                staffing.push({ 
+                    id: Date.now() + Math.random(), name: name, 
+                    start: startTime, end: (status==='loaned'?startTime:null), 
+                    status: status, role: roleVal, accumulated: 0, 
+                    manualOverride: manualOverride, loanDest: loanDest 
+                });
+            }
         });
+
+        if (customName) {
+            const fmtName = customName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+            let roleVal = customRoleVal;
+            
+            if (fmtName === "Robert W" && roleVal === 'Unloader') roleVal = 'Belt Tender';
+            
+            let status = 'active';
+            let loanDest = null;
+            let manualOverride = (roleVal !== 'Unloader');
+
+             if (LOAN_ROLES.includes(roleVal)) {
+                 status = 'loaned';
+                 loanDest = roleVal;
+                 roleVal = 'Unloader';
+                 manualOverride = false;
+            }
+
+            if (!teamNames.includes(fmtName)) {
+                teamNames.push(fmtName);
+                refreshTeamNamesSorted();
+                saveTeam();
+                populateUnloaderSelect();
+            }
+
+            if(!staffing.find(s => s.name === fmtName && s.status !== 'cut')) {
+                 staffing.push({ 
+                     id: Date.now() + Math.random(), name: fmtName, 
+                     start: startTime, end: (status==='loaned'?startTime:null), 
+                     status: status, role: roleVal, accumulated: 0, 
+                     manualOverride: manualOverride, loanDest: loanDest 
+                 });
+            }
+        }
+
+        saveStaffing();
+        closeModal('add-staff-modal');
+        renderStaffingView();
+        updateStaffingTimers();
+        updateTabBadges();
+        showSaveToast();
     }
 
     function cutStaff(id) {
         const s = staffing.find(x => x.id === id);
-        if(s) { s.status = 'cut'; s.accumulated += (Date.now() - s.start); s.start = null; localStorage.setItem('ps9_staffing', JSON.stringify(staffing)); renderStaffingView(); updateStaffingTimers(); updateTabBadges(); }
+        if(s) {
+            s.status = 'cut'; s.end = Date.now();
+            if (s.start !== null) s.accumulated = (s.accumulated || 0) + (Date.now() - s.start);
+            s.start = null;
+            if(s.role === 'Belt Tender' || s.role === 'Bulk Sweep') s.role = 'Unloader';
+            saveStaffing(); renderStaffingView(); updateStaffingTimers(); updateTabBadges(); showSaveToast();
+        }
+    }
+    
+    function openLoanModal(id) {
+        pendingLoanId = id;
+        byId('loan-staff-modal').style.display='flex';
+    }
+    
+    function confirmLoanStaff() {
+        const dest = byId('loan-dest-select').value;
+        const s = staffing.find(x => x.id === pendingLoanId);
+        if(s) {
+            s.status = 'loaned';
+            s.loanDest = dest;
+            s.end = Date.now(); 
+            if (s.start !== null) s.accumulated = (s.accumulated || 0) + (Date.now() - s.start);
+            s.start = null;
+            
+            if(s.role === 'Belt Tender' || s.role === 'Bulk Sweep') s.role = 'Unloader';
+            saveStaffing(); renderStaffingView(); updateStaffingTimers(); updateTabBadges(); showSaveToast();
+        }
+        closeModal('loan-staff-modal');
+    }
+
+    function removeStaff(id) {
+        if(confirm("Delete this employee record?")) {
+            staffing = staffing.filter(s => s.id !== id);
+            saveStaffing(); renderStaffingView(); updateStaffingTimers(); updateTabBadges();
+        }
+    }
+    
+    function openEditStaffModal(id) {
+        const s = staffing.find(x => x.id === id); if(!s) return;
+        byId('edit-staff-id').value = id;
+        const date = new Date(s.start || Date.now());
+        byId('edit-staff-time').value = `${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`;
+        byId('edit-staff-modal').style.display = 'flex';
+    }
+
+    function saveStaffEdit() {
+        const id = parseFloat(byId('edit-staff-id').value), timeInput = byId('edit-staff-time').value;
+        const s = staffing.find(x => x.id === id);
+        if(s && timeInput) {
+            const [h, m] = timeInput.split(':').map(Number);
+            const newDate = new Date(s.start || Date.now());
+            newDate.setHours(h, m);
+            const diff = newDate.getTime() - (s.start || Date.now());
+            if(diff < -43200000) newDate.setDate(newDate.getDate() + 1);
+            if(diff > 43200000) newDate.setDate(newDate.getDate() - 1);
+            s.start = newDate.getTime();
+            saveStaffing(); renderStaffingView(); updateStaffingTimers(); closeModal('edit-staff-modal'); showSaveToast();
+        }
+    }
+
+    function pauseStaff(id) {
+        const s = staffing.find(x => x.id === id);
+        if (s && s.status === 'active') {
+            s.status = 'paused';
+            s.accumulated = (s.accumulated || 0) + (Date.now() - s.start);
+            s.start = null;
+            saveStaffing(); renderStaffingView(); updateStaffingTimers(); updateTabBadges();
+        }
+    }
+    function resumeStaff(id) {
+        const s = staffing.find(x => x.id === id);
+        if (s && s.status === 'paused') {
+            s.status = 'active'; s.start = Date.now();
+            saveStaffing(); renderStaffingView(); updateStaffingTimers(); updateTabBadges();
+        }
     }
 
     function calculateTotalHours(s) {
-        let ms = s.accumulated || 0;
-        if(s.status === 'active' && s.start) ms += (Date.now() - s.start);
-        return ms / 3600000;
+        let totalMs = (s.accumulated || 0);
+        if (s.status === 'active' && s.start) totalMs += (Date.now() - s.start);
+        return Math.round(totalMs / 60000) / 60;
     }
 
     function autoAssignRoles() {
-        const active = staffing.filter(s => s.status === 'active' || s.status === 'paused');
-        active.sort((a,b) => calculateTotalHours(b) - calculateTotalHours(a));
-        let belts = active.filter(s => s.manualOverride && s.role === 'Belt Tender').length;
-        let sweeps = active.filter(s => s.manualOverride && s.role === 'Bulk Sweep').length;
-        active.forEach(s => {
-            if(!s.manualOverride) {
-                if(belts < 1) { s.role = 'Belt Tender'; belts++; }
-                else if(sweeps < 2) { s.role = 'Bulk Sweep'; sweeps++; }
-                else s.role = 'Unloader';
+        const activeStaff = staffing.filter(s => s.status === 'active' || s.status === 'paused');
+        activeStaff.sort((a, b) => calculateTotalHours(b) - calculateTotalHours(a));
+
+        let lockedBeltTenders = 0;
+        let lockedSweeps = 0;
+
+        activeStaff.forEach(s => {
+            if (s.manualOverride) {
+                if (s.role === 'Belt Tender') lockedBeltTenders++;
+                if (s.role === 'Bulk Sweep') lockedSweeps++;
             }
         });
+
+        let changed = false;
+
+        activeStaff.forEach(s => {
+            if (s.manualOverride) return;
+
+            let newRole = 'Unloader';
+            if (lockedBeltTenders < 1) { newRole = 'Belt Tender'; lockedBeltTenders++; } 
+            else if (lockedSweeps < 2) { newRole = 'Bulk Sweep'; lockedSweeps++; }
+
+            if (s.role !== newRole) { s.role = newRole; changed = true; }
+        });
+
+        if (changed) { saveStaffing(); return true; }
+        return false;
     }
 
-    function updateStaffingTimers() {
-        autoAssignRoles();
-        if(byId('tab-staffing').classList.contains('active')) renderStaffingView();
+    function saveStaffRole(id, value, selectEl) {
+        const s = staffing.find(x => x.id === id); 
+        if (!s) return;
         
-        let activeUHours = 0, onClock = 0;
+        if (value === 'Auto' || value === 'Unloader') {
+            s.manualOverride = false;
+        } else { 
+            s.manualOverride = true; 
+            s.role = value; 
+        }
+        
+        saveStaffing(); renderStaffingView(); updateStaffingTimers(); updateTabBadges(); showSaveToast();
+    }
+
+    function renderStaffingView() {
+        autoAssignRoles();
+        const activeList = byId('staff-list-active'), cutList = byId('staff-list-cut'), loanList = byId('staff-list-loaned');
+        activeList.innerHTML = ''; cutList.innerHTML = ''; loanList.innerHTML = '';
+        
+        const getRoleScore = (r) => { if(r==='Belt Tender') return 3; if(r==='Bulk Sweep') return 2; return 1; };
+        
+        const activeStaff = staffing.filter(s => s.status === 'active' || s.status === 'paused')
+            .sort((a,b) => {
+                const scoreA = getRoleScore(a.role);
+                const scoreB = getRoleScore(b.role);
+                if(scoreA !== scoreB) return scoreB - scoreA;
+                return calculateTotalHours(b) - calculateTotalHours(a);
+            });
+
+        activeStaff.forEach(s => {
+            const isPaused = s.status === 'paused';
+            const isManual = s.manualOverride === true;
+            let roleIcon = '';
+            if (s.role === 'Belt Tender') roleIcon = '👑';
+            else if (s.role === 'Bulk Sweep') roleIcon = '🧹';
+            
+            const roleColor = s.role==='Belt Tender'?'#ff9500':(s.role==='Bulk Sweep'?'#34c759':'#000');
+            
+            const div = document.createElement('div'); div.className = 'staff-card';
+            div.dataset.id = s.id; 
+            if(isPaused) div.style.cssText = 'opacity:0.7; border:1px dashed #ccc;';
+            
+            div.innerHTML = `
+                <div style="width:100%">
+                    <div class="staff-top-row">
+                        <div class="staff-name">${s.name} <span style="margin-left:5px; font-size:18px;">${roleIcon}</span> ${isManual ? '<i class="ph ph-lock-key" style="font-size:14px; color:#555; margin-left:4px;"></i>' : ''} ${isPaused?'<span style="background:#ffcc00; color:#000; font-size:10px; padding:2px 4px; border-radius:4px; font-weight:700; margin-left:5px;">PAUSED</span>':''}</div>
+                        <div style="display:flex; gap:8px;">
+                             <button class="icon-btn" onclick="openLoanModal(${s.id})" style="width:32px; height:32px; font-size:16px;"><i class="ph ph-export"></i></button>
+                            <button class="icon-btn" onclick="${isPaused?'resumeStaff':'pauseStaff'}(${s.id})" style="width:32px; height:32px; font-size:16px; ${isPaused?'background:#e5e5ea; color:#000;':''}"><i class="ph ${isPaused?'ph-play':'ph-pause'}"></i></button>
+                            <button class="icon-btn" onclick="openEditStaffModal(${s.id})" style="width:32px; height:32px; font-size:16px;"><i class="ph ph-pencil-simple"></i></button>
+                            <button class="staff-action-btn" onclick="cutStaff(${s.id})">CUT</button>
+                            <button class="icon-btn" onclick="removeStaff(${s.id})" style="width:32px; height:32px; font-size:16px; color:#ff3b30;"><i class="ph ph-trash"></i></button>
+                        </div>
+                    </div>
+                    <div class="staff-time">${isPaused?'Paused':'Started: '+new Date(s.start).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+                        <div class="staff-hours" id="staff-hours-${s.id}" style="color:${roleColor}">${calculateTotalHours(s).toFixed(2)}h</div>
+                        <div style="width:55%">
+                             <select class="role-select" onchange="saveStaffRole(${s.id}, this.value, this)" style="background:${isManual ? '#e5e5ea' : '#f2f2f7'}; border:${isManual ? '1px solid #ccc' : 'none'};">
+                                <option value="Auto" ${!isManual ? 'selected' : ''}>Auto (${s.role})</option>
+                                <option value="Unloader" ${isManual && s.role==='Unloader'?'selected':''}>Unloader</option>
+                                <option value="Belt Tender" ${isManual && s.role==='Belt Tender'?'selected':''}>Belt Tender</option>
+                                <option value="Bulk Sweep" ${isManual && s.role==='Bulk Sweep'?'selected':''}>Bulk Sweep</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>`;
+            activeList.appendChild(div);
+        });
+
+        const loanStaffList = staffing.filter(s => s.status === 'loaned');
+        loanStaffList.forEach(s => {
+             const div = document.createElement('div'); div.className = 'log-card'; 
+             div.innerHTML = `
+                <div class="log-info">
+                     <div class="log-header-row"><span class="log-door-pill" style="background:#000;">${s.name}</span></div>
+                     <div class="log-tags-row"><span class="log-tag tag-gray"><i class="ph ph-arrow-right"></i> ${s.loanDest}</span></div>
+                </div>
+                <div class="log-right-col">
+                    <div style="text-align:right;"><div class="log-duration" style="font-size:18px;">${new Date(s.end).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</div><div class="log-duration-label">Left At</div></div>
+                    <button class="log-mini-btn" style="color:#ff3b30; border-color:#ff3b30;" onclick="removeStaff(${s.id})"><i class="ph ph-trash"></i></button>
+                </div>
+             `;
+             loanList.appendChild(div);
+        });
+
+        const cutStaffList = staffing.filter(s => s.status === 'cut').sort((a,b) => calculateTotalHours(b) - calculateTotalHours(a));
+        cutStaffList.forEach(s => {
+            const div = document.createElement('div'); div.className = 'staff-card cut';
+            div.innerHTML = `
+                <div><div class="staff-name">${s.name} • ${s.role}</div><div class="staff-time">Ended: ${new Date(s.end).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</div></div>
+                <div style="display:flex; align-items:center; gap:10px;"><div class="staff-hours">${calculateTotalHours(s).toFixed(2)}h</div><button class="icon-btn" onclick="removeStaff(${s.id})" style="width:32px; height:32px; font-size:16px; color:#ff3b30; background:transparent;"><i class="ph ph-trash"></i></button></div>`;
+            cutList.appendChild(div);
+        });
+
+        byId('badge-on-clock').innerText = activeStaff.length;
+        byId('badge-off-clock').innerText = cutStaffList.length;
+        byId('badge-loaned').innerText = loanStaffList.length;
+    }
+
+    function updateStaffingTimers(checkRoles = true) {
+        if(checkRoles) { const changed = autoAssignRoles(); if(changed) renderStaffingView(); }
+
+        let onClock=0, uHours=0, bHours=0, sHours=0;
         staffing.forEach(s => {
-            if(s.status === 'active' || s.status === 'paused') {
+            let hrs = calculateTotalHours(s);
+            if(s.status==='active'||s.status==='paused') {
                 onClock++;
-                if(s.role === 'Unloader') activeUHours += calculateTotalHours(s);
+                const el = byId(`staff-hours-${s.id}`); if(el) el.innerText = hrs.toFixed(2)+'h';
             }
+            if(s.role==='Unloader') uHours+=hrs; else if(s.role==='Belt Tender') bHours+=hrs; else if(s.role==='Bulk Sweep') sHours+=hrs;
         });
         byId('staff-active-count').innerText = onClock;
-        byId('staff-total-hours').innerText = activeUHours.toFixed(2);
-
-        // DOP STATUS LOGIC
-        const [uStr, sStr] = currentDOP.split('-');
-        const target = parseInt(uStr) + parseInt(sStr);
-        const dopCount = staffing.filter(s => (s.status === 'active' || s.status === 'paused') && s.role !== 'Belt Tender').length;
-        const diff = dopCount - target;
-        const bar = byId('dop-status-bar');
+        byId('staff-total-hours').innerText = uHours.toFixed(2);
         
-        if (diff === 0) { bar.className = 'dop-status dop-ok'; bar.innerText = 'DOP Met'; }
-        else if (diff > 0) { bar.className = 'dop-status dop-over'; bar.innerText = `DOP Over (+${diff})`; }
-        else { bar.className = 'dop-status dop-under'; bar.innerText = `DOP Under (-${Math.abs(diff)})`; }
+        // DOP STATUS UPDATE - Modified Logic (Unloaders + Bulk Sweeps only)
+        const [uStr, sStr] = currentDOP.split('-');
+        const targetTotal = parseInt(uStr) + parseInt(sStr);
+        
+        // Exclude Belt Tender from 'onClock' count for DOP check
+        const dopActiveCount = staffing.filter(s => 
+            (s.status === 'active' || s.status === 'paused') && s.role !== 'Belt Tender'
+        ).length;
+        
+        const diff = dopActiveCount - targetTotal;
+        const statusBar = byId('dop-status-bar');
+        if(!statusBar) return;
+        
+        if (diff === 0) {
+            statusBar.className = 'dop-status dop-ok';
+            statusBar.innerText = `DOP Met`;
+        } else if (diff > 0) {
+            statusBar.className = 'dop-status dop-over';
+            statusBar.innerText = `DOP Over (+${diff})`;
+        } else {
+            statusBar.className = 'dop-status dop-under';
+            statusBar.innerText = `DOP Under (-${Math.abs(diff)})`;
+        }
+    }
+
+    function switchTab(tabId, btn) {
+        document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
+        byId(`tab-${tabId}`).classList.add('active');
+        document.querySelectorAll('.tab-btn').forEach(el=>el.classList.remove('active'));
+        if(btn) btn.classList.add('active');
+        
+        if(tabId==='staffing') {
+            renderStaffingView();
+            updateStaffingTimers();
+            if(!staffingInterval) staffingInterval = setInterval(updateStaffingTimers, 5000);
+        } else {
+            if(staffingInterval) { clearInterval(staffingInterval); staffingInterval = null; }
+        }
+
+        if(tabId==='dashboard') renderDashboard();
+        if(tabId==='active') renderActiveTab();
+        if(tabId==='logs') renderLogs();
+    }
+
+    function closeModal(id) { const m = byId(id); if(m) m.style.display='none'; }
+    function openArrivalModal() {
+        const firstEmpty = Object.keys(doors).find(d => doors[d].status === 'empty' && !doors[d].unavailable);
+        if(!firstEmpty) return alert("No bays available");
+        currentDoor = firstEmpty;
+        byId('modal-door-num').innerText = currentDoor;
+        const sel = byId('select-unloader');
+        sel.innerHTML = '<option value="" selected>Unassigned</option>';
+        staffing.filter(s => s.status==='active').forEach(s => sel.innerHTML += `<option value="${s.name}">${s.name}</option>`);
+        byId('input-modal').style.display = 'flex';
+    }
+
+    function setType(t) { currentType = t; byId('opt-wally').classList.toggle('selected', t==='Wally'); byId('opt-cpu').classList.toggle('selected', t==='CPU'); }
+    function confirmArrival() {
+        const id = byId('input-arrival-id').value.toUpperCase();
+        if(!id) return alert("Missing ID");
+        doors[currentDoor] = { status:'active', start:Date.now(), id, type:currentType, unloader:byId('select-unloader').value };
+        saveDoors(); closeModal('input-modal'); renderDashboard(); updateTabBadges();
     }
 
     function renderDashboard() {
         const ag = byId('active-trailers-grid'), og = byId('open-bays-grid');
         ag.innerHTML = ''; og.innerHTML = '';
-        for(let i=DOORS_START; i<=DOORS_END; i++) {
+        for(let i=DOORS_START; i<=DOORS_END; i++){
             const d = doors[i];
-            const div = document.createElement('div'); div.className = `bay-circle bay-${i}`;
-            if(d.status === 'active') { div.innerHTML = `${i}<div class="type-badge">${d.type==='Wally'?'W':'C'}</div>`; ag.appendChild(div); }
-            else { div.innerText = i; og.appendChild(div); div.onclick = () => openArrivalModal(i); }
+            const div = document.createElement('div');
+            div.className = `bay-circle bay-${i} ${d.unavailable?'unavailable':''}`;
+            if(d.status==='active'){
+                div.innerHTML = `${i}<div class="type-badge">${d.type[0]}</div>`; ag.appendChild(div);
+                div.onclick = () => openActiveDetails(i);
+            } else {
+                div.innerText = i; og.appendChild(div);
+                div.onclick = () => openArrivalModal(i);
+            }
         }
+    }
+
+    function renderActiveTab() {
+        const list = byId('active-tab-list'); list.innerHTML = '';
+        Object.keys(doors).forEach(i => {
+            if(doors[i].status==='active'){
+                const d = doors[i];
+                list.innerHTML += `<div class="active-card"><div class="active-card-info"><div class="active-card-header"><span class="door-pill">Door ${i}</span><span class="active-card-title">${d.id}</span></div><div class="active-card-details">${d.unloader||'Unassigned'}</div></div></div>`;
+            }
+        });
     }
 
     function renderLogs() {
         const list = byId('logs-list'); list.innerHTML = '';
-        historyLog.slice(0, 20).forEach(l => {
-            list.innerHTML += `<div class="log-card"><div><span class="log-door-pill">Door ${l.door}</span> <span class="log-title">${l.id}</span></div><div class="log-duration">${Math.round((l.end-l.start)/60000)}m</div></div>`;
+        historyLog.forEach(l => {
+            list.innerHTML += `<div class="log-card"><div class="log-info"><div class="log-header-row"><span class="log-door-pill">Door ${l.door}</span><div class="log-title">${l.id}</div></div><div class="log-footer-row">${l.unloader}</div></div><div class="log-right-col"><div class="log-duration">${Math.round(l.duration/60000)}m</div></div></div>`;
         });
     }
 
-    function updateTabBadges() {
-        const activeCount = Object.values(doors).filter(d => d.status === 'active').length;
-        byId('badge-staffing').innerText = staffing.filter(s=>s.status==='active').length;
-        byId('badge-staffing').classList.toggle('zero', byId('badge-staffing').innerText === "0");
+    function openActiveDetails(i) {
+        detailDoor = i; const d = doors[i];
+        byId('detail-door-num').innerText = i;
+        byId('active-detail-modal').style.display = 'flex';
     }
-
-    function openArrivalModal(i) { currentDoor = i; byId('modal-door-num').innerText = i; byId('input-modal').style.display='flex'; }
-    function confirmArrival() { const id = byId('input-arrival-id').value.toUpperCase(); if(!id) return; doors[currentDoor] = { status:'active', id, start:Date.now(), type:'Wally' }; localStorage.setItem('ps9_doors', JSON.stringify(doors)); closeModal('input-modal'); renderDashboard(); }
-    function resetData() { if(confirm("Reset all?")) { localStorage.clear(); location.reload(); } }
-    function openStartSortFlow() { alert("Shift Started"); }
-    function calculatePPH() { const v = byId('pph-volume-input').value; const h = parseFloat(byId('staff-total-hours').innerText); byId('pph-result').innerText = h > 0 ? Math.round(v/h) : 0; }
-    function openPPHModal() { byId('pph-modal').style.display = 'flex'; }
 
     init();
 </script>
