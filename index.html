@@ -206,13 +206,16 @@
         .staffing-header-card { background: #000; color: #fff; border-radius: 20px; padding: 20px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         .staffing-header-title { font-size: 14px; opacity: 0.8; font-weight: 600; text-transform: uppercase; margin-bottom: 5px; }
         .staffing-header-val { font-size: 32px; font-weight: 800; }
-        .dop-container { margin-bottom: 20px; background: #fff; border: 1px solid #e5e5ea; border-radius: 16px; padding: 15px; display: flex; flex-direction: column; gap: 12px; }
+        .dop-container { margin-bottom: 20px; background: #fff; border: 1px solid #e5e5ea; border-radius: 16px; padding: 10px 15px; display: flex; flex-direction: column; gap: 12px; }
         .dop-row { display: flex; justify-content: space-between; align-items: center; }
         .dop-label { font-size: 14px; font-weight: 700; color: #000; }
         .dop-select { background: #f2f2f7; border: none; padding: 8px 12px; border-radius: 8px; font-size: 14px; font-weight: 600; }
-        .dop-status { font-size: 13px; font-weight: 600; padding: 8px 12px; border-radius: 8px; text-align: center; }
-        .dop-ok { background: #d1fae5; color: #065f46; }
-        .dop-warn { background: #fee2e2; color: #991b1b; }
+        .dop-status { font-size: 13px; font-weight: 700; padding: 8px 12px; border-radius: 8px; text-align: center; }
+        
+        /* Version 3.50-beta Standardized Colors */
+        .dop-ok { background: #d1fae5; color: #065f46; } /* Green */
+        .dop-under { background: #ffedd5; color: #9a3412; } /* Orange */
+        .dop-over { background: #fee2e2; color: #991b1b; } /* Red */
 
         .staff-section-title { font-size: 18px; font-weight: 800; margin: 25px 0 15px 0; display: flex; justify-content: space-between; align-items: center; }
         .staff-count-badge { background: #e5e5ea; color: #000; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 700; margin-left: 8px; }
@@ -250,7 +253,7 @@
         .tool-card.add { border: 2px dashed #ccc; background: transparent; box-shadow: none; }
         .tool-card.add .tool-icon-wrapper { background: #e5e5ea; color: #000; }
 
-        /* --- LOGS --- */
+        /* --- LOGS SECTION (REVISED) --- */
         .stats-collapse-btn { width: 100%; background: #f2f2f7; border: none; border-radius: 16px; padding: 18px; display: flex; justify-content: space-between; align-items: center; font-size: 16px; font-weight: 700; color: #000; cursor: pointer; margin-bottom: 20px; }
         .stats-content-area { background: white; border: 1px solid #e5e5ea; border-radius: 16px; padding: 20px; margin-bottom: 25px; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
         .stats-table { width: 100%; border-collapse: collapse; font-size: 15px; }
@@ -260,7 +263,7 @@
         .active-filter-display { display: flex; align-items: center; justify-content: space-between; background: #000; color: white; padding: 12px 20px; border-radius: 16px; margin-bottom: 20px; font-weight: 600; }
         .logs-list { display: flex; flex-direction: column; gap: 15px; }
         
-        /* LOG CARD STYLES */
+        /* NEW LOG CARD STYLES */
         .log-card {
             background: white; border: 1px solid #e5e5ea; border-radius: 20px; padding: 16px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.03); display: flex; justify-content: space-between; align-items: center; gap: 15px;
@@ -314,9 +317,7 @@
         .tab-btn i { font-size: 26px; }
         .tab-btn.active { color: #000; }
         .tab-badge { position: absolute; top: -4px; right: 0; background: #ff3b30; color: white; font-size: 10px; font-weight: 800; min-width: 18px; height: 18px; border-radius: 9px; display: flex; align-items: center; justify-content: center; padding: 0 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); border: 2px solid white; }
-        .tab-badge.zero { background: #e5e5ea; color: #8e8e93; }
-        .tab-badge.warning { background: #ff9500; }
-        .tab-badge.success { background: #34c759; }
+        .tab-badge.zero { display: none; }
 
         .save-toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; z-index: 3000; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
         .save-toast.visible { opacity: 1; }
@@ -399,14 +400,13 @@
     <div id="tab-dashboard" class="tab-content active">
         <div class="top-actions">
             <button class="action-btn" onclick="openStartSortFlow()"><i class="ph ph-play-circle"></i> Start Sort</button>
-            <button class="action-btn" onclick="openAddUnloaderModal()"><i class="ph ph-user-plus"></i> Add Unloader</button>
             <button class="action-btn" onclick="openArrivalModal()"><i class="ph ph-truck"></i> Onboard</button>
         </div>
 
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 3.50</div>
+            <div class="app-version">Version 3.50-beta</div>
         </div>
 
         <div class="section-title">Sort Statistics</div>
@@ -558,7 +558,7 @@
                     </div>
                     <div class="settings-note" style="margin-top:20px; padding:0;">Allow attributing trailers completed up to <span id="attr-note-val" style="font-weight:700; color:#000;">5</span> minutes after the hour to the previous hour.</div>
                 </div>
-                <div class="settings-row"><span class="settings-label">Simulate Shift Change</span><div class="toggle-switch" id="switch-sim-window" onclick="toggleSwitch('sim-window')"></div></div>
+                 <div class="settings-row"><span class="settings-label">Force Attribution (Simulate)</span><div class="toggle-switch" id="switch-sim-window" onclick="toggleSwitch('sim-window')"></div></div>
                  <div class="settings-row"><span class="settings-label">Disable Time Attribution</span><div class="toggle-switch" id="switch-dis-window" onclick="toggleSwitch('dis-window')"></div></div>
             </div>
             <div class="settings-header">Saved Accounts</div>
@@ -572,7 +572,6 @@
             <div class="settings-header">Demo</div>
             <div class="settings-group">
                 <div class="settings-row"><span class="settings-label">Demo Mode</span><div class="toggle-switch" id="switch-demo-mode" onclick="toggleSwitch('demo-mode')"></div></div>
-                <div class="settings-row"><span class="settings-label">Force Attribution (Simulate)</span><div class="toggle-switch" id="switch-sim-window" onclick="toggleSwitch('sim-window')"></div></div>
                 <div class="settings-row"><span class="settings-label">Disable hardcoded times</span><div class="toggle-switch" id="switch-disable-times" onclick="toggleSwitch('disable-times')"></div></div>
                 <div class="settings-row"><span class="settings-label">Generate Random History</span><div class="toggle-switch" id="switch-demo-random" onclick="toggleSwitch('demo-random')"></div></div>
                 <div class="settings-row"><span class="settings-label">Auto-Replenish Bays</span><div class="toggle-switch" id="switch-demo-replenish" onclick="toggleSwitch('demo-replenish')"></div></div>
@@ -598,9 +597,30 @@
     <button class="tab-btn" onclick="switchTab('active', this)" id="tab-btn-active"><i class="ph ph-truck-trailer"></i><span>Active</span><span class="tab-badge" id="badge-active">0</span></button>
     <button class="tab-btn" onclick="switchTab('logs', this)" id="tab-btn-logs"><i class="ph ph-list-dashes"></i><span>Logs</span></button>
     <button class="tab-btn" onclick="switchTab('staffing', this)" id="tab-btn-staffing"><i class="ph ph-users"></i><span>Staffing</span><span class="tab-badge" id="badge-staffing">0</span></button>
-    <button class="tab-btn" onclick="switchTab('tools', this)" id="tab-btn-tools"><i class="ph ph-toolbox"></i><span>Tools</span><span class="tab-badge" id="badge-tools">0</span></button>
+    <button class="tab-btn" onclick="switchTab('tools', this)" id="tab-btn-tools"><i class="ph ph-toolbox"></i><span>Tools</span></button>
     <button class="tab-btn" onclick="switchTab('settings', this)" id="tab-btn-settings"><i class="ph ph-gear"></i><span>Settings</span><span class="tab-badge" id="badge-settings">0</span></button>
 </nav>
+
+<div class="modal-overlay" id="add-staff-modal">
+    <div class="modal-sheet">
+        <h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Clock In Staff <span id="staff-selection-count" style="font-size:14px; color:#8e8e93; font-weight:500; margin-left:10px;">0 Selected</span></h2>
+        <div id="staff-checkbox-list" class="staff-checkbox-list"></div>
+        <div style="margin: 20px 0 20px 0; border-top: 1px solid #eee; padding-top:15px;">
+            <label style="font-size:12px; color:var(--text-sub); font-weight:600; display:block; margin-bottom:5px;">Add New Person</label>
+            <div class="staff-item-row" style="border:none; padding:0;">
+                <input type="text" id="staff-custom-name" class="form-input" style="margin:0; flex:1; margin-right:10px;" placeholder="Name" autocapitalize="words">
+                <select class="staff-role-select" id="staff-custom-role" onchange="toggleStaffOther(this)">
+                    <option value="Unloader">Auto (Unloader)</option>
+                    <option value="Belt Tender">Belt Tender (Locked)</option>
+                    <option value="Bulk Sweep">Bulk Sweep (Locked)</option>
+                    <option value="Other">Other</option>
+                </select>
+                <input type="text" id="staff-custom-other" class="staff-other-input" placeholder="Area">
+            </div>
+        </div>
+        <button class="btn-primary" onclick="confirmAddStaff()">Clock In Selected</button><button class="btn-cancel" onclick="closeModal('add-staff-modal')">Cancel</button>
+    </div>
+</div>
 
 <div class="modal-overlay" id="start-sort-modal-1">
     <div class="modal-sheet">
@@ -628,26 +648,6 @@
         <div style="margin-bottom:20px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Total Volume</label><input type="number" id="pph-volume-input" class="form-input" placeholder="Enter package count" oninput="calculatePPH()"></div>
         <div style="text-align:center; margin-bottom:30px;"><div style="font-size:14px; color:var(--text-sub); font-weight:700;">CURRENT PPH</div><div style="font-size:60px; font-weight:900; color:#000; letter-spacing:-2px;" id="pph-result">0</div></div>
         <div style="display:flex; gap:10px;"><button class="btn-primary" onclick="resetPPH()" style="background:#e5e5ea; color:#000; flex:1;">Reset</button><button class="btn-cancel" onclick="closeModal('pph-modal')" style="flex:1; margin-top:0; border: 1px solid #e5e5ea; border-radius:16px; padding:18px;">Close</button></div>
-    </div>
-</div>
-<div class="modal-overlay" id="add-staff-modal">
-    <div class="modal-sheet">
-        <h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Clock In Staff <span id="staff-selection-count" style="font-size:14px; color:#8e8e93; font-weight:500; margin-left:10px;">0 Selected</span></h2>
-        <div id="staff-checkbox-list" class="staff-checkbox-list"></div>
-        <div style="margin: 20px 0 20px 0; border-top: 1px solid #eee; padding-top:15px;">
-            <label style="font-size:12px; color:var(--text-sub); font-weight:600; display:block; margin-bottom:5px;">Add New Person</label>
-            <div class="staff-item-row" style="border:none; padding:0;">
-                <input type="text" id="staff-custom-name" class="form-input" style="margin:0; flex:1; margin-right:10px;" placeholder="Name" autocapitalize="words">
-                <select class="staff-role-select" id="staff-custom-role" onchange="toggleStaffOther(this)">
-                    <option value="Unloader">Auto (Unloader)</option>
-                    <option value="Belt Tender">Belt Tender (Locked)</option>
-                    <option value="Bulk Sweep">Bulk Sweep (Locked)</option>
-                    <option value="Other">Other</option>
-                </select>
-                <input type="text" id="staff-custom-other" class="staff-other-input" placeholder="Area">
-            </div>
-        </div>
-        <button class="btn-primary" onclick="confirmAddStaff()">Clock In Selected</button><button class="btn-cancel" onclick="closeModal('add-staff-modal')">Cancel</button>
     </div>
 </div>
 <div class="modal-overlay" id="edit-staff-modal"><div class="modal-sheet"><h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Edit Staff</h2><input type="hidden" id="edit-staff-id"><div style="margin-bottom:15px;"><label class="settings-label">Start Time</label><input type="time" id="edit-staff-time" class="form-input"></div><button class="btn-primary" onclick="saveStaffEdit()">Save Changes</button><button class="btn-cancel" onclick="closeModal('edit-staff-modal')">Discard</button></div></div>
@@ -835,7 +835,7 @@
     let pendingLoanId = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '3.50';
+    const APP_VERSION = '3.50-beta';
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Matt S", "Robert W", "Trevon C", "Victor M", "Russell H", "Fonseca J"];
@@ -859,12 +859,12 @@
 
     // --- CHANGELOG ---
     const CHANGELOG = `
-v3.50:
-- Bugfix: "Add" button restored on Staffing page (missing input fix).
-- Bugfix: "Other" dropdown logic restored.
-
-v3.49:
-- Bugfix: "Add" button missing function definition fix.
+v3.50-beta:
+- DOP Color Scheme: Under is now Orange, Over is now Red.
+- Language Standardized: "DOP Under (-X)", "DOP Met", "DOP Over (+X)".
+- DOP Headcount: Now strictly counts Unloaders and Bulk Sweeps (Belt Tenders excluded from the target count).
+- Bugfix: "Add" button restored on Staffing page (fixed missing selector/function errors from 3.50).
+- Feature: Added selection counter to "Clock In Staff" modal.
     `;
 
     // --- STATE ---
@@ -977,6 +977,7 @@ v3.49:
         setTimeout(() => {
             updateAttributionUI();
             setupAttributionSlider();
+            updateStaffingTimers(); // Immediate DOP update on init
         }, 100);
 
         setInterval(updateTabBadges, 2000);
@@ -1188,13 +1189,12 @@ v3.49:
                         <input type="checkbox" value="${n}" class="staff-checkbox" onchange="updateStaffSelectionCount()">
                         <span>${n}</span>
                     </label>
-                    <select class="staff-role-select" id="role-select-${n.replace(/\s+/g, '')}" onchange="toggleStaffOther(this)">
+                    <select class="staff-role-select" id="role-select-${n.replace(/\s+/g, '')}">
                         <option value="Unloader">Auto (Unloader)</option>
                         <option value="Belt Tender">Belt Tender (Locked)</option>
                         <option value="Bulk Sweep">Bulk Sweep (Locked)</option>
                         <option value="Other">Other</option>
                     </select>
-                    <input type="text" id="other-input-${n.replace(/\s+/g, '')}" class="staff-other-input" placeholder="Role">
                 `;
                 container.appendChild(item);
             }
@@ -1297,6 +1297,7 @@ v3.49:
         saveStaffing();
         closeModal('add-staff-modal');
         renderStaffingView();
+        updateStaffingTimers();
         updateTabBadges();
         showSaveToast();
     }
@@ -1308,7 +1309,7 @@ v3.49:
             if (s.start !== null) s.accumulated = (s.accumulated || 0) + (Date.now() - s.start);
             s.start = null;
             if(s.role === 'Belt Tender' || s.role === 'Bulk Sweep') s.role = 'Unloader';
-            saveStaffing(); renderStaffingView(); updateTabBadges(); showSaveToast();
+            saveStaffing(); renderStaffingView(); updateStaffingTimers(); updateTabBadges(); showSaveToast();
         }
     }
     
@@ -1328,7 +1329,7 @@ v3.49:
             s.start = null;
             
             if(s.role === 'Belt Tender' || s.role === 'Bulk Sweep') s.role = 'Unloader';
-            saveStaffing(); renderStaffingView(); updateTabBadges(); showSaveToast();
+            saveStaffing(); renderStaffingView(); updateStaffingTimers(); updateTabBadges(); showSaveToast();
         }
         closeModal('loan-staff-modal');
     }
@@ -1336,7 +1337,7 @@ v3.49:
     function removeStaff(id) {
         if(confirm("Delete this employee record?")) {
             staffing = staffing.filter(s => s.id !== id);
-            saveStaffing(); renderStaffingView(); updateTabBadges();
+            saveStaffing(); renderStaffingView(); updateStaffingTimers(); updateTabBadges();
         }
     }
     
@@ -1359,7 +1360,7 @@ v3.49:
             if(diff < -43200000) newDate.setDate(newDate.getDate() + 1);
             if(diff > 43200000) newDate.setDate(newDate.getDate() - 1);
             s.start = newDate.getTime();
-            saveStaffing(); renderStaffingView(); closeModal('edit-staff-modal'); showSaveToast();
+            saveStaffing(); renderStaffingView(); updateStaffingTimers(); closeModal('edit-staff-modal'); showSaveToast();
         }
     }
 
@@ -1369,14 +1370,14 @@ v3.49:
             s.status = 'paused';
             s.accumulated = (s.accumulated || 0) + (Date.now() - s.start);
             s.start = null;
-            saveStaffing(); renderStaffingView(); updateTabBadges();
+            saveStaffing(); renderStaffingView(); updateStaffingTimers(); updateTabBadges();
         }
     }
     function resumeStaff(id) {
         const s = staffing.find(x => x.id === id);
         if (s && s.status === 'paused') {
             s.status = 'active'; s.start = Date.now();
-            saveStaffing(); renderStaffingView(); updateTabBadges();
+            saveStaffing(); renderStaffingView(); updateStaffingTimers(); updateTabBadges();
         }
     }
 
@@ -1427,7 +1428,7 @@ v3.49:
             s.role = value; 
         }
         
-        saveStaffing(); renderStaffingView(); updateTabBadges(); showSaveToast();
+        saveStaffing(); renderStaffingView(); updateStaffingTimers(); updateTabBadges(); showSaveToast();
     }
 
     function renderStaffingView() {
@@ -1548,8 +1549,6 @@ v3.49:
         });
         byId('staff-active-count').innerText = onClock;
         byId('staff-total-hours').innerText = uHours.toFixed(2);
-        byId('staff-belt-hours').innerText = bHours.toFixed(2);
-        byId('staff-sweep-hours').innerText = sHours.toFixed(2);
         
         // DOP STATUS UPDATE - Modified Logic
         const [uStr, sStr] = currentDOP.split('-');
@@ -1559,15 +1558,19 @@ v3.49:
             (s.status === 'active' || s.status === 'paused') && s.role !== 'Belt Tender'
         ).length;
         
-        const missing = targetTotal - dopActiveCount;
-        
+        const diff = dopActiveCount - targetTotal;
         const statusBar = byId('dop-status-bar');
-        if(missing <= 0) {
+        if(!statusBar) return;
+        
+        if (diff === 0) {
             statusBar.className = 'dop-status dop-ok';
-            statusBar.innerText = `DOP Met ✅`;
+            statusBar.innerText = `DOP Met`;
+        } else if (diff > 0) {
+            statusBar.className = 'dop-status dop-over';
+            statusBar.innerText = `DOP Over (+${diff})`;
         } else {
-            statusBar.className = 'dop-status dop-warn';
-            statusBar.innerText = `Down ${missing}`;
+            statusBar.className = 'dop-status dop-under';
+            statusBar.innerText = `DOP Under (-${Math.abs(diff)})`;
         }
     }
     
@@ -1700,22 +1703,18 @@ v3.49:
         byId(`tab-${tabId}`).classList.add('active');
         document.querySelectorAll('.tab-btn').forEach(el=>el.classList.remove('active'));
         if(btn) btn.classList.add('active');
-        else {
-             const icons=document.querySelectorAll('.tab-btn');
-             const idx = ['dashboard','active','logs','staffing','tools','settings'].indexOf(tabId);
-             if(idx>=0) icons[idx].classList.add('active');
-        }
         
         if(tabId==='staffing') {
             renderStaffingView();
-            if(!staffingInterval) staffingInterval = setInterval(updateStaffingTimers, 1000);
+            updateStaffingTimers();
+            if(!staffingInterval) staffingInterval = setInterval(updateStaffingTimers, 5000);
         } else {
             if(staffingInterval) { clearInterval(staffingInterval); staffingInterval = null; }
         }
 
         if(tabId==='dashboard') renderDashboard();
         if(tabId==='active') renderActiveTab();
-        if(tabId==='logs') { currentVisibleLogs = 50; renderLogs(); }
+        if(tabId==='logs') renderLogs();
     }
 
     function closeModal(id) { const m = byId(id); if(m) m.style.display='none'; window.scrollTo(0,0); }
@@ -1907,7 +1906,6 @@ v3.49:
         byId('stat-hour-wally').innerText = hw; byId('stat-last-wally').innerText = lhw;
     }
 
-    // --- RENDER DASHBOARD ---
     function renderDashboard() {
         updateStats();
         const openGrid = byId('open-bays-grid'), activeGrid = byId('active-trailers-grid');
@@ -1964,7 +1962,6 @@ v3.49:
         byId('detail-id').innerText = d.id;
         byId('detail-unloader').innerText = d.unloader || "Unassigned";
         
-        // Show Started By if different (and filter Unassigned)
         const realAssignments = (d.assignments || []).filter(a => a.name && a.name !== 'Unassigned');
         let startedBy = (realAssignments.length > 0) ? realAssignments[0].name : null;
 
