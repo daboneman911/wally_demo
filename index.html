@@ -206,16 +206,13 @@
         .staffing-header-card { background: #000; color: #fff; border-radius: 20px; padding: 20px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         .staffing-header-title { font-size: 14px; opacity: 0.8; font-weight: 600; text-transform: uppercase; margin-bottom: 5px; }
         .staffing-header-val { font-size: 32px; font-weight: 800; }
-        .dop-container { margin-bottom: 20px; background: #fff; border: 1px solid #e5e5ea; border-radius: 16px; padding: 10px 15px; display: flex; flex-direction: column; gap: 12px; }
+        .dop-container { margin-bottom: 20px; background: #fff; border: 1px solid #e5e5ea; border-radius: 16px; padding: 15px; display: flex; flex-direction: column; gap: 12px; }
         .dop-row { display: flex; justify-content: space-between; align-items: center; }
         .dop-label { font-size: 14px; font-weight: 700; color: #000; }
         .dop-select { background: #f2f2f7; border: none; padding: 8px 12px; border-radius: 8px; font-size: 14px; font-weight: 600; }
-        .dop-status { font-size: 13px; font-weight: 700; padding: 8px 12px; border-radius: 8px; text-align: center; }
-        
-        /* Version 3.52 Standardized Verbiage & Colors */
-        .dop-ok { background: #d1fae5; color: #065f46; } /* Green */
-        .dop-under { background: #ffedd5; color: #9a3412; } /* Orange */
-        .dop-over { background: #fee2e2; color: #991b1b; } /* Red */
+        .dop-status { font-size: 13px; font-weight: 600; padding: 8px 12px; border-radius: 8px; text-align: center; }
+        .dop-ok { background: #d1fae5; color: #065f46; }
+        .dop-warn { background: #fee2e2; color: #991b1b; }
 
         .staff-section-title { font-size: 18px; font-weight: 800; margin: 25px 0 15px 0; display: flex; justify-content: space-between; align-items: center; }
         .staff-count-badge { background: #e5e5ea; color: #000; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 700; margin-left: 8px; }
@@ -253,7 +250,7 @@
         .tool-card.add { border: 2px dashed #ccc; background: transparent; box-shadow: none; }
         .tool-card.add .tool-icon-wrapper { background: #e5e5ea; color: #000; }
 
-        /* --- LOGS SECTION (REVISED) --- */
+        /* --- LOGS --- */
         .stats-collapse-btn { width: 100%; background: #f2f2f7; border: none; border-radius: 16px; padding: 18px; display: flex; justify-content: space-between; align-items: center; font-size: 16px; font-weight: 700; color: #000; cursor: pointer; margin-bottom: 20px; }
         .stats-content-area { background: white; border: 1px solid #e5e5ea; border-radius: 16px; padding: 20px; margin-bottom: 25px; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
         .stats-table { width: 100%; border-collapse: collapse; font-size: 15px; }
@@ -263,7 +260,7 @@
         .active-filter-display { display: flex; align-items: center; justify-content: space-between; background: #000; color: white; padding: 12px 20px; border-radius: 16px; margin-bottom: 20px; font-weight: 600; }
         .logs-list { display: flex; flex-direction: column; gap: 15px; }
         
-        /* NEW LOG CARD STYLES */
+        /* LOG CARD STYLES */
         .log-card {
             background: white; border: 1px solid #e5e5ea; border-radius: 20px; padding: 16px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.03); display: flex; justify-content: space-between; align-items: center; gap: 15px;
@@ -402,13 +399,14 @@
     <div id="tab-dashboard" class="tab-content active">
         <div class="top-actions">
             <button class="action-btn" onclick="openStartSortFlow()"><i class="ph ph-play-circle"></i> Start Sort</button>
+            <button class="action-btn" onclick="openAddUnloaderModal()"><i class="ph ph-user-plus"></i> Add Unloader</button>
             <button class="action-btn" onclick="openArrivalModal()"><i class="ph ph-truck"></i> Onboard</button>
         </div>
 
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 3.52</div>
+            <div class="app-version">Version 3.50</div>
         </div>
 
         <div class="section-title">Sort Statistics</div>
@@ -510,6 +508,7 @@
                 <div><div class="staffing-header-title">Active Staff</div><div class="staffing-header-val" id="staff-active-count">0</div></div>
                 <div style="text-align:right;"><div class="staffing-header-title">Unloader Hours</div><div class="staffing-header-val" id="staff-total-hours">0.0</div></div>
             </div>
+            <div class="breakdown-row"><span>Belt Hours: <span id="staff-belt-hours">0.0</span></span><span>Sweep Hours: <span id="staff-sweep-hours">0.0</span></span></div>
         </div>
 
         <div class="staff-section-title">On Clock <span class="staff-count-badge" id="badge-on-clock">0</span></div>
@@ -559,7 +558,7 @@
                     </div>
                     <div class="settings-note" style="margin-top:20px; padding:0;">Allow attributing trailers completed up to <span id="attr-note-val" style="font-weight:700; color:#000;">5</span> minutes after the hour to the previous hour.</div>
                 </div>
-                 <div class="settings-row"><span class="settings-label">Force Attribution (Simulate)</span><div class="toggle-switch" id="switch-sim-window" onclick="toggleSwitch('sim-window')"></div></div>
+                <div class="settings-row"><span class="settings-label">Simulate Shift Change</span><div class="toggle-switch" id="switch-sim-window" onclick="toggleSwitch('sim-window')"></div></div>
                  <div class="settings-row"><span class="settings-label">Disable Time Attribution</span><div class="toggle-switch" id="switch-dis-window" onclick="toggleSwitch('dis-window')"></div></div>
             </div>
             <div class="settings-header">Saved Accounts</div>
@@ -573,6 +572,7 @@
             <div class="settings-header">Demo</div>
             <div class="settings-group">
                 <div class="settings-row"><span class="settings-label">Demo Mode</span><div class="toggle-switch" id="switch-demo-mode" onclick="toggleSwitch('demo-mode')"></div></div>
+                <div class="settings-row"><span class="settings-label">Force Attribution (Simulate)</span><div class="toggle-switch" id="switch-sim-window" onclick="toggleSwitch('sim-window')"></div></div>
                 <div class="settings-row"><span class="settings-label">Disable hardcoded times</span><div class="toggle-switch" id="switch-disable-times" onclick="toggleSwitch('disable-times')"></div></div>
                 <div class="settings-row"><span class="settings-label">Generate Random History</span><div class="toggle-switch" id="switch-demo-random" onclick="toggleSwitch('demo-random')"></div></div>
                 <div class="settings-row"><span class="settings-label">Auto-Replenish Bays</span><div class="toggle-switch" id="switch-demo-replenish" onclick="toggleSwitch('demo-replenish')"></div></div>
@@ -598,28 +598,9 @@
     <button class="tab-btn" onclick="switchTab('active', this)" id="tab-btn-active"><i class="ph ph-truck-trailer"></i><span>Active</span><span class="tab-badge" id="badge-active">0</span></button>
     <button class="tab-btn" onclick="switchTab('logs', this)" id="tab-btn-logs"><i class="ph ph-list-dashes"></i><span>Logs</span></button>
     <button class="tab-btn" onclick="switchTab('staffing', this)" id="tab-btn-staffing"><i class="ph ph-users"></i><span>Staffing</span><span class="tab-badge" id="badge-staffing">0</span></button>
-    <button class="tab-btn" onclick="switchTab('tools', this)" id="tab-btn-tools"><i class="ph ph-toolbox"></i><span>Tools</span></button>
+    <button class="tab-btn" onclick="switchTab('tools', this)" id="tab-btn-tools"><i class="ph ph-toolbox"></i><span>Tools</span><span class="tab-badge" id="badge-tools">0</span></button>
     <button class="tab-btn" onclick="switchTab('settings', this)" id="tab-btn-settings"><i class="ph ph-gear"></i><span>Settings</span><span class="tab-badge" id="badge-settings">0</span></button>
 </nav>
-
-<div class="modal-overlay" id="add-staff-modal">
-    <div class="modal-sheet">
-        <h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Clock In Staff <span id="staff-selection-count" style="font-size:14px; color:#8e8e93; font-weight:500; margin-left:10px;">0 Selected</span></h2>
-        <div id="staff-checkbox-list" class="staff-checkbox-list"></div>
-        <div style="margin: 20px 0 20px 0; border-top: 1px solid #eee; padding-top:15px;">
-            <label style="font-size:12px; color:var(--text-sub); font-weight:600; display:block; margin-bottom:5px;">Add New Person</label>
-            <div class="staff-item-row" style="border:none; padding:0;">
-                <input type="text" id="staff-custom-name" class="form-input" style="margin:0; flex:1; margin-right:10px;" placeholder="Name" autocapitalize="words">
-                <select class="staff-role-select" id="staff-custom-role">
-                    <option value="Unloader">Auto (Unloader)</option>
-                    <option value="Belt Tender">Belt Tender (Locked)</option>
-                    <option value="Bulk Sweep">Bulk Sweep (Locked)</option>
-                </select>
-            </div>
-        </div>
-        <button class="btn-primary" onclick="confirmAddStaff()">Clock In Selected</button><button class="btn-cancel" onclick="closeModal('add-staff-modal')">Cancel</button>
-    </div>
-</div>
 
 <div class="modal-overlay" id="start-sort-modal-1">
     <div class="modal-sheet">
@@ -647,6 +628,26 @@
         <div style="margin-bottom:20px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Total Volume</label><input type="number" id="pph-volume-input" class="form-input" placeholder="Enter package count" oninput="calculatePPH()"></div>
         <div style="text-align:center; margin-bottom:30px;"><div style="font-size:14px; color:var(--text-sub); font-weight:700;">CURRENT PPH</div><div style="font-size:60px; font-weight:900; color:#000; letter-spacing:-2px;" id="pph-result">0</div></div>
         <div style="display:flex; gap:10px;"><button class="btn-primary" onclick="resetPPH()" style="background:#e5e5ea; color:#000; flex:1;">Reset</button><button class="btn-cancel" onclick="closeModal('pph-modal')" style="flex:1; margin-top:0; border: 1px solid #e5e5ea; border-radius:16px; padding:18px;">Close</button></div>
+    </div>
+</div>
+<div class="modal-overlay" id="add-staff-modal">
+    <div class="modal-sheet">
+        <h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Clock In Staff <span id="staff-selection-count" style="font-size:14px; color:#8e8e93; font-weight:500; margin-left:10px;">0 Selected</span></h2>
+        <div id="staff-checkbox-list" class="staff-checkbox-list"></div>
+        <div style="margin: 20px 0 20px 0; border-top: 1px solid #eee; padding-top:15px;">
+            <label style="font-size:12px; color:var(--text-sub); font-weight:600; display:block; margin-bottom:5px;">Add New Person</label>
+            <div class="staff-item-row" style="border:none; padding:0;">
+                <input type="text" id="staff-custom-name" class="form-input" style="margin:0; flex:1; margin-right:10px;" placeholder="Name" autocapitalize="words">
+                <select class="staff-role-select" id="staff-custom-role" onchange="toggleStaffOther(this)">
+                    <option value="Unloader">Auto (Unloader)</option>
+                    <option value="Belt Tender">Belt Tender (Locked)</option>
+                    <option value="Bulk Sweep">Bulk Sweep (Locked)</option>
+                    <option value="Other">Other</option>
+                </select>
+                <input type="text" id="staff-custom-other" class="staff-other-input" placeholder="Area">
+            </div>
+        </div>
+        <button class="btn-primary" onclick="confirmAddStaff()">Clock In Selected</button><button class="btn-cancel" onclick="closeModal('add-staff-modal')">Cancel</button>
     </div>
 </div>
 <div class="modal-overlay" id="edit-staff-modal"><div class="modal-sheet"><h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Edit Staff</h2><input type="hidden" id="edit-staff-id"><div style="margin-bottom:15px;"><label class="settings-label">Start Time</label><input type="time" id="edit-staff-time" class="form-input"></div><button class="btn-primary" onclick="saveStaffEdit()">Save Changes</button><button class="btn-cancel" onclick="closeModal('edit-staff-modal')">Discard</button></div></div>
@@ -834,7 +835,7 @@
     let pendingLoanId = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '3.52';
+    const APP_VERSION = '3.50';
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Matt S", "Robert W", "Trevon C", "Victor M", "Russell H", "Fonseca J"];
@@ -858,16 +859,12 @@
 
     // --- CHANGELOG ---
     const CHANGELOG = `
-v3.52:
-- DOP Color Scheme: Under is now Orange, Over is now Red.
-- Language Standardized: "DOP Under (-X)", "DOP Met", "DOP Over (+X)".
-- DOP Headcount: Now strictly counts Unloaders and Bulk Sweeps (Belt Tenders excluded from the target count).
-- Bugfix: "Add" button restored on Staffing page (fixed missing selector/function errors).
-- Feature: Added selection counter to "Clock In Staff" modal.
-
 v3.50:
 - Bugfix: "Add" button restored on Staffing page (missing input fix).
 - Bugfix: "Other" dropdown logic restored.
+
+v3.49:
+- Bugfix: "Add" button missing function definition fix.
     `;
 
     // --- STATE ---
@@ -980,7 +977,6 @@ v3.50:
         setTimeout(() => {
             updateAttributionUI();
             setupAttributionSlider();
-            updateStaffingTimers(); // Immediate DOP update
         }, 100);
 
         setInterval(updateTabBadges, 2000);
@@ -1198,7 +1194,7 @@ v3.50:
                         <option value="Bulk Sweep">Bulk Sweep (Locked)</option>
                         <option value="Other">Other</option>
                     </select>
-                    <input type="text" id="other-input-${n.replace(/\s+/g, '')}" class="staff-other-input" placeholder="Area">
+                    <input type="text" id="other-input-${n.replace(/\s+/g, '')}" class="staff-other-input" placeholder="Role">
                 `;
                 container.appendChild(item);
             }
@@ -1238,6 +1234,7 @@ v3.50:
                 if(otherInput) roleVal = otherInput.value.trim();
             }
             
+            // SPECIFIC LOGIC FOR ROBERT W
             if (name === "Robert W" && roleVal === 'Unloader') {
                 roleVal = 'Belt Tender';
             }
@@ -1300,7 +1297,6 @@ v3.50:
         saveStaffing();
         closeModal('add-staff-modal');
         renderStaffingView();
-        updateStaffingTimers();
         updateTabBadges();
         showSaveToast();
     }
@@ -1312,7 +1308,7 @@ v3.50:
             if (s.start !== null) s.accumulated = (s.accumulated || 0) + (Date.now() - s.start);
             s.start = null;
             if(s.role === 'Belt Tender' || s.role === 'Bulk Sweep') s.role = 'Unloader';
-            saveStaffing(); renderStaffingView(); updateStaffingTimers(); updateTabBadges(); showSaveToast();
+            saveStaffing(); renderStaffingView(); updateTabBadges(); showSaveToast();
         }
     }
     
@@ -1332,7 +1328,7 @@ v3.50:
             s.start = null;
             
             if(s.role === 'Belt Tender' || s.role === 'Bulk Sweep') s.role = 'Unloader';
-            saveStaffing(); renderStaffingView(); updateStaffingTimers(); updateTabBadges(); showSaveToast();
+            saveStaffing(); renderStaffingView(); updateTabBadges(); showSaveToast();
         }
         closeModal('loan-staff-modal');
     }
@@ -1340,7 +1336,7 @@ v3.50:
     function removeStaff(id) {
         if(confirm("Delete this employee record?")) {
             staffing = staffing.filter(s => s.id !== id);
-            saveStaffing(); renderStaffingView(); updateStaffingTimers(); updateTabBadges();
+            saveStaffing(); renderStaffingView(); updateTabBadges();
         }
     }
     
@@ -1363,7 +1359,7 @@ v3.50:
             if(diff < -43200000) newDate.setDate(newDate.getDate() + 1);
             if(diff > 43200000) newDate.setDate(newDate.getDate() - 1);
             s.start = newDate.getTime();
-            saveStaffing(); renderStaffingView(); updateStaffingTimers(); closeModal('edit-staff-modal'); showSaveToast();
+            saveStaffing(); renderStaffingView(); closeModal('edit-staff-modal'); showSaveToast();
         }
     }
 
@@ -1373,7 +1369,7 @@ v3.50:
             s.status = 'paused';
             s.accumulated = (s.accumulated || 0) + (Date.now() - s.start);
             s.start = null;
-            saveStaffing(); renderStaffingView(); updateStaffingTimers(); updateTabBadges();
+            saveStaffing(); renderStaffingView(); updateTabBadges();
         }
     }
     function resumeStaff(id) {
@@ -1431,7 +1427,7 @@ v3.50:
             s.role = value; 
         }
         
-        saveStaffing(); renderStaffingView(); updateStaffingTimers(); updateTabBadges(); showSaveToast();
+        saveStaffing(); renderStaffingView(); updateTabBadges(); showSaveToast();
     }
 
     function renderStaffingView() {
@@ -1479,10 +1475,9 @@ v3.50:
                         <div class="staff-hours" id="staff-hours-${s.id}" style="color:${roleColor}">${calculateTotalHours(s).toFixed(2)}h</div>
                         <div style="width:55%">
                              <select class="role-select" onchange="saveStaffRole(${s.id}, this.value, this)" style="background:${isManual ? '#e5e5ea' : '#f2f2f7'}; border:${isManual ? '1px solid #ccc' : 'none'};">
-                                <option value="Auto" ${!isManual ? 'selected' : ''}>Auto (${s.role})</option>
-                                <option value="Unloader" ${isManual && s.role==='Unloader'?'selected':''}>Unloader</option>
-                                <option value="Belt Tender" ${s.role==='Belt Tender'?'selected':''}>Belt Tender</option>
-                                <option value="Bulk Sweep" ${s.role==='Bulk Sweep'?'selected':''}>Bulk Sweep</option>
+                                <option value="Auto" ${!isManual ? 'selected' : ''}>Auto (Unloader)</option>
+                                <option value="Belt Tender" ${s.role==='Belt Tender'?'selected':''}>Belt Tender (Locked)</option>
+                                <option value="Bulk Sweep" ${s.role==='Bulk Sweep'?'selected':''}>Bulk Sweep (Locked)</option>
                             </select>
                         </div>
                     </div>
@@ -1518,6 +1513,7 @@ v3.50:
         byId('badge-on-clock').innerText = activeStaff.length;
         byId('badge-off-clock').innerText = cutStaffList.length;
         byId('badge-loaned').innerText = loanStaffList.length;
+        updateStaffingTimers(false); 
     }
 
     function updateStaffingTimers(checkRoles = true) {
@@ -1552,29 +1548,150 @@ v3.50:
         });
         byId('staff-active-count').innerText = onClock;
         byId('staff-total-hours').innerText = uHours.toFixed(2);
+        byId('staff-belt-hours').innerText = bHours.toFixed(2);
+        byId('staff-sweep-hours').innerText = sHours.toFixed(2);
         
-        // DOP STATUS UPDATE - Standardized Logic (Unloaders + Bulk Sweeps only)
+        // DOP STATUS UPDATE - Modified Logic
         const [uStr, sStr] = currentDOP.split('-');
         const targetTotal = parseInt(uStr) + parseInt(sStr);
-        
         // Exclude Belt Tender from 'onClock' count for DOP check
         const dopActiveCount = staffing.filter(s => 
             (s.status === 'active' || s.status === 'paused') && s.role !== 'Belt Tender'
         ).length;
         
-        const diff = dopActiveCount - targetTotal;
-        const statusBar = byId('dop-status-bar');
-        if(!statusBar) return;
+        const missing = targetTotal - dopActiveCount;
         
-        if (diff === 0) {
+        const statusBar = byId('dop-status-bar');
+        if(missing <= 0) {
             statusBar.className = 'dop-status dop-ok';
-            statusBar.innerText = `DOP Met`;
-        } else if (diff > 0) {
-            statusBar.className = 'dop-status dop-over';
-            statusBar.innerText = `DOP Over (+${diff})`;
+            statusBar.innerText = `DOP Met ✅`;
         } else {
-            statusBar.className = 'dop-status dop-under';
-            statusBar.innerText = `DOP Under (-${Math.abs(diff)})`;
+            statusBar.className = 'dop-status dop-warn';
+            statusBar.innerText = `Down ${missing}`;
+        }
+    }
+    
+    function toggleMoveOther(selectEl) {
+        const input = byId('move-custom-other');
+        if(input) {
+            input.style.display = (selectEl.value === 'Other') ? 'block' : 'none';
+            if(selectEl.value==='Other') input.focus();
+        }
+    }
+    
+    function openMoveMenu() { 
+        closeModal('active-detail-modal'); 
+        byId('move-dest-select').value = 'Small Sort';
+        toggleMoveOther(byId('move-dest-select'));
+        byId('move-menu-modal').style.display = 'flex'; 
+    }
+    
+    function confirmMoveDoor() {
+        let dest = byId('move-dest-select').value;
+        if(dest === 'Other') dest = byId('move-custom-other').value.trim();
+        if(!dest) return alert("Please specify a destination");
+        moveDoor(dest);
+    }
+
+    function addSavedAccount() {
+        const val = byId('new-account-input').value.trim().toUpperCase();
+        if(val && !savedAccounts.includes(val)) {
+            savedAccounts.push(val); saveAccounts(); renderSavedAccounts(); updateAccountDatalist();
+            byId('new-account-input').value = '';
+        }
+    }
+    function removeAccount(acct) { savedAccounts = savedAccounts.filter(a => a !== acct); saveAccounts(); renderSavedAccounts(); updateAccountDatalist(); }
+    function renderSavedAccounts() {
+        const list = byId('saved-accounts-list'); list.innerHTML = '';
+        if(savedAccounts.length===0) return list.innerHTML = '<div style="padding:15px 0; color:#8e8e93; text-align:center;">No saved accounts</div>';
+        savedAccounts.forEach(acct => {
+            const div = document.createElement('div'); div.className = 'saved-acct-item';
+            div.innerHTML = `<span>${acct}</span><i class="ph ph-minus-circle delete-acct-btn" onclick="removeAccount('${acct}')"></i>`;
+            list.appendChild(div);
+        });
+    }
+    function updateAccountDatalist() {
+        const dl = byId('saved-accounts-datalist'); dl.innerHTML = '';
+        savedAccounts.forEach(acct => { const opt = document.createElement('option'); opt.value = acct; dl.appendChild(opt); });
+    }
+
+    function toggleSwitch(id) {
+        const el = byId('switch-'+id); el.classList.toggle('checked');
+        const checked = el.classList.contains('checked');
+        if(id==='demo-mode') { demoActive = checked; updateTabBadges(); }
+        if(id==='demo-replenish') config.replenish = checked;
+        if(id==='demo-random') config.randomHistory = checked;
+        if(id==='mixed-types') config.mixedTypes = checked;
+        if(id==='disable-times') config.disableTimes = checked;
+        if(id==='sim-window') config.simulateWindow = checked;
+        if(id==='dis-window') { config.disableWindow = checked; attributionConfig.enabled = !checked; }
+        renderDashboard();
+    }
+
+    function stepDoor(delta) {
+        let val = parseInt(byId('demo-door-val').innerText) + delta;
+        if(val<1) val=1; if(val>8) val=8;
+        byId('demo-door-val').innerText = val; config.doorCount = val;
+    }
+    function setDemoType(t) { config.demoType = t; byId('seg-wally').classList.toggle('selected', t==='Wally'); byId('seg-cpu').classList.toggle('selected', t==='CPU'); }
+    
+    function startDemo() {
+        demoActive = true;
+        for(let i=DOORS_START; i<=DOORS_END; i++) if(doors[i].status==='empty' && (i-DOORS_START)<config.doorCount) randomArrival(i);
+        saveDoors(); alert("Demo Started"); switchTab('dashboard'); updateTabBadges();
+    }
+    
+    function randomArrival(doorNum) {
+        let type = config.mixedTypes ? (Math.random()>0.5?'Wally':'CPU') : config.demoType;
+        const id = Math.floor(1000 + Math.random() * 9000).toString();
+        const unloader = teamNames[Math.floor(Math.random() * teamNames.length)];
+        doors[doorNum] = { status: 'active', start: Date.now(), id: id.toUpperCase(), account: type==='CPU'?"DEMO"+Math.floor(Math.random()*100):"", type: type, unloader: unloader, unavailable: false, lastCompletionTime: null, cpuOptions: [], assignments: [{ name: unloader, start: Date.now(), end: null }] };
+        renderDashboard(); updateTabBadges();
+    }
+
+    function getShiftStartTime() { return localStorage.getItem('ps9_shift_start') || "19:55"; }
+    function saveShiftStart(val) { localStorage.setItem('ps9_shift_start', val); renderDashboard(); }
+    
+    function getShiftTimeWindows() {
+        if (config.disableTimes) {
+             const now = new Date(), start = new Date(now); start.setMinutes(0,0,0);
+             return { thisHourStart: start, thisHourEnd: new Date(start.getTime()+3600000), lastHourStart: new Date(start.getTime()-3600000), lastHourEnd: start, shiftStart: new Date(now.setHours(20,0,0,0)) };
+        }
+        const [h, m] = getShiftStartTime().split(':').map(Number);
+        const now = new Date(); let start = new Date(now); start.setHours(h, m, 0, 0);
+        if (now < start) start.setDate(start.getDate() - 1);
+        const hoursElapsed = Math.floor((now - start) / 3600000);
+        const thisHourStart = new Date(start.getTime() + (hoursElapsed * 3600000));
+        return { thisHourStart, thisHourEnd: new Date(thisHourStart.getTime() + 3600000), lastHourStart: new Date(thisHourStart.getTime() - 3600000), lastHourEnd: thisHourStart, shiftStart: start };
+    }
+
+    function getCompletionHour(ts) {
+        const { shiftStart } = getShiftTimeWindows();
+        return Math.floor((ts - shiftStart.getTime()) / 3600000) + 1;
+    }
+
+    function populateUnloaderSelect() {
+        const ids = ['select-unloader', 'edit-select-unloader', 'edit-active-unloader', 'filter-unloader-select', 'req-unloader-select'];
+        ids.forEach(id => {
+            const el = byId(id); if(!el) return;
+            const isFilter = id === 'filter-unloader-select';
+            el.innerHTML = isFilter ? '<option value="All">All Unloaders</option>' : '<option value="" selected>Unassigned</option>';
+            teamNamesSorted.forEach(name => {
+                const opt = document.createElement('option'); opt.value = name; opt.innerText = name; el.appendChild(opt);
+            });
+            if(!isFilter) el.innerHTML += '<option value="Custom">Custom / Other</option>';
+        });
+    }
+
+    function openAddUnloaderModal() { byId('input-new-unloader-name').value=''; byId('add-unloader-modal').style.display='flex'; }
+    function confirmAddUnloader() {
+        const val = byId('input-new-unloader-name').value.trim();
+        if(val){
+            const cap = val.toLowerCase().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+            if(!teamNames.includes(cap)){
+                teamNames.push(cap); refreshTeamNamesSorted(); saveTeam(); populateUnloaderSelect();
+            }
+            closeModal('add-unloader-modal');
         }
     }
 
@@ -1583,78 +1700,739 @@ v3.50:
         byId(`tab-${tabId}`).classList.add('active');
         document.querySelectorAll('.tab-btn').forEach(el=>el.classList.remove('active'));
         if(btn) btn.classList.add('active');
+        else {
+             const icons=document.querySelectorAll('.tab-btn');
+             const idx = ['dashboard','active','logs','staffing','tools','settings'].indexOf(tabId);
+             if(idx>=0) icons[idx].classList.add('active');
+        }
         
         if(tabId==='staffing') {
             renderStaffingView();
-            updateStaffingTimers();
-            if(!staffingInterval) staffingInterval = setInterval(updateStaffingTimers, 5000);
+            if(!staffingInterval) staffingInterval = setInterval(updateStaffingTimers, 1000);
         } else {
             if(staffingInterval) { clearInterval(staffingInterval); staffingInterval = null; }
         }
 
         if(tabId==='dashboard') renderDashboard();
         if(tabId==='active') renderActiveTab();
-        if(tabId==='logs') renderLogs();
+        if(tabId==='logs') { currentVisibleLogs = 50; renderLogs(); }
     }
 
-    function closeModal(id) { const m = byId(id); if(m) m.style.display='none'; }
-    function openArrivalModal() {
-        const firstEmpty = Object.keys(doors).find(d => doors[d].status === 'empty' && !doors[d].unavailable);
-        if(!firstEmpty) return alert("No bays available");
-        currentDoor = firstEmpty;
-        byId('modal-door-num').innerText = currentDoor;
-        const sel = byId('select-unloader');
-        sel.innerHTML = '<option value="" selected>Unassigned</option>';
-        staffing.filter(s => s.status==='active').forEach(s => sel.innerHTML += `<option value="${s.name}">${s.name}</option>`);
-        byId('input-modal').style.display = 'flex';
+    function closeModal(id) { const m = byId(id); if(m) m.style.display='none'; window.scrollTo(0,0); }
+    function checkDuplicateWally(id) {
+        const { shiftStart } = getShiftTimeWindows();
+        return historyLog.find(l => l.type === 'Wally' && l.id === id && l.end >= shiftStart.getTime());
     }
 
-    function setType(t) { currentType = t; byId('opt-wally').classList.toggle('selected', t==='Wally'); byId('opt-cpu').classList.toggle('selected', t==='CPU'); }
-    function confirmArrival() {
-        const id = byId('input-arrival-id').value.toUpperCase();
-        if(!id) return alert("Missing ID");
-        doors[currentDoor] = { status:'active', start:Date.now(), id, type:currentType, unloader:byId('select-unloader').value };
-        saveDoors(); closeModal('input-modal'); renderDashboard(); updateTabBadges();
+    function continueWithDuplicate() {
+        closeModal('duplicate-wally-modal');
+        if (pendingWallyDuplicate) {
+            const { doorNum, wallyId, unloader, startTime } = pendingWallyDuplicate;
+            doors[doorNum] = { status: 'active', start: startTime, id: wallyId, account: "", type: 'Wally', unloader: unloader || "Unassigned", isDuplicate: true, unavailable: false, lastCompletionTime: null, cpuOptions: [], assignments: [{ name: unloader||"Unassigned", start: startTime, end: null }] };
+            if(isFirstOnboard) { isFirstOnboard = false; localStorage.setItem('ps9_is_first_onboard', 'false'); }
+            saveDoors(); closeModal('input-modal'); renderDashboard(); updateTabBadges(); showSaveToast(); pendingWallyDuplicate = null;
+        }
     }
 
-    function renderDashboard() {
-        const ag = byId('active-trailers-grid'), og = byId('open-bays-grid');
-        ag.innerHTML = ''; og.innerHTML = '';
-        for(let i=DOORS_START; i<=DOORS_END; i++){
-            const d = doors[i];
-            const div = document.createElement('div');
-            div.className = `bay-circle bay-${i} ${d.unavailable?'unavailable':''}`;
-            if(d.status==='active'){
-                div.innerHTML = `${i}<div class="type-badge">${d.type[0]}</div>`; ag.appendChild(div);
-                div.onclick = () => openActiveDetails(i);
+    function confirmCompleteDoor() { 
+        if(detailDoor) completeDoor(detailDoor); 
+    }
+    
+    function completeDoor(doorNum, force = false) {
+        const d = doors[doorNum];
+        
+        if (!force && (!d.unloader || d.unloader === 'Unassigned')) {
+             closeModal('active-detail-modal');
+             byId('req-unloader-select').value = "";
+             byId('unloader-required-modal').style.display = 'flex';
+             return;
+        }
+        
+        const now = new Date(), mins = now.getMinutes();
+        const { shiftStart } = getShiftTimeWindows();
+        const win = attributionConfig.minutes;
+        const shouldCheck = !config.disableWindow && (now - shiftStart > 3600000) && attributionConfig.enabled && win > 0 && (mins <= win || config.simulateWindow);
+        if (shouldCheck) {
+            byId('attribution-window-text').textContent = `00-${win.toString().padStart(2,'0')}`;
+            pendingCompletion = { doorNum, time: now.getTime() };
+            byId('hour-attribution-modal').style.display = 'flex';
+        } else finalizeCompletion(doorNum, now.getTime(), 0);
+    }
+    
+    function checkReqCustom(s) { byId('req-custom-unloader').style.display = s.value === 'Custom' ? 'block' : 'none'; }
+    
+    function saveRequiredUnloader() {
+        let unl = byId('req-unloader-select').value;
+        if(unl === 'Custom') unl = byId('req-custom-unloader').value.trim();
+        if(!unl) return alert("Please select an unloader");
+        
+        if(unl !== "Unassigned" && unl === byId('req-custom-unloader').value.trim()) {
+            unl = unl.toLowerCase().split(' ').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ');
+        }
+        
+        const d = doors[detailDoor];
+        d.unloader = unl;
+        if(d.assignments.length > 0) {
+            if (d.assignments[d.assignments.length-1].name === 'Unassigned') {
+                 d.assignments[d.assignments.length-1].name = unl;
             } else {
-                div.innerText = i; og.appendChild(div);
-                div.onclick = () => openArrivalModal(i);
+                 d.assignments.push({ name: unl, start: Date.now(), end: null });
+            }
+        } else {
+             d.assignments = [{ name: unl, start: d.start, end: null }];
+        }
+        saveDoors();
+        closeModal('unloader-required-modal');
+        completeDoor(detailDoor, true);
+    }
+
+    function resolveAttribution(choice) {
+        closeModal('hour-attribution-modal');
+        if (!pendingCompletion) return;
+        let offset = 0;
+        if (choice === 'Previous') offset = (new Date(pendingCompletion.time).getMinutes() + 1) * 60000;
+        finalizeCompletion(pendingCompletion.doorNum, pendingCompletion.time, offset);
+        pendingCompletion = null;
+    }
+
+    function openMoveMenu() { closeModal('active-detail-modal'); byId('move-menu-modal').style.display = 'flex'; }
+    function moveDoor(destination) {
+        closeModal('move-menu-modal');
+        const d = doors[detailDoor];
+        
+        const now = Date.now();
+        if(d.assignments && d.assignments.length > 0) {
+            const last = d.assignments[d.assignments.length - 1];
+            if(!last.end) last.end = now;
+        }
+
+        historyLog.unshift({
+            door: detailDoor, id: d.id, account: d.account||"", type: d.type, unloader: d.unloader,
+            start: d.start, end: now, dateKey: dateKeyFromTs(now), duration: now - d.start,
+            durationMinutes: Math.round((now - d.start)/60000), statOffset: 0,
+            logId: Date.now().toString(36), duplicate: false,
+            completionHour: getCompletionHour(now),
+            cpuOptions: d.cpuOptions || [],
+            status: 'moved',
+            moveDest: destination
+        });
+
+        doors[detailDoor] = { status: 'empty', start: 0, id: '', type: '', unloader: '', unavailable: false, lastCompletionTime: now, assignments: [] };
+        saveDoors(); saveHistory(); renderDashboard(); renderActiveTab(); updateTabBadges(); showSaveToast();
+    }
+
+    function finalizeCompletion(doorNum, endTime, offset) {
+        const d = doors[doorNum];
+        let start = d.start;
+        
+        if(d.assignments && d.assignments.length > 0) {
+            const last = d.assignments[d.assignments.length - 1];
+            if(!last.end) last.end = endTime;
+        }
+
+        const durationMap = {};
+        
+        const realAssignments = (d.assignments || []).filter(a => a.name && a.name !== 'Unassigned');
+        let startedBy = (realAssignments.length > 0) ? realAssignments[0].name : null;
+        
+        if (d.assignments && d.assignments.length > 0) {
+            d.assignments.forEach(a => {
+                if (a.name === 'Unassigned') return;
+                const dur = (a.end || endTime) - a.start;
+                if (!durationMap[a.name]) durationMap[a.name] = 0;
+                durationMap[a.name] += dur;
+            });
+        } else {
+            if(d.unloader !== 'Unassigned') durationMap[d.unloader] = endTime - start;
+        }
+
+        let primaryUnloader = d.unloader;
+        let maxDur = -1;
+        Object.keys(durationMap).forEach(name => {
+            if (durationMap[name] > maxDur) {
+                maxDur = durationMap[name];
+                primaryUnloader = name;
+            }
+        });
+        
+        if (!primaryUnloader || primaryUnloader === 'Unassigned') primaryUnloader = "Unknown";
+
+        const assistants = Object.keys(durationMap).filter(n => n !== primaryUnloader);
+
+        if(config.randomHistory && demoActive) {
+             const {shiftStart} = getShiftTimeWindows();
+             endTime = Math.floor(Math.random()*(Date.now()-shiftStart.getTime()) + shiftStart.getTime());
+             start = endTime - (Math.floor(Math.random()*30+15)*60000); offset=0;
+        }
+
+        if (d.type === 'CPU' && d.account && !savedAccounts.includes(d.account.trim().toUpperCase())) {
+            savedAccounts.push(d.account.trim().toUpperCase()); saveAccounts(); updateAccountDatalist();
+        }
+
+        historyLog.unshift({
+            door: doorNum, id: d.id, account: d.account||"", type: d.type, unloader: primaryUnloader,
+            startedBy: startedBy, assistants: assistants,
+            start: start, end: endTime, dateKey: dateKeyFromTs(endTime), duration: endTime - start,
+            durationMinutes: Math.round((endTime - start)/60000), statOffset: offset,
+            logId: Date.now().toString(36), duplicate: d.isDuplicate||false,
+            completionHour: getCompletionHour(endTime - offset),
+            cpuOptions: d.cpuOptions || [],
+            status: 'completed'
+        });
+        
+        if (d.type === 'Wally' && navigator.share && !demoActive) {
+             navigator.share({ text: `Door ${doorNum} done` }).catch(e=>{});
+        }
+        closeModal('active-detail-modal');
+
+        doors[doorNum] = { status: 'empty', start: 0, id: '', type: '', unloader: '', unavailable: false, lastCompletionTime: endTime, assignments: [] };
+        saveDoors(); saveHistory(); renderDashboard(); renderActiveTab(); updateTabBadges(); showSaveToast();
+        if (demoActive && config.replenish) setTimeout(() => { if (doors[doorNum].status === 'empty') randomArrival(doorNum); }, 7000);
+    }
+
+    function updateStats() {
+        const { thisHourStart, thisHourEnd, lastHourStart, lastHourEnd } = getShiftTimeWindows();
+        let tw=0, tc=0, hw=0, lhw=0;
+        historyLog.forEach(l => {
+            if (l.status && l.status !== 'completed') return; 
+
+            const t = l.end - (l.statOffset || 0); 
+            if (l.type === 'Wally') {
+                tw++;
+                if (t >= thisHourStart.getTime() && t < thisHourEnd.getTime()) hw++;
+                else if (t >= lastHourStart.getTime() && t < lastHourEnd.getTime()) lhw++;
+            } else tc++;
+        });
+        byId('stat-total-wally').innerText = tw; byId('stat-total-cpu').innerText = tc;
+        byId('stat-hour-wally').innerText = hw; byId('stat-last-wally').innerText = lhw;
+    }
+
+    // --- RENDER DASHBOARD ---
+    function renderDashboard() {
+        updateStats();
+        const openGrid = byId('open-bays-grid'), activeGrid = byId('active-trailers-grid');
+        openGrid.innerHTML = ''; activeGrid.innerHTML = '';
+        let hasOpen = false, hasActive = false;
+
+        for(let i=DOORS_START; i<=DOORS_END; i++) {
+            const d = doors[i];
+            const btn = document.createElement('div');
+            btn.className = `bay-circle bay-${i} ${d.unavailable ? 'unavailable' : ''}`;
+            btn.dataset.door = i; 
+
+            if (d.status === 'active') {
+                hasActive = true;
+                btn.innerHTML = `${i}<div class="type-badge ${d.type==='Wally'?'badge-w':'badge-c'}">${d.type==='Wally'?'W':'C'}</div>`;
+                if (d.start > 0) {
+                     const min = (Date.now() - d.start) / 60000;
+                     if (min > 60) btn.classList.add('status-crit');
+                     else if (min > 45) btn.classList.add('status-warn');
+                     else btn.classList.add('status-ok');
+                }
+                activeGrid.appendChild(btn);
+            } else {
+                hasOpen = true;
+                btn.innerText = i;
+                if (d.lastCompletionTime && d.status === 'empty' && !d.unavailable) {
+                    const idle = Math.floor((Date.now() - d.lastCompletionTime) / 60000);
+                    btn.innerHTML += `<div class="bay-timer">${idle}m</div>`;
+                }
+                openGrid.appendChild(btn);
             }
         }
+        if(!hasOpen) openGrid.innerHTML = '<div class="empty-state-text">All bays full.</div>';
+        if(!hasActive) activeGrid.innerHTML = '<div class="empty-state-text">No active trailers.</div>';
     }
 
     function renderActiveTab() {
         const list = byId('active-tab-list'); list.innerHTML = '';
-        Object.keys(doors).forEach(i => {
-            if(doors[i].status==='active'){
-                const d = doors[i];
-                list.innerHTML += `<div class="active-card"><div class="active-card-info"><div class="active-card-header"><span class="door-pill">Door ${i}</span><span class="active-card-title">${d.id}</span></div><div class="active-card-details">${d.unloader||'Unassigned'}</div></div></div>`;
+        let hasActive = false;
+        for(let i=DOORS_START; i<=DOORS_END; i++) {
+            if(doors[i].status === 'active') {
+                hasActive = true;
+                const d = doors[i], start = new Date(d.start).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                list.innerHTML += `<div class="active-card"><div class="active-card-info"><div class="active-card-header"><span class="door-pill">Door ${i}</span><span class="active-card-title">${d.type} ${d.id}</span></div><div class="active-card-details">${d.unloader}${d.account ? ' | '+d.account : ''}</div><div class="active-card-time">Started: ${start}</div></div><div class="active-card-actions"><button class="icon-btn" onclick="openEditActiveModal(${i})"><i class="ph ph-pencil-simple"></i></button><button class="btn-primary" style="width:auto; padding:10px 16px; margin:0;" onclick="completeDoor(${i})">Finish</button></div></div>`;
             }
-        });
+        }
+        if(!hasActive) list.innerHTML = '<div style="text-align:center; color:#999; margin-top:40px;">No active trailers</div>';
     }
+
+    function openActiveDetails(doorNum) {
+        detailDoor = doorNum; const d = doors[doorNum];
+        byId('detail-door-num').innerText = doorNum;
+        byId('detail-type').innerText = d.type;
+        byId('detail-id').innerText = d.id;
+        byId('detail-unloader').innerText = d.unloader || "Unassigned";
+        
+        // Show Started By if different (and filter Unassigned)
+        const realAssignments = (d.assignments || []).filter(a => a.name && a.name !== 'Unassigned');
+        let startedBy = (realAssignments.length > 0) ? realAssignments[0].name : null;
+
+        const startedRow = byId('row-started-by');
+        if (startedBy && startedBy !== d.unloader) {
+            startedRow.style.display = 'flex';
+            byId('detail-started-by').innerText = startedBy;
+        } else {
+            startedRow.style.display = 'none';
+        }
+
+        byId('detail-time').innerText = new Date(d.start).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        byId('detail-duration').innerText = Math.floor((Date.now() - d.start)/60000) + "m";
+        const ar = byId('row-account');
+        if (d.account) { ar.style.display = 'flex'; byId('detail-account').innerText = d.account; } else ar.style.display = 'none';
+        
+        const rowOpts = byId('row-cpu-opts');
+        if (d.type === 'CPU' && d.cpuOptions && d.cpuOptions.length > 0) {
+            rowOpts.style.display = 'flex';
+            byId('detail-cpu-opts').innerText = d.cpuOptions.join(', ');
+        } else {
+            rowOpts.style.display = 'none';
+        }
+
+        byId('active-detail-modal').style.display = 'flex';
+    }
+
+    function openEditActiveModalFromDetail() { closeModal('active-detail-modal'); openEditActiveModal(detailDoor); }
+    function openEditActiveModal(doorNum) {
+        const d = doors[doorNum];
+        byId('edit-active-original-door').value = doorNum;
+        byId('edit-active-id').value = d.id;
+        byId('edit-active-account').value = d.account || "";
+        const us = byId('edit-active-unloader'); us.value = d.unloader || "";
+        if(us.selectedIndex === -1) { us.value = 'Custom'; checkActiveCustomUnloader(us); byId('edit-active-custom-unloader').value = d.unloader; }
+        else checkActiveCustomUnloader(us);
+        setEditActiveType(d.type);
+        
+        const opts = d.cpuOptions || [];
+        byId('edit-active-chk-hott').checked = opts.includes('HOTT');
+        byId('edit-active-chk-recycle').checked = opts.includes('RECYCLE');
+        byId('edit-active-chk-gv').checked = opts.includes('GV');
+
+        const sel = byId('edit-active-door-select'); sel.innerHTML = '';
+        for(let i=DOORS_START; i<=DOORS_END; i++) {
+            if(i===doorNum || doors[i].status==='empty') {
+                const opt = document.createElement('option'); opt.value = i; opt.innerText = `Bay ${i}`; if(i===doorNum) opt.selected=true; sel.appendChild(opt);
+            }
+        }
+        setSwitchType('Replacement');
+        byId('edit-active-modal').style.display = 'flex';
+    }
+
+    function setEditActiveType(t) { 
+        byId('active-opt-wally').classList.toggle('selected', t==='Wally'); 
+        byId('active-opt-cpu').classList.toggle('selected', t==='CPU'); 
+        byId('edit-active-modal').dataset.type = t; 
+        const optsContainer = byId('edit-active-options-container');
+        if(optsContainer) optsContainer.style.display = (t === 'CPU') ? 'block' : 'none';
+    }
+    
+    function setSwitchType(t) {
+        currentSwitchType = t;
+        byId('seg-replace').classList.toggle('selected', t === 'Replacement');
+        byId('seg-assist').classList.toggle('selected', t === 'Assist');
+    }
+
+    function checkActiveCustomUnloader(s) { 
+        byId('edit-active-custom-unloader').style.display = s.value === 'Custom' ? 'block' : 'none'; 
+        byId('edit-active-assist-option').style.display = 'block';
+    }
+
+    function saveActiveEdit() {
+        const orig = parseInt(byId('edit-active-original-door').value), dest = parseInt(byId('edit-active-door-select').value);
+        let unl = byId('edit-active-unloader').value;
+        if(unl === 'Custom') unl = byId('edit-active-custom-unloader').value.trim();
+        if (!unl) unl = "Unassigned";
+        else if (unl !== "Unassigned" && unl === byId('edit-active-custom-unloader').value.trim()) unl = unl.toLowerCase().split(' ').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ');
+        
+        const type = byId('edit-active-modal').dataset.type;
+        let cpuOpts = [];
+        if(type === 'CPU') {
+            if(byId('edit-active-chk-hott').checked) cpuOpts.push('HOTT');
+            if(byId('edit-active-chk-recycle').checked) cpuOpts.push('RECYCLE');
+            if(byId('edit-active-chk-gv').checked) cpuOpts.push('GV');
+        }
+
+        const d = doors[orig];
+        const now = Date.now();
+        let newAssignments = [...(d.assignments || [])];
+        
+        if (d.unloader !== unl) {
+            if (newAssignments.length > 0) {
+                newAssignments[newAssignments.length - 1].end = now;
+            }
+            const entryName = (currentSwitchType === 'Assist') ? `${unl} (Assist)` : unl;
+            newAssignments.push({ name: entryName, start: now, end: null });
+        }
+
+        const data = { 
+            status: 'active', start: doors[orig].start, id: byId('edit-active-id').value.trim().toUpperCase(), 
+            account: byId('edit-active-account').value.trim().toUpperCase(), type: type, unloader: unl, 
+            unavailable: false, lastCompletionTime: doors[orig].lastCompletionTime, cpuOptions: cpuOpts,
+            assignments: newAssignments
+        };
+
+        if(dest !== orig) { doors[dest] = data; doors[orig] = {status:'empty', start:0, id:'', type:'', unloader:'', unavailable: false, lastCompletionTime: doors[orig].lastCompletionTime, assignments:[]}; }
+        else doors[orig] = data;
+        saveDoors(); closeModal('edit-active-modal'); renderActiveTab(); renderDashboard(); updateTabBadges(); showSaveToast();
+    }
+
+    function checkCustomUnloader(s) { byId('input-custom-unloader').style.display = s.value === 'Custom' ? 'block' : 'none'; }
+    function confirmArrival() {
+        const idVal = currentType === 'Wally' ? byId('input-wally-id').value : byId('input-trailer-id').value;
+        if(!idVal) return alert("Missing ID");
+        const fId = idVal.toUpperCase(), fAcc = (currentType==='CPU'?byId('input-account-id').value:'').toUpperCase();
+        let unl = byId('select-unloader').value;
+        if(unl === 'Custom') { unl = byId('input-custom-unloader').value; if(unl) unl = unl.toLowerCase().split(' ').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' '); }
+        
+        if (currentType === 'Wally') {
+            const dup = checkDuplicateWally(fId);
+            if (dup) {
+                pendingWallyDuplicate = { doorNum: currentDoor, wallyId: fId, unloader: unl||"Unassigned", startTime: Date.now() };
+                byId('dup-wally-id').textContent = fId; byId('dup-door').textContent = `Door ${dup.door}`;
+                byId('dup-time').textContent = new Date(dup.end).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); byId('dup-unloader').textContent = dup.unloader;
+                byId('duplicate-wally-modal').style.display = 'flex'; 
+                return;
+            }
+        }
+
+        let cpuOpts = [];
+        if (currentType === 'CPU') {
+            if(byId('chk-hott').checked) cpuOpts.push('HOTT');
+            if(byId('chk-recycle').checked) cpuOpts.push('RECYCLE');
+            if(byId('chk-gv').checked) cpuOpts.push('GV');
+        }
+
+        let startTime = Date.now(), cTime = byId('input-onboard-time').value;
+        if (cTime) {
+            const now = new Date(), [h, m] = cTime.split(':').map(Number);
+            const d = new Date(now); d.setHours(h, m, 0, 0);
+            if (d > now) d.setDate(d.getDate() - 1); startTime = d.getTime();
+        }
+        doors[currentDoor] = { 
+            status: 'active', start: startTime, id: fId, account: fAcc, type: currentType, 
+            unloader: unl||"Unassigned", isDuplicate: false, unavailable: false, 
+            lastCompletionTime: null, cpuOptions: cpuOpts,
+            assignments: [{ name: unl||"Unassigned", start: startTime, end: null }]
+        };
+        if(isFirstOnboard) { isFirstOnboard = false; localStorage.setItem('ps9_is_first_onboard', 'false'); }
+        saveDoors(); closeModal('input-modal'); renderDashboard(); updateTabBadges(); showSaveToast();
+    }
+
+    function openArrivalModal(specificDoor = null) {
+        if (specificDoor) currentDoor = specificDoor;
+        else {
+             currentDoor = null;
+             for(let i=DOORS_START; i<=DOORS_END; i++) if(doors[i].status==='empty'&&!doors[i].unavailable) { currentDoor=i; break; }
+        }
+        if(!currentDoor) return alert("No bays available!");
+        byId('modal-door-num').innerText = currentDoor;
+        byId('input-wally-id').value = ''; byId('input-trailer-id').value = ''; byId('input-account-id').value = '';
+        byId('select-unloader').value = ""; byId('input-custom-unloader').style.display = 'none';
+        
+        byId('chk-hott').checked = false;
+        byId('chk-recycle').checked = false;
+        byId('chk-gv').checked = false;
+
+        const tIn = byId('input-onboard-time');
+        if (isFirstOnboard && lastSortStartTime) tIn.value = lastSortStartTime;
+        else { const now=new Date(); tIn.value = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`; }
+        
+        const form = byId('onboard-form-container'), msg = byId('unavailable-msg'), btn = byId('btn-toggle-availability');
+        if (doors[currentDoor].unavailable) { form.style.display='none'; msg.style.display='block'; btn.innerText="Mark Available"; btn.style.background="#34c759"; btn.style.color="white"; btn.style.border="none"; }
+        else { form.style.display='block'; msg.style.display='none'; btn.innerText="Mark Unavailable"; btn.style.background="white"; btn.style.color="#ff3b30"; btn.style.border="2px solid #e5e5ea"; }
+        setType('Wally'); byId('input-modal').style.display = 'flex';
+        if (!doors[currentDoor].unavailable) setTimeout(() => { const f=byId('input-wally-id'); if(f) f.focus(); }, 100);
+    }
+
+    function handleAvailabilityToggle() { doors[currentDoor].unavailable = !doors[currentDoor].unavailable; saveDoors(); renderDashboard(); showSaveToast(); closeModal('input-modal'); }
+    function setType(t) {
+        currentType = t;
+        byId('opt-wally').classList.toggle('selected', t==='Wally'); 
+        byId('opt-cpu').classList.toggle('selected', t==='CPU'); 
+        byId('wally-inputs').style.display = t==='Wally'?'block':'none'; 
+        byId('cpu-inputs').style.display = t==='CPU'?'block':'none';
+    }
+
+    function viewStatLogs(type) {
+        closeModal('input-modal'); closeModal('active-detail-modal');
+        activeLogFilter = { door: 'All', type: 'All', timeRange: 'All', unloader: 'All', search: '', date: 'All' };
+        if(type==='Wally'||type==='CPU') activeLogFilter.type = type;
+        else if(type==='Hour-0') { activeLogFilter.timeRange = 'ThisHour'; activeLogFilter.type = 'Wally'; }
+        else if(type==='Hour-1') { activeLogFilter.timeRange = 'LastHour'; activeLogFilter.type = 'Wally'; }
+        switchTab('logs');
+    }
+    function viewDoorLogs(n) { closeModal('input-modal'); closeModal('active-detail-modal'); setLogFilter(n); switchTab('logs'); }
+    function openFilterModal() {
+        const g = byId('filter-grid'); g.innerHTML = `<div class="filter-btn ${currentLogFilter==='All'?'active':''}" onclick="setLogFilter('All')">All</div>`;
+        for(let i=DOORS_START; i<=DOORS_END; i++) g.innerHTML += `<div class="filter-btn ${currentLogFilter==i?'active':''}" onclick="setLogFilter(${i})">Door ${i}</div>`;
+        byId('filter-unloader-select').value = activeLogFilter.unloader;
+        byId('filter-date-input').value = activeLogFilter.date !== 'All' ? activeLogFilter.date : '';
+        byId('filter-modal').style.display='flex';
+    }
+    function applyFilter() {
+        activeLogFilter.unloader = byId('filter-unloader-select').value;
+        const d = byId('filter-date-input').value; activeLogFilter.date = d || 'All';
+        closeModal('filter-modal'); renderLogs();
+    }
+    function clearLogFilter() { currentLogFilter='All'; activeLogFilter={door:'All',unloader:'All',type:'All',timeRange:'All',search:'',date:'All'}; byId('log-search').value=''; renderLogs(); }
+    function setLogFilter(v) { currentLogFilter = v; activeLogFilter.door = v; renderLogs(); }
+    
+    function toggleStats(sec) {
+        const c = byId(sec==='unloader'?'stats-content':'hourly-content'), i = byId(sec==='unloader'?'stats-caret':'hourly-caret');
+        const show = c.style.display!=='block'; c.style.display=show?'block':'none'; i.className=show?'ph ph-caret-up':'ph ph-caret-down';
+        if(show) sec==='unloader' ? calculateAndRenderStats() : calculateAndRenderHourlyStats();
+    }
+    function calculateAndRenderStats() {
+         const stats = {};
+         historyLog.forEach(l => { 
+             if(l.status === 'moved') return;
+             const n = l.unloader; if(!stats[n]) stats[n]={w:0,c:0,t:0}; if(l.type==='Wally') stats[n].w++; else stats[n].c++; stats[n].t++; 
+         });
+         const tb = byId('unloader-stats-body'); tb.innerHTML='';
+         Object.entries(stats).sort((a,b)=>b[1].t-a[1].t).forEach(([n,d])=>tb.innerHTML+=`<tr><td>${n}</td><td style="text-align:center">${d.w}</td><td style="text-align:center">${d.c}</td><td style="text-align:right">${d.t}</td></tr>`);
+    }
+    function calculateAndRenderHourlyStats() {
+        const { shiftStart } = getShiftTimeWindows(); const h = {};
+        historyLog.forEach(l => { 
+            if(l.status === 'moved') return;
+            const idx = Math.floor((l.end-(l.statOffset||0)-shiftStart.getTime())/3600000)+1; if(!h[idx]) h[idx]=0; h[idx]++; 
+        });
+        const tb = byId('hourly-stats-body'); tb.innerHTML='';
+        Object.keys(h).sort((a,b)=>a-b).forEach(k=>tb.innerHTML+=`<tr><td>${getHourText(parseInt(k))}</td><td style="text-align:center">${h[k]}</td></tr>`);
+    }
+
+    // --- OPTIMIZED RENDER LOGS ---
+    let currentVisibleLogs = 50;
+    let filteredLogsCache = []; 
 
     function renderLogs() {
-        const list = byId('logs-list'); list.innerHTML = '';
-        historyLog.forEach(l => {
-            list.innerHTML += `<div class="log-card"><div class="log-info"><div class="log-header-row"><span class="log-door-pill">Door ${l.door}</span><div class="log-title">${l.id}</div></div><div class="log-footer-row">${l.unloader}</div></div><div class="log-right-col"><div class="log-duration">${Math.round(l.duration/60000)}m</div></div></div>`;
+        const list = byId('logs-list'); if(!list) return;
+        const filterDisplay = byId('active-filter-display'), filterText = byId('filter-text-display');
+        const sVal = byId('log-search').value.trim().toUpperCase(); activeLogFilter.search = sVal;
+        
+        const { thisHourStart, thisHourEnd, lastHourStart, lastHourEnd } = getShiftTimeWindows();
+        filteredLogsCache = historyLog.filter(l => {
+            if (activeLogFilter.date !== 'All' && l.dateKey !== activeLogFilter.date) return false;
+            if (activeLogFilter.door !== 'All' && l.door != activeLogFilter.door) return false;
+            if (activeLogFilter.unloader !== 'All' && l.unloader !== activeLogFilter.unloader) return false;
+            if (activeLogFilter.type !== 'All' && l.type !== activeLogFilter.type) return false;
+            if (activeLogFilter.search && !l.id.includes(sVal) && !l.account.includes(sVal) && String(l.door)!=sVal) return false;
+            if (activeLogFilter.timeRange !== 'All') {
+                const t = l.end - (l.statOffset || 0);
+                if (activeLogFilter.timeRange === 'ThisHour' && (t < thisHourStart.getTime() || t >= thisHourEnd.getTime())) return false;
+                if (activeLogFilter.timeRange === 'LastHour' && (t < lastHourStart.getTime() || t >= lastHourEnd.getTime())) return false;
+            }
+            return true;
         });
+
+        const isFiltering = Object.values(activeLogFilter).some(v => v !== 'All' && v !== '');
+        if (filterDisplay) {
+            filterDisplay.style.display = isFiltering ? 'flex' : 'none';
+            if (isFiltering) {
+                const p = [];
+                if(activeLogFilter.date!=='All') p.push(activeLogFilter.date);
+                if(activeLogFilter.door!=='All') p.push("Door "+activeLogFilter.door);
+                if(activeLogFilter.unloader!=='All') p.push(activeLogFilter.unloader);
+                if(activeLogFilter.type!=='All') p.push(activeLogFilter.type);
+                if(activeLogFilter.search) p.push(`"${activeLogFilter.search}"`);
+                filterText.innerText = p.join(' + ');
+            }
+        }
+
+        list.innerHTML = '';
+        currentVisibleLogs = 50; 
+        renderLogBatch();
+        
+        if(statsVisible) calculateAndRenderStats();
+        if(hourlyVisible) calculateAndRenderHourlyStats();
     }
 
-    function openActiveDetails(i) {
-        detailDoor = i; const d = doors[i];
-        byId('detail-door-num').innerText = i;
-        byId('active-detail-modal').style.display = 'flex';
+    function renderLogBatch() {
+        const list = byId('logs-list');
+        const loadMore = byId('logs-load-more');
+        
+        if (filteredLogsCache.length === 0) {
+            list.innerHTML = '<div style="text-align:center; color:#999; margin-top:20px;">No logs found.</div>';
+            loadMore.style.display = 'none';
+            return;
+        }
+
+        const frag = document.createDocumentFragment();
+        const batch = filteredLogsCache.slice(list.children.length, currentVisibleLogs);
+        
+        batch.forEach(l => {
+            const card = document.createElement('div'); card.className = 'log-card';
+            const dur = Math.round(l.duration/60000);
+            
+            // Build Type String
+            let typeStr = l.type + (l.duplicate ? ' DUP' : '');
+            if (l.type === 'CPU' && l.cpuOptions && l.cpuOptions.length > 0) {
+                typeStr += ` (${l.cpuOptions.join(', ')})`;
+            }
+            
+            // Handle Moved status
+            let statusPill = '';
+            if (l.status === 'moved') {
+                statusPill = `<span class="log-tag tag-gray"><i class="ph ph-arrows-left-right"></i> ${l.moveDest}</span>`;
+            } else {
+                statusPill = `<span class="log-tag tag-black">${l.type}</span>`;
+                if(l.duplicate) statusPill += ` <span class="log-tag tag-red">DUP</span>`;
+                if (l.type === 'CPU' && l.cpuOptions && l.cpuOptions.length > 0) {
+                     l.cpuOptions.forEach(opt => { statusPill += ` <span class="log-tag tag-gray">${opt}</span>`; });
+                }
+            }
+            statusPill += `<span class="log-tag" style="background:#fff; border:1px solid #e5e5ea;">${getHourText(l.completionHour)}</span>`;
+
+            // Build User String
+            let userStr = l.unloader;
+            let startStr = "";
+            if (l.startedBy && l.startedBy !== l.unloader && l.startedBy !== 'Unassigned') {
+                startStr = ` <span style="font-size:12px; color:#999;">(via ${l.startedBy})</span>`;
+            }
+            
+            const timeRange = `${new Date(l.start).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} - ${new Date(l.end).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
+
+            card.innerHTML = `
+                <div class="log-info">
+                    <div class="log-header-row">
+                        <span class="log-door-pill" onclick="viewDoorLogs(${l.door})">Door ${l.door}</span>
+                        <div class="log-title">${l.id}<span class="log-account">${l.account ? l.account : ''}</span></div>
+                    </div>
+                    <div class="log-tags-row">${statusPill}</div>
+                    <div class="log-footer-row">
+                        <div class="log-footer-item"><i class="ph ph-user"></i> ${userStr}${startStr}</div>
+                        <div class="log-footer-item"><i class="ph ph-clock"></i> ${timeRange}</div>
+                    </div>
+                </div>
+                <div class="log-right-col">
+                    <div style="text-align:right;">
+                        <div class="log-duration">${dur}<span style="font-size:14px; font-weight:700;">m</span></div>
+                        <div class="log-duration-label">Duration</div>
+                    </div>
+                    <div class="log-actions-row">
+                         ${(Date.now()-l.end < 120000 && !demoActive) ? `<button class="log-mini-btn" onclick="revertLog(${historyLog.indexOf(l)})"><i class="ph ph-arrow-u-up-left"></i></button>` : ''}
+                        <button class="log-mini-btn" onclick="openEditLogModal(${historyLog.indexOf(l)})"><i class="ph ph-pencil-simple"></i></button>
+                    </div>
+                </div>
+            `;
+            frag.appendChild(card);
+        });
+        
+        list.appendChild(frag);
+        loadMore.style.display = (currentVisibleLogs < filteredLogsCache.length) ? 'block' : 'none';
+    }
+
+    function loadMoreLogs() {
+        currentVisibleLogs += 50;
+        renderLogBatch();
+    }
+
+    function revertLog(i) {
+        const l = historyLog[i];
+        if(!l || (Date.now()-l.end>120000 && !demoActive) || doors[l.door].status!=='empty') return alert("Cannot revert");
+        doors[l.door] = { 
+            status:'active', start:l.start, id:l.id, account:l.account, type:l.type, 
+            unloader:l.unloader, unavailable:false, lastCompletionTime:null, 
+            cpuOptions: l.cpuOptions || [], assignments: [{name: l.unloader, start: l.start, end: null}] 
+        };
+        historyLog.splice(i, 1); saveDoors(); saveHistory(); renderDashboard(); renderLogs(); updateTabBadges();
+    }
+
+    function openEditLogModal(i) {
+        const l = historyLog[i]; byId('edit-log-index').value = i; byId('edit-input-id').value = l.id;
+        const sel = byId('edit-select-unloader'); sel.innerHTML='<option value="">Unassigned</option>';
+        teamNamesSorted.forEach(n => { const o=document.createElement('option'); o.value=n; o.innerText=n; sel.appendChild(o); });
+        sel.value = l.unloader;
+        setEditType(l.type);
+        
+        const opts = l.cpuOptions || [];
+        byId('edit-log-chk-hott').checked = opts.includes('HOTT');
+        byId('edit-log-chk-recycle').checked = opts.includes('RECYCLE');
+        byId('edit-log-chk-gv').checked = opts.includes('GV');
+
+        byId('edit-log-modal').style.display='flex';
+    }
+
+    function confirmLogEdit() {
+        const i = parseInt(byId('edit-log-index').value), id = byId('edit-input-id').value.toUpperCase(), unl = byId('edit-select-unloader').value;
+        const type = byId('edit-log-modal').dataset.type;
+        
+        let cpuOpts = [];
+        if(type === 'CPU') {
+            if(byId('edit-log-chk-hott').checked) cpuOpts.push('HOTT');
+            if(byId('edit-log-chk-recycle').checked) cpuOpts.push('RECYCLE');
+            if(byId('edit-log-chk-gv').checked) cpuOpts.push('GV');
+        }
+
+        historyLog[i].id = id; historyLog[i].unloader = unl; historyLog[i].type = type; historyLog[i].cpuOptions = cpuOpts;
+        saveHistory(); closeModal('edit-log-modal'); renderLogs();
+    }
+
+    function openExportModal() { byId('export-modal').style.display = 'flex'; }
+    function exportLogsCSV() {
+        closeModal('export-modal');
+        let csv = "Type,ID,Account,Door,Unloader,StartedBy,Duration(mins),StartTime,EndTime,StartHour,EndHour,Duplicate,Hour,Options,Status\n";
+        historyLog.forEach(l => {
+            const opts = (l.cpuOptions || []).join(';');
+            csv += `${l.type},${l.id},${l.account||''},${l.door},${l.unloader},${l.startedBy||''},${Math.round(l.duration/60000)},${new Date(l.start).toLocaleString()},${new Date(l.end).toLocaleString()},${new Date(l.start).getHours()},${new Date(l.end).getHours()},${l.duplicate?'Yes':'No'},${l.completionHour},${opts},${l.status||'completed'}\n`
+        });
+        const a = document.createElement('a'); a.href=window.URL.createObjectURL(new Blob([csv], {type:'text/csv'})); a.download='wally-logs.csv'; a.click();
+    }
+    
+    function exportLogsPDF() {
+        closeModal('export-modal');
+        if (!window.jspdf) return alert("PDF library loading. Please wait or check connection.");
+        const doc = new window.jspdf.jsPDF(), now = new Date();
+        doc.setFontSize(18); doc.text(`PS9 Wally Tracker Report - ${now.toLocaleDateString()}`, 14, 20);
+        doc.setFontSize(12); doc.text(`Generated: ${now.toLocaleTimeString()}`, 14, 30);
+        
+        const stats={}; historyLog.forEach(l=>{ 
+            if(l.status === 'moved') return;
+            const n=l.unloader; if(!stats[n])stats[n]={w:0,c:0,t:0}; if(l.type==='Wally')stats[n].w++; else stats[n].c++; stats[n].t++; 
+        });
+        doc.autoTable({ startY: 45, head:[['Name','Wally','CPU','Total']], body:Object.entries(stats).sort((a,b)=>b[1].t-a[1].t).map(([n,d])=>[n,d.w,d.c,d.t]) });
+        
+        const logsBody = historyLog.map(l => {
+             let typeStr = l.type + (l.duplicate?' (DUP)':'');
+             if(l.status === 'moved') typeStr = `MOVED: ${l.moveDest}`;
+             else if(l.type === 'CPU' && l.cpuOptions && l.cpuOptions.length>0) typeStr += `\n${l.cpuOptions.join(',')}`;
+             
+             let uStr = l.unloader;
+             if(l.startedBy && l.startedBy !== l.unloader && l.startedBy !== 'Unassigned') uStr += `\n(Start: ${l.startedBy})`;
+
+             return [new Date(l.end).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}), l.door, typeStr, l.id, uStr, Math.round(l.duration/60000)+"m", getHourText(l.completionHour)];
+        });
+        doc.autoTable({ startY: doc.lastAutoTable.finalY+15, head:[['Time','Door','Type','ID','Unloader','Duration','Hour']], body:logsBody });
+        doc.save(`wally-report-${now.toISOString().split('T')[0]}.pdf`);
+    }
+
+    // --- PPH CALCULATOR ---
+    function openPPHModal() {
+        const hrs = calculateUnloaderHours(), inp = byId('pph-unloader-hours-input');
+        inp.value = hrs>0?hrs.toFixed(2):''; byId('pph-volume-input').value=''; byId('pph-result').innerText='0';
+        byId('pph-modal').style.display='flex';
+        setTimeout(()=>hrs>0?byId('pph-volume-input').focus():inp.focus(), 100);
+    }
+    function resetPPH() {
+        const hrs = calculateUnloaderHours(), inp = byId('pph-unloader-hours-input');
+        inp.value = hrs>0?hrs.toFixed(2):''; byId('pph-volume-input').value=''; byId('pph-result').innerText='0';
+        hrs===0?inp.focus():byId('pph-volume-input').focus();
+    }
+    function calculateUnloaderHours() {
+        const now = Date.now(); let t = 0;
+        staffing.forEach(s => { if(s.role==='Unloader') t += (s.accumulated||0) + ((s.status==='active'&&s.start)?(now-s.start):0); });
+        return t/3600000;
+    }
+    function calculatePPH() {
+        const v = parseFloat(byId('pph-volume-input').value)||0, h = parseFloat(byId('pph-unloader-hours-input').value)||0;
+        byId('pph-result').innerText = h===0 ? '0' : Math.round(v/h).toLocaleString();
+    }
+    function setEditType(t) { 
+        byId('edit-opt-wally').classList.toggle('selected', t==='Wally'); 
+        byId('edit-opt-cpu').classList.toggle('selected', t==='CPU'); 
+        byId('edit-log-modal').dataset.type = t; 
+        const c = byId('edit-log-options-container');
+        if(c) c.style.display = (t === 'CPU') ? 'block' : 'none';
     }
 
     init();
