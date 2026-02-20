@@ -406,7 +406,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 3.55</div>
+            <div class="app-version">Version 3.56</div>
         </div>
 
         <div class="section-title">Sort Statistics</div>
@@ -558,7 +558,7 @@
                     </div>
                     <div class="settings-note" style="margin-top:20px; padding:0;">Completions between <span id="attr-range-start" style="font-weight:700; color:#000;">0</span> and <span id="attr-range-end" style="font-weight:700; color:#000;">10</span> minutes after each hour will ask for attribution. Window is 10 minutes total, starting at the selected minute.</div>
                 </div>
-                <div class="settings-row"><span class="settings-label">Simulate Shift Change</span><div class="toggle-switch" id="switch-sim-window" onclick="toggleSwitch('sim-window')"></div></div>
+                <div class="settings-row"><span class="settings-label">Simulate Attribution</span><div class="toggle-switch" id="switch-sim-window" onclick="toggleSwitch('sim-window')"></div></div>
                  <div class="settings-row"><span class="settings-label">Disable Time Attribution</span><div class="toggle-switch" id="switch-dis-window" onclick="toggleSwitch('dis-window')"></div></div>
             </div>
             <div class="settings-header">Saved Accounts</div>
@@ -572,7 +572,7 @@
             <div class="settings-header">Demo</div>
             <div class="settings-group">
                 <div class="settings-row"><span class="settings-label">Demo Mode</span><div class="toggle-switch" id="switch-demo-mode" onclick="toggleSwitch('demo-mode')"></div></div>
-                <div class="settings-row"><span class="settings-label">Force Attribution (Simulate)</span><div class="toggle-switch" id="switch-sim-window" onclick="toggleSwitch('sim-window')"></div></div>
+                <div class="settings-row"><span class="settings-label">Simulate Attribution</span><div class="toggle-switch" id="switch-sim-window" onclick="toggleSwitch('sim-window')"></div></div>
                 <div class="settings-row"><span class="settings-label">Disable hardcoded times</span><div class="toggle-switch" id="switch-disable-times" onclick="toggleSwitch('disable-times')"></div></div>
                 <div class="settings-row"><span class="settings-label">Generate Random History</span><div class="toggle-switch" id="switch-demo-random" onclick="toggleSwitch('demo-random')"></div></div>
                 <div class="settings-row"><span class="settings-label">Auto-Replenish Bays</span><div class="toggle-switch" id="switch-demo-replenish" onclick="toggleSwitch('demo-replenish')"></div></div>
@@ -643,10 +643,20 @@
         </div>
         <div style="margin-bottom:20px;">
             <label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Assign to Hour</label>
-            <div class="segment-control" style="width:100%;">
-                <div class="segment-opt selected" id="manual-hour-current" onclick="setManualHour('current')">Current Hour</div>
-                <div class="segment-opt" id="manual-hour-previous" onclick="setManualHour('previous')">Previous Hour</div>
-            </div>
+            <select id="manual-hour-select" class="form-input">
+                <option value="1">1st Hour</option>
+                <option value="2">2nd Hour</option>
+                <option value="3">3rd Hour</option>
+                <option value="4">4th Hour</option>
+                <option value="5">5th Hour</option>
+                <option value="6">6th Hour</option>
+                <option value="7">7th Hour</option>
+                <option value="8">8th Hour</option>
+                <option value="9">9th Hour</option>
+                <option value="10">10th Hour</option>
+                <option value="11">11th Hour</option>
+                <option value="12">12th Hour</option>
+            </select>
         </div>
         <button class="btn-primary" onclick="confirmManualAdd()">Add to Stats</button>
         <button class="btn-cancel" onclick="closeModal('manual-add-modal')">Cancel</button>
@@ -887,10 +897,10 @@
 
     // Manual Add state
     let manualType = 'Wally';
-    let manualHour = 'current'; // 'current' or 'previous'
+    // manualHour now stored as numeric hour (1-12)
 
     // --- CONFIG ---
-    const APP_VERSION = '3.55';
+    const APP_VERSION = '3.56';
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Robert W", "Trevon C", "Russell H", "Fonseca J", "Eddie F", "Juan F", "Arce J"];
@@ -914,6 +924,11 @@
 
     // --- CHANGELOG ---
     const CHANGELOG = `
+v3.56:
+- Manual Add: replaced hour selection with dropdown to choose specific hour (1st-12th).
+- Settings: renamed "Simulate Shift Change" to "Simulate Attribution" for consistency.
+- Version bump to 3.56.
+
 v3.55:
 - Removed redundant "Onboard" button from home screen.
 - Adjusted top button spacing for better alignment.
@@ -927,9 +942,6 @@ v3.54:
 v3.53:
 - Added Manual Add button to manually add completions to stats.
 - Choose hour (Current/Previous) and assign unloader.
-
-v3.52:
-- Added new unloader: Arce J to default team list.
     `;
 
     // --- STATE ---
@@ -1772,7 +1784,8 @@ v3.52:
         byId('manual-chk-recycle').checked = false;
         byId('manual-chk-gv').checked = false;
         setManualType('Wally');
-        setManualHour('current');
+        // Default to 1st hour
+        byId('manual-hour-select').value = '1';
         byId('manual-add-modal').style.display = 'flex';
     }
 
@@ -1782,12 +1795,6 @@ v3.52:
         byId('manual-opt-cpu').classList.toggle('selected', t==='CPU');
         byId('manual-wally-inputs').style.display = t==='Wally' ? 'block' : 'none';
         byId('manual-cpu-inputs').style.display = t==='CPU' ? 'block' : 'none';
-    }
-
-    function setManualHour(h) {
-        manualHour = h;
-        byId('manual-hour-current').classList.toggle('selected', h==='current');
-        byId('manual-hour-previous').classList.toggle('selected', h==='previous');
     }
 
     function confirmManualAdd() {
@@ -1814,17 +1821,15 @@ v3.52:
         }
         if (!unl) unl = "Unassigned";
 
-        // Determine offset for hour
+        // Get selected hour
+        const selectedHour = parseInt(byId('manual-hour-select').value);
         const now = Date.now();
-        let offset = 0;
-        if (manualHour === 'previous') {
-            const { shiftStart } = getShiftTimeWindows();
-            const hoursElapsed = Math.floor((now - shiftStart.getTime()) / 3600000);
-            const currentHourStart = shiftStart.getTime() + hoursElapsed * 3600000;
-            // Set effective time to 1 minute before current hour start
-            const targetEffective = currentHourStart - 60000;
-            offset = now - targetEffective;
-        }
+        const { shiftStart } = getShiftTimeWindows();
+        // target effective time = start of selected hour
+        const targetEffective = shiftStart.getTime() + (selectedHour - 1) * 3600000;
+        let offset = now - targetEffective;
+        // Ensure offset is not negative (if selected hour is in future, but that shouldn't happen with manual)
+        if (offset < 0) offset = 0;
 
         // Create log entry
         const logEntry = {
