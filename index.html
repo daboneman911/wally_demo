@@ -401,12 +401,13 @@
             <button class="action-btn" onclick="openStartSortFlow()"><i class="ph ph-play-circle"></i> Start Sort</button>
             <button class="action-btn" onclick="openAddUnloaderModal()"><i class="ph ph-user-plus"></i> Add Unloader</button>
             <button class="action-btn" onclick="openArrivalModal()"><i class="ph ph-truck"></i> Onboard</button>
+            <button class="action-btn" onclick="openManualAddModal()" style="background:#34c759;"><i class="ph ph-pencil-simple-line"></i> Manual</button>
         </div>
 
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 3.52</div>
+            <div class="app-version">Version 3.54</div>
         </div>
 
         <div class="section-title">Sort Statistics</div>
@@ -551,12 +552,12 @@
             <div class="settings-group">
                 <div class="settings-row"><span class="settings-label">Shift Start Time</span><input type="time" id="setting-shift-start" class="settings-input-inline" onchange="saveShiftStart(this.value)"></div>
                 <div class="settings-slider-container" style="border-top:1px solid #f2f2f7;">
-                    <div class="slider-header"><span class="settings-label">Attribution Window</span><span class="slider-value" id="attribution-value">5m</span></div>
+                    <div class="slider-header"><span class="settings-label">Attribution Window Start</span><span class="slider-value" id="attribution-value">0m</span></div>
                     <div class="slider-wrapper">
                         <div class="slider-track"></div><div class="slider-fill" id="slider-fill"></div><div class="slider-thumb" id="slider-thumb"></div>
                         <div class="slider-ticks"><div class="slider-tick" style="left: 0%"><div class="slider-tick-label">0</div></div><div class="slider-tick" style="left: 50%"><div class="slider-tick-label">5</div></div><div class="slider-tick" style="left: 100%"><div class="slider-tick-label">10</div></div></div>
                     </div>
-                    <div class="settings-note" style="margin-top:20px; padding:0;">Allow attributing trailers completed up to <span id="attr-note-val" style="font-weight:700; color:#000;">5</span> minutes after the hour to the previous hour.</div>
+                    <div class="settings-note" style="margin-top:20px; padding:0;">Completions between <span id="attr-range-start" style="font-weight:700; color:#000;">0</span> and <span id="attr-range-end" style="font-weight:700; color:#000;">10</span> minutes after each hour will ask for attribution. Window is 10 minutes total, starting at the selected minute.</div>
                 </div>
                 <div class="settings-row"><span class="settings-label">Simulate Shift Change</span><div class="toggle-switch" id="switch-sim-window" onclick="toggleSwitch('sim-window')"></div></div>
                  <div class="settings-row"><span class="settings-label">Disable Time Attribution</span><div class="toggle-switch" id="switch-dis-window" onclick="toggleSwitch('dis-window')"></div></div>
@@ -601,6 +602,57 @@
     <button class="tab-btn" onclick="switchTab('tools', this)" id="tab-btn-tools"><i class="ph ph-toolbox"></i><span>Tools</span><span class="tab-badge" id="badge-tools">0</span></button>
     <button class="tab-btn" onclick="switchTab('settings', this)" id="tab-btn-settings"><i class="ph ph-gear"></i><span>Settings</span><span class="tab-badge" id="badge-settings">0</span></button>
 </nav>
+
+<!-- Manual Add Modal -->
+<div class="modal-overlay" id="manual-add-modal">
+    <div class="modal-sheet">
+        <h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Manual Add</h2>
+        <div class="type-selector">
+            <div class="type-opt selected" id="manual-opt-wally" onclick="setManualType('Wally')">Wally</div>
+            <div class="type-opt" id="manual-opt-cpu" onclick="setManualType('CPU')">CPU</div>
+        </div>
+        <div id="manual-wally-inputs">
+            <div style="margin-bottom:15px;">
+                <label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Wally Number</label>
+                <input type="text" id="manual-wally-id" class="form-input" placeholder="e.g. 5589" inputmode="numeric" pattern="[0-9]*" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+            </div>
+        </div>
+        <div id="manual-cpu-inputs" style="display:none;">
+            <div style="margin-bottom:15px;">
+                <label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Trailer Number</label>
+                <input type="text" id="manual-trailer-id" class="form-input" placeholder="e.g. TRL123" autocapitalize="characters" oninput="this.value = this.value.toUpperCase()">
+            </div>
+            <div style="margin-bottom:15px;">
+                <label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Account Number</label>
+                <input type="text" id="manual-account-id" class="form-input" placeholder="e.g. ACCT456" autocapitalize="characters" oninput="this.value = this.value.toUpperCase()" list="saved-accounts-datalist">
+            </div>
+            <div style="margin-bottom:15px;">
+                <label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:8px; display:block;">Options</label>
+                <div class="options-grid">
+                    <label class="option-toggle"><input type="checkbox" id="manual-chk-hott" value="HOTT"><span>HOTT</span></label>
+                    <label class="option-toggle"><input type="checkbox" id="manual-chk-recycle" value="RECYCLE"><span>RECYCLE</span></label>
+                    <label class="option-toggle"><input type="checkbox" id="manual-chk-gv" value="GV"><span>GV</span></label>
+                </div>
+            </div>
+        </div>
+        <div style="margin-bottom:15px;">
+            <label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Unloader</label>
+            <select id="manual-unloader" class="form-input" onchange="checkManualCustomUnloader(this)">
+                <option value="" selected>Unassigned</option>
+            </select>
+            <input type="text" id="manual-custom-unloader" class="form-input" style="display:none; margin-top:10px;" placeholder="Enter Name" autocapitalize="words">
+        </div>
+        <div style="margin-bottom:20px;">
+            <label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Assign to Hour</label>
+            <div class="segment-control" style="width:100%;">
+                <div class="segment-opt selected" id="manual-hour-current" onclick="setManualHour('current')">Current Hour</div>
+                <div class="segment-opt" id="manual-hour-previous" onclick="setManualHour('previous')">Previous Hour</div>
+            </div>
+        </div>
+        <button class="btn-primary" onclick="confirmManualAdd()">Add to Stats</button>
+        <button class="btn-cancel" onclick="closeModal('manual-add-modal')">Cancel</button>
+    </div>
+</div>
 
 <div class="modal-overlay" id="start-sort-modal-1">
     <div class="modal-sheet">
@@ -652,7 +704,7 @@
 </div>
 <div class="modal-overlay" id="edit-staff-modal"><div class="modal-sheet"><h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Edit Staff</h2><input type="hidden" id="edit-staff-id"><div style="margin-bottom:15px;"><label class="settings-label">Start Time</label><input type="time" id="edit-staff-time" class="form-input"></div><button class="btn-primary" onclick="saveStaffEdit()">Save Changes</button><button class="btn-cancel" onclick="closeModal('edit-staff-modal')">Discard</button></div></div>
 <div class="modal-overlay" id="export-modal"><div class="modal-sheet"><h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Export Data</h2><button class="btn-primary" onclick="exportLogsCSV()">Export CSV (Spreadsheet)</button><button class="btn-primary" onclick="exportLogsPDF()" style="margin-top:10px; background:#e5e5ea; color:#000;">Export PDF (Report)</button><button class="btn-cancel" onclick="closeModal('export-modal')">Cancel</button></div></div>
-<div class="modal-overlay z-high" id="hour-attribution-modal"><div class="modal-sheet"><h2 style="margin: 0 0 10px 0; font-size:24px; text-align:center;">Attribute Completion</h2><p style="text-align:center; color:#757575; margin-bottom:25px; padding: 0 10px;">This trailer was completed during the shift transition window (<span id="attribution-window-text">00-05</span>).</p><button class="btn-primary" onclick="resolveAttribution('Previous')">Previous Hour</button><button class="btn-primary" onclick="resolveAttribution('Current')" style="background:#f2f2f7; color:#000; margin-top:10px;">Current Hour</button></div></div>
+<div class="modal-overlay z-high" id="hour-attribution-modal"><div class="modal-sheet"><h2 style="margin: 0 0 10px 0; font-size:24px; text-align:center;">Attribute Completion</h2><p style="text-align:center; color:#757575; margin-bottom:25px; padding: 0 10px;">This trailer was completed during the shift transition window (<span id="attribution-window-text">00-10</span> minutes after the hour).</p><button class="btn-primary" onclick="resolveAttribution('Previous')">Previous Hour</button><button class="btn-primary" onclick="resolveAttribution('Current')" style="background:#f2f2f7; color:#000; margin-top:10px;">Current Hour</button></div></div>
 <div class="modal-overlay" id="filter-modal">
     <div class="modal-sheet">
         <h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Filter Logs</h2>
@@ -834,8 +886,12 @@
     let currentSwitchType = 'Replacement';
     let pendingLoanId = null;
 
+    // Manual Add state
+    let manualType = 'Wally';
+    let manualHour = 'current'; // 'current' or 'previous'
+
     // --- CONFIG ---
-    const APP_VERSION = '3.52';
+    const APP_VERSION = '3.54';
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Robert W", "Trevon C", "Russell H", "Fonseca J", "Eddie F", "Juan F", "Arce J"];
@@ -859,17 +915,17 @@
 
     // --- CHANGELOG ---
     const CHANGELOG = `
+v3.54:
+- Attribution window changed: now a fixed 10-minute window that starts at a selected minute after each hour (based on shift start offset).
+- Updated slider to set the start minute (0-10). Window runs from start to start+10 minutes.
+- Updated attribution modal text to show correct range.
+
+v3.53:
+- Added Manual Add button to manually add completions to stats.
+- Choose hour (Current/Previous) and assign unloader.
+
 v3.52:
 - Added new unloader: Arce J to default team list.
-- Version bump to 3.52.
-
-v3.51:
-- Updated default team list (removed Matt S, Victor M; added Eddie F, Juan F).
-- Version bump to 3.51.
-
-v3.50:
-- Bugfix: "Add" button restored on Staffing page (missing input fix).
-- Bugfix: "Other" dropdown logic restored.
     `;
 
     // --- STATE ---
@@ -887,7 +943,8 @@ v3.50:
         simulateWindow: false, disableWindow: false
     };
 
-    let attributionConfig = { minutes: 5, enabled: true };
+    // attributionConfig.minutes now represents the start minute (offset) of the 10-minute window
+    let attributionConfig = { minutes: 0, enabled: true }; // default start at 0 (window 0-10)
     let pendingCompletion = null;
     let tempSortStartTime = "";
 
@@ -1089,14 +1146,22 @@ v3.50:
     function initAttributionSettings() {
         const saved = localStorage.getItem('ps9_attribution_config_v2');
         if (saved) attributionConfig = JSON.parse(saved);
+        // Ensure default if missing or old format
+        if (attributionConfig.minutes === undefined) attributionConfig.minutes = 0;
         updateAttributionUI();
     }
     function updateAttributionUI() {
-        const val = attributionConfig.minutes;
-        byId('attribution-value').textContent = val + "m";
-        const note = byId('attr-note-val'); if(note) note.textContent = val;
-        byId('slider-fill').style.width = `${(val/10)*100}%`;
-        byId('slider-thumb').style.left = `${(val/10)*100}%`;
+        const start = attributionConfig.minutes;
+        const end = start + 10;
+        byId('attribution-value').textContent = start + "m";
+        const rangeStart = byId('attr-range-start');
+        const rangeEnd = byId('attr-range-end');
+        if (rangeStart) rangeStart.textContent = start;
+        if (rangeEnd) rangeEnd.textContent = end;
+        // Update slider position
+        const pct = (start / 10) * 100;
+        byId('slider-fill').style.width = pct + '%';
+        byId('slider-thumb').style.left = pct + '%';
     }
     function saveAttributionSetting() {
         localStorage.setItem('ps9_attribution_config_v2', JSON.stringify(attributionConfig));
@@ -1111,9 +1176,9 @@ v3.50:
             const rect = track.getBoundingClientRect();
             let pct = ((clientX - rect.left) / rect.width) * 100;
             pct = Math.max(0, Math.min(100, pct));
-            const minVal = Math.round((pct / 100) * 10);
-            if (minVal === attributionConfig.minutes) return;
-            attributionConfig.minutes = minVal;
+            const startMin = Math.round((pct / 100) * 10);
+            if (startMin === attributionConfig.minutes) return;
+            attributionConfig.minutes = startMin;
             updateAttributionUI();
             if (persist) saveAttributionSetting();
             else { clearTimeout(saveTimer); saveTimer = setTimeout(saveAttributionSetting, 200); }
@@ -1676,7 +1741,7 @@ v3.50:
     }
 
     function populateUnloaderSelect() {
-        const ids = ['select-unloader', 'edit-select-unloader', 'edit-active-unloader', 'filter-unloader-select', 'req-unloader-select'];
+        const ids = ['select-unloader', 'edit-select-unloader', 'edit-active-unloader', 'filter-unloader-select', 'req-unloader-select', 'manual-unloader'];
         ids.forEach(id => {
             const el = byId(id); if(!el) return;
             const isFilter = id === 'filter-unloader-select';
@@ -1686,6 +1751,114 @@ v3.50:
             });
             if(!isFilter) el.innerHTML += '<option value="Custom">Custom / Other</option>';
         });
+    }
+
+    function checkManualCustomUnloader(s) {
+        byId('manual-custom-unloader').style.display = s.value === 'Custom' ? 'block' : 'none';
+    }
+
+    function openManualAddModal() {
+        // Reset form
+        byId('manual-wally-id').value = '';
+        byId('manual-trailer-id').value = '';
+        byId('manual-account-id').value = '';
+        byId('manual-unloader').value = '';
+        byId('manual-custom-unloader').style.display = 'none';
+        byId('manual-chk-hott').checked = false;
+        byId('manual-chk-recycle').checked = false;
+        byId('manual-chk-gv').checked = false;
+        setManualType('Wally');
+        setManualHour('current');
+        byId('manual-add-modal').style.display = 'flex';
+    }
+
+    function setManualType(t) {
+        manualType = t;
+        byId('manual-opt-wally').classList.toggle('selected', t==='Wally');
+        byId('manual-opt-cpu').classList.toggle('selected', t==='CPU');
+        byId('manual-wally-inputs').style.display = t==='Wally' ? 'block' : 'none';
+        byId('manual-cpu-inputs').style.display = t==='CPU' ? 'block' : 'none';
+    }
+
+    function setManualHour(h) {
+        manualHour = h;
+        byId('manual-hour-current').classList.toggle('selected', h==='current');
+        byId('manual-hour-previous').classList.toggle('selected', h==='previous');
+    }
+
+    function confirmManualAdd() {
+        // Get ID
+        let id = manualType === 'Wally' ? byId('manual-wally-id').value : byId('manual-trailer-id').value;
+        if (!id) return alert("Please enter an ID");
+        id = id.toUpperCase();
+
+        let account = '';
+        let cpuOpts = [];
+        if (manualType === 'CPU') {
+            account = byId('manual-account-id').value.toUpperCase();
+            if (byId('manual-chk-hott').checked) cpuOpts.push('HOTT');
+            if (byId('manual-chk-recycle').checked) cpuOpts.push('RECYCLE');
+            if (byId('manual-chk-gv').checked) cpuOpts.push('GV');
+        }
+
+        // Get unloader
+        let unl = byId('manual-unloader').value;
+        if (unl === 'Custom') {
+            unl = byId('manual-custom-unloader').value.trim();
+            if (!unl) return alert("Please enter custom unloader name");
+            unl = unl.toLowerCase().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        }
+        if (!unl) unl = "Unassigned";
+
+        // Determine offset for hour
+        const now = Date.now();
+        let offset = 0;
+        if (manualHour === 'previous') {
+            const { shiftStart } = getShiftTimeWindows();
+            const hoursElapsed = Math.floor((now - shiftStart.getTime()) / 3600000);
+            const currentHourStart = shiftStart.getTime() + hoursElapsed * 3600000;
+            // Set effective time to 1 minute before current hour start
+            const targetEffective = currentHourStart - 60000;
+            offset = now - targetEffective;
+        }
+
+        // Create log entry
+        const logEntry = {
+            door: 0, // manual entry has no door
+            id: id,
+            account: account,
+            type: manualType,
+            unloader: unl,
+            startedBy: null,
+            assistants: [],
+            start: now - 15*60000, // approximate start 15 mins ago
+            end: now,
+            dateKey: dateKeyFromTs(now),
+            duration: 15*60000,
+            durationMinutes: 15,
+            statOffset: offset,
+            logId: Date.now().toString(36) + Math.random().toString(36).substr(2),
+            duplicate: false,
+            completionHour: getCompletionHour(now - offset),
+            cpuOptions: cpuOpts,
+            status: 'completed',
+            manual: true
+        };
+
+        historyLog.unshift(logEntry);
+        saveHistory();
+
+        // If CPU account not saved, add it
+        if (manualType === 'CPU' && account && !savedAccounts.includes(account)) {
+            savedAccounts.push(account);
+            saveAccounts();
+            updateAccountDatalist();
+        }
+
+        closeModal('manual-add-modal');
+        renderDashboard();
+        if (byId('tab-logs').classList.contains('active')) renderLogs();
+        showSaveToast();
     }
 
     function openAddUnloaderModal() { byId('input-new-unloader-name').value=''; byId('add-unloader-modal').style.display='flex'; }
@@ -1753,12 +1926,15 @@ v3.50:
              return;
         }
         
-        const now = new Date(), mins = now.getMinutes();
+        const now = new Date();
+        const mins = now.getMinutes();
         const { shiftStart } = getShiftTimeWindows();
-        const win = attributionConfig.minutes;
-        const shouldCheck = !config.disableWindow && (now - shiftStart > 3600000) && attributionConfig.enabled && win > 0 && (mins <= win || config.simulateWindow);
+        const startOffset = attributionConfig.minutes; // start minute of window
+        const endOffset = startOffset + 10; // end minute
+        const shouldCheck = !config.disableWindow && (now - shiftStart > 3600000) && attributionConfig.enabled && 
+                            mins >= startOffset && mins < endOffset || config.simulateWindow;
         if (shouldCheck) {
-            byId('attribution-window-text').textContent = `00-${win.toString().padStart(2,'0')}`;
+            byId('attribution-window-text').textContent = `${startOffset.toString().padStart(2,'0')}-${endOffset.toString().padStart(2,'0')}`;
             pendingCompletion = { doorNum, time: now.getTime() };
             byId('hour-attribution-modal').style.display = 'flex';
         } else finalizeCompletion(doorNum, now.getTime(), 0);
@@ -2297,6 +2473,11 @@ v3.50:
             
             const timeRange = `${new Date(l.start).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} - ${new Date(l.end).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
 
+            // Add a marker for manual entries
+            if (l.manual) {
+                statusPill += ` <span class="log-tag tag-gray"><i class="ph ph-pencil-simple-line"></i> Manual</span>`;
+            }
+
             card.innerHTML = `
                 <div class="log-info">
                     <div class="log-header-row">
@@ -2376,10 +2557,10 @@ v3.50:
     function openExportModal() { byId('export-modal').style.display = 'flex'; }
     function exportLogsCSV() {
         closeModal('export-modal');
-        let csv = "Type,ID,Account,Door,Unloader,StartedBy,Duration(mins),StartTime,EndTime,StartHour,EndHour,Duplicate,Hour,Options,Status\n";
+        let csv = "Type,ID,Account,Door,Unloader,StartedBy,Duration(mins),StartTime,EndTime,StartHour,EndHour,Duplicate,Hour,Options,Status,Manual\n";
         historyLog.forEach(l => {
             const opts = (l.cpuOptions || []).join(';');
-            csv += `${l.type},${l.id},${l.account||''},${l.door},${l.unloader},${l.startedBy||''},${Math.round(l.duration/60000)},${new Date(l.start).toLocaleString()},${new Date(l.end).toLocaleString()},${new Date(l.start).getHours()},${new Date(l.end).getHours()},${l.duplicate?'Yes':'No'},${l.completionHour},${opts},${l.status||'completed'}\n`
+            csv += `${l.type},${l.id},${l.account||''},${l.door},${l.unloader},${l.startedBy||''},${Math.round(l.duration/60000)},${new Date(l.start).toLocaleString()},${new Date(l.end).toLocaleString()},${new Date(l.start).getHours()},${new Date(l.end).getHours()},${l.duplicate?'Yes':'No'},${l.completionHour},${opts},${l.status||'completed'},${l.manual?'Yes':'No'}\n`
         });
         const a = document.createElement('a'); a.href=window.URL.createObjectURL(new Blob([csv], {type:'text/csv'})); a.download='wally-logs.csv'; a.click();
     }
