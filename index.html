@@ -400,14 +400,13 @@
         <div class="top-actions">
             <button class="action-btn" onclick="openStartSortFlow()"><i class="ph ph-play-circle"></i> Start Sort</button>
             <button class="action-btn" onclick="openAddUnloaderModal()"><i class="ph ph-user-plus"></i> Add Unloader</button>
-            <button class="action-btn" onclick="openArrivalModal()"><i class="ph ph-truck"></i> Onboard</button>
-            <button class="action-btn" onclick="openManualAddModal()" style="background:#34c759;"><i class="ph ph-pencil-simple-line"></i> Manual</button>
+            <button class="action-btn" onclick="openManualAddModal()"><i class="ph ph-pencil-simple-line"></i> Manual</button>
         </div>
 
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 3.54</div>
+            <div class="app-version">Version 3.55</div>
         </div>
 
         <div class="section-title">Sort Statistics</div>
@@ -891,7 +890,7 @@
     let manualHour = 'current'; // 'current' or 'previous'
 
     // --- CONFIG ---
-    const APP_VERSION = '3.54';
+    const APP_VERSION = '3.55';
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Robert W", "Trevon C", "Russell H", "Fonseca J", "Eddie F", "Juan F", "Arce J"];
@@ -915,6 +914,11 @@
 
     // --- CHANGELOG ---
     const CHANGELOG = `
+v3.55:
+- Removed redundant "Onboard" button from home screen.
+- Adjusted top button spacing for better alignment.
+- Manual button now matches other buttons (black background, white text).
+
 v3.54:
 - Attribution window changed: now a fixed 10-minute window that starts at a selected minute after each hour (based on shift start offset).
 - Updated slider to set the start minute (0-10). Window runs from start to start+10 minutes.
