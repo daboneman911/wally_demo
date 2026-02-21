@@ -492,7 +492,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 3.60</div>
+            <div class="app-version">Version 3.61</div>
         </div>
 
         <div class="section-title">Sort Statistics</div>
@@ -1036,7 +1036,7 @@
     let manualType = 'Wally';
 
     // --- CONFIG ---
-    const APP_VERSION = '3.60';
+    const APP_VERSION = '3.61';
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Robert W", "Trevon C", "Russell H", "Fonseca J", "Eddie F", "Juan F", "Arce J"];
@@ -1060,17 +1060,16 @@
 
     // --- CHANGELOG ---
     const CHANGELOG = `
+v3.61:
+- First onboarded doors now default to shift start time (without requiring Start Sort).
+- When no active trailers exist, onboarding start time defaults to shift start time from settings.
+- Subsequent onboardings default to current time.
+
 v3.60:
 - Added ability to edit start time in active trailer edit modal.
 - Moved Notes to Tools tab: added Notes Manager with search by ID or keyword.
 - Manual add hour selection limited to 1st-5th hour.
 - Onboarding now shows note-based badges (B for bulk, S for sortable) when note contains those keywords.
-- Various UI improvements.
-
-v3.59:
-- Added ability to edit completion hour in log entries. Changing the hour updates stats accordingly.
-- Added hour dropdown to edit log modal.
-- Stats (Total Wallies, Wallies This Hour, Wallies Last Hour) now recalculate after editing.
     `;
 
     // --- STATE ---
@@ -2593,8 +2592,17 @@ v3.59:
         byId('chk-gv').checked = false;
 
         const tIn = byId('input-onboard-time');
-        if (isFirstOnboard && lastSortStartTime) tIn.value = lastSortStartTime;
-        else { const now=new Date(); tIn.value = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`; }
+        // Check if any active trailers exist
+        const anyActive = Object.values(doors).some(d => d.status === 'active');
+        if (!anyActive) {
+            // No active trailers → default to shift start time
+            const shiftStart = getShiftStartTime();
+            tIn.value = shiftStart;
+        } else {
+            // Default to current time
+            const now = new Date();
+            tIn.value = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+        }
         
         const form = byId('onboard-form-container'), msg = byId('unavailable-msg'), btn = byId('btn-toggle-availability');
         if (doors[currentDoor].unavailable) { form.style.display='none'; msg.style.display='block'; btn.innerText="Mark Available"; btn.style.background="#34c759"; btn.style.color="white"; btn.style.border="none"; }
