@@ -264,9 +264,17 @@
 
         /* --- TOOLS GRID --- */
         .tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 10px 0; }
-        .tool-card { background: #fff; border-radius: 24px; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; aspect-ratio: 1 / 1; box-shadow: 0 4px 15px rgba(0,0,0,0.05); cursor: pointer; transition: transform 0.1s; }
+        .tool-card {
+            background: #fff; border-radius: 24px; padding: 20px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; aspect-ratio: 1 / 1;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); cursor: pointer; transition: transform 0.1s;
+        }
         .tool-card:active { transform: scale(0.96); background: #f9f9f9; }
-        .tool-icon-wrapper { width: 50px; height: 50px; background: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 24px; margin-bottom: 12px; }
+        .tool-icon-wrapper {
+            width: 50px; height: 50px; background: #000; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; color: #fff; font-size: 24px; margin-bottom: 12px;
+        }
         .tool-title { font-size: 16px; font-weight: 700; color: #000; margin-bottom: 4px; }
         .tool-card.add { border: 2px dashed #ccc; background: transparent; box-shadow: none; }
         .tool-card.add .tool-icon-wrapper { background: #e5e5ea; color: #000; }
@@ -404,6 +412,63 @@
         .slider-tick { width: 1px; height: 8px; background: #ccc; position: relative; }
         .slider-tick-label { position: absolute; top: 12px; font-size: 11px; color: #8e8e93; transform: translateX(-50%); white-space: nowrap; font-weight: 600; }
         #restore-file-input { display: none; }
+
+        /* Notes Manager */
+        .notes-list {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            border: 1px solid #e5e5ea;
+            border-radius: 16px;
+            background: #f9f9f9;
+        }
+        .note-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e5e5ea;
+            cursor: pointer;
+        }
+        .note-item:last-child { border-bottom: none; }
+        .note-item:active { background: #f2f2f7; }
+        .note-id { font-weight: 700; font-size: 18px; color: #000; }
+        .note-preview {
+            font-size: 14px;
+            color: #8e8e93;
+            max-width: 70%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .note-badge {
+            background: #000;
+            color: white;
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-left: 10px;
+        }
+
+        /* Onboarding note badge */
+        .note-badge-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 5px;
+        }
+        .type-badge-small {
+            background: #000;
+            color: white;
+            border-radius: 16px;
+            padding: 4px 12px;
+            font-size: 12px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
     </style>
 </head>
 <body>
@@ -427,7 +492,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 3.58</div>
+            <div class="app-version">Version 3.60</div>
         </div>
 
         <div class="section-title">Sort Statistics</div>
@@ -548,10 +613,13 @@
             <div class="tool-card" onclick="openPPHModal()">
                 <div class="tool-icon-wrapper"><i class="ph ph-calculator"></i></div><div class="tool-title">PPH Calculator</div>
             </div>
+            <div class="tool-card" onclick="openNotesManager()">
+                <div class="tool-icon-wrapper"><i class="ph ph-note"></i></div><div class="tool-title">Notes Manager</div>
+            </div>
             <div class="tool-card" onclick="alert('Observation Corner coming soon')">
                 <div class="tool-icon-wrapper"><i class="ph ph-eye"></i></div><div class="tool-title">Observation</div>
             </div>
-             <div class="tool-card add" onclick="alert('More tools soon')">
+            <div class="tool-card add" onclick="alert('More tools soon')">
                 <div class="tool-icon-wrapper"><i class="ph ph-plus"></i></div><div class="tool-title">Add Tool</div>
             </div>
         </div>
@@ -636,6 +704,16 @@
     </div>
 </div>
 
+<!-- Notes Manager Modal -->
+<div class="modal-overlay" id="notes-manager-modal">
+    <div class="modal-sheet" style="max-height:80vh; overflow-y:auto;">
+        <h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Notes Manager</h2>
+        <input type="text" id="notes-search" class="search-bar" placeholder="Search by Wally ID or keyword..." oninput="renderNotesList()">
+        <div id="notes-list-container" class="notes-list"></div>
+        <button class="btn-cancel" onclick="closeModal('notes-manager-modal')">Close</button>
+    </div>
+</div>
+
 <!-- Manual Add Modal -->
 <div class="modal-overlay" id="manual-add-modal">
     <div class="modal-sheet">
@@ -683,13 +761,6 @@
                 <option value="3">3rd Hour</option>
                 <option value="4">4th Hour</option>
                 <option value="5">5th Hour</option>
-                <option value="6">6th Hour</option>
-                <option value="7">7th Hour</option>
-                <option value="8">8th Hour</option>
-                <option value="9">9th Hour</option>
-                <option value="10">10th Hour</option>
-                <option value="11">11th Hour</option>
-                <option value="12">12th Hour</option>
             </select>
         </div>
         <button class="btn-primary" onclick="confirmManualAdd()">Add to Stats</button>
@@ -763,7 +834,15 @@
         <h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Onboard Door <span id="modal-door-num"></span></h2>
         <div id="onboard-form-container">
             <div class="type-selector"><div class="type-opt selected" id="opt-wally" onclick="setType('Wally')">Wally</div><div class="type-opt" id="opt-cpu" onclick="setType('CPU')">CPU</div></div>
-            <div id="wally-inputs"><div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Wally Number</label><input type="text" id="input-wally-id" class="form-input" placeholder="e.g. 5589" inputmode="numeric" pattern="[0-9]*" oninput="this.value = this.value.replace(/[^0-9]/g, '')"></div></div>
+            <div id="wally-inputs">
+                <div style="margin-bottom:15px;">
+                    <label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Wally Number</label>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <input type="text" id="input-wally-id" class="form-input" style="flex:1;" placeholder="e.g. 5589" inputmode="numeric" pattern="[0-9]*" oninput="this.value = this.value.replace(/[^0-9]/g, ''); updateOnboardingNoteIndicator(this.value)">
+                        <div id="onboarding-note-badge" style="display:none;"></div>
+                    </div>
+                </div>
+            </div>
             <div id="cpu-inputs" style="display:none;">
                 <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Trailer Number</label><input type="text" id="input-trailer-id" class="form-input" placeholder="e.g. TRL123" autocapitalize="characters" oninput="this.value = this.value.toUpperCase()"></div>
                 <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Account Number</label><input type="text" id="input-account-id" class="form-input" placeholder="e.g. ACCT456" autocapitalize="characters" oninput="this.value = this.value.toUpperCase()" list="saved-accounts-datalist"><datalist id="saved-accounts-datalist"></datalist></div>
@@ -878,6 +957,10 @@
              </div>
         </div>
         <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Unloader</label><select id="edit-active-unloader" class="form-input" onchange="checkActiveCustomUnloader(this)"></select><input type="text" id="edit-active-custom-unloader" class="form-input" style="display:none; margin-top:10px;" placeholder="Enter Name" autocapitalize="words"></div>
+        <div style="margin-bottom:15px;">
+            <label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Start Time</label>
+            <input type="time" id="edit-active-start-time" class="form-input">
+        </div>
         <div id="edit-active-assist-option" style="margin-bottom:20px; display:none;">
             <label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:8px; display:block;">Switch Type</label>
             <div class="segment-control">
@@ -903,6 +986,23 @@
              </div>
         </div>
         <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Unloader</label><select id="edit-select-unloader" class="form-input"></select></div>
+        <div style="margin-bottom:15px;">
+            <label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Completion Hour</label>
+            <select id="edit-completion-hour" class="form-input">
+                <option value="1">1st Hour</option>
+                <option value="2">2nd Hour</option>
+                <option value="3">3rd Hour</option>
+                <option value="4">4th Hour</option>
+                <option value="5">5th Hour</option>
+                <option value="6">6th Hour</option>
+                <option value="7">7th Hour</option>
+                <option value="8">8th Hour</option>
+                <option value="9">9th Hour</option>
+                <option value="10">10th Hour</option>
+                <option value="11">11th Hour</option>
+                <option value="12">12th Hour</option>
+            </select>
+        </div>
         <button class="btn-primary" onclick="confirmLogEdit()">Save Changes</button><button class="btn-cancel" onclick="closeModal('edit-log-modal')">Discard</button>
     </div>
 </div>
@@ -934,10 +1034,9 @@
 
     // Manual Add state
     let manualType = 'Wally';
-    // manualHour now stored as numeric hour (1-12)
 
     // --- CONFIG ---
-    const APP_VERSION = '3.58';
+    const APP_VERSION = '3.60';
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Robert W", "Trevon C", "Russell H", "Fonseca J", "Eddie F", "Juan F", "Arce J"];
@@ -961,18 +1060,17 @@
 
     // --- CHANGELOG ---
     const CHANGELOG = `
-v3.58:
-- Made note icons more prominent: now circular with background, black when note exists.
-- Improved visibility and consistency with app's color scheme.
+v3.60:
+- Added ability to edit start time in active trailer edit modal.
+- Moved Notes to Tools tab: added Notes Manager with search by ID or keyword.
+- Manual add hour selection limited to 1st-5th hour.
+- Onboarding now shows note-based badges (B for bulk, S for sortable) when note contains those keywords.
+- Various UI improvements.
 
-v3.57:
-- Added Wally Notes feature: click note icon next to any Wally ID in Active or Logs to add/edit notes.
-- Notes are stored per Wally ID and included in backup/restore.
-- Log search now also searches note text.
-
-v3.56:
-- Manual Add: replaced hour selection with dropdown to choose specific hour (1st-12th).
-- Settings: renamed "Simulate Shift Change" to "Simulate Attribution" for consistency.
+v3.59:
+- Added ability to edit completion hour in log entries. Changing the hour updates stats accordingly.
+- Added hour dropdown to edit log modal.
+- Stats (Total Wallies, Wallies This Hour, Wallies Last Hour) now recalculate after editing.
     `;
 
     // --- STATE ---
@@ -1048,6 +1146,71 @@ v3.56:
         if (byId('tab-logs').classList.contains('active')) renderLogs();
     }
 
+    function openNotesManager() {
+        renderNotesList();
+        byId('notes-manager-modal').style.display = 'flex';
+    }
+
+    function renderNotesList() {
+        const search = byId('notes-search').value.toLowerCase();
+        const container = byId('notes-list-container');
+        container.innerHTML = '';
+
+        const entries = Object.entries(wallyNotes)
+            .filter(([id, note]) => {
+                if (!search) return true;
+                return id.toLowerCase().includes(search) || note.toLowerCase().includes(search);
+            })
+            .sort((a, b) => a[0].localeCompare(b[0]));
+
+        if (entries.length === 0) {
+            container.innerHTML = '<div style="padding:20px; text-align:center; color:#8e8e93;">No notes found</div>';
+            return;
+        }
+
+        entries.forEach(([id, note]) => {
+            const preview = note.length > 50 ? note.substring(0, 50) + '…' : note;
+            const div = document.createElement('div');
+            div.className = 'note-item';
+            div.onclick = () => {
+                closeModal('notes-manager-modal');
+                openNoteModal(id);
+            };
+            div.innerHTML = `
+                <div>
+                    <span class="note-id">${id}</span>
+                    <span class="note-preview">${preview}</span>
+                </div>
+                <span class="note-badge">${note.length}</span>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    function updateOnboardingNoteIndicator(wallyId) {
+        const badgeContainer = byId('onboarding-note-badge');
+        if (!badgeContainer) return;
+        if (!wallyId) {
+            badgeContainer.style.display = 'none';
+            return;
+        }
+        const note = wallyNotes[wallyId];
+        if (!note) {
+            badgeContainer.style.display = 'none';
+            return;
+        }
+        const noteLower = note.toLowerCase();
+        let badges = [];
+        if (noteLower.includes('bulk')) badges.push('B');
+        if (noteLower.includes('sortable')) badges.push('S');
+        if (badges.length === 0) {
+            badgeContainer.style.display = 'none';
+            return;
+        }
+        badgeContainer.style.display = 'flex';
+        badgeContainer.innerHTML = badges.map(b => `<span class="type-badge-small">${b}</span>`).join('');
+    }
+
     // --- INIT ---
     function init() {
         console.log(`Wally Dashboard v${APP_VERSION} initialized`);
@@ -1066,6 +1229,12 @@ v3.56:
         const searchInput = byId('log-search');
         if(searchInput) {
             searchInput.addEventListener('input', debounce(() => renderLogs(), 300));
+        }
+
+        // Notes search in manager
+        const notesSearch = byId('notes-search');
+        if(notesSearch) {
+            notesSearch.addEventListener('input', debounce(() => renderNotesList(), 300));
         }
 
         // Load Data
@@ -2279,6 +2448,10 @@ v3.56:
         byId('edit-active-chk-recycle').checked = opts.includes('RECYCLE');
         byId('edit-active-chk-gv').checked = opts.includes('GV');
 
+        // Set start time
+        const startDate = new Date(d.start);
+        byId('edit-active-start-time').value = `${startDate.getHours().toString().padStart(2,'0')}:${startDate.getMinutes().toString().padStart(2,'0')}`;
+
         const sel = byId('edit-active-door-select'); sel.innerHTML = '';
         for(let i=DOORS_START; i<=DOORS_END; i++) {
             if(i===doorNum || doors[i].status==='empty') {
@@ -2323,10 +2496,25 @@ v3.56:
             if(byId('edit-active-chk-gv').checked) cpuOpts.push('GV');
         }
 
+        // Get new start time
+        const startTimeInput = byId('edit-active-start-time').value;
+        let newStart = doors[orig].start;
+        if (startTimeInput) {
+            const now = new Date(doors[orig].start);
+            const [h, m] = startTimeInput.split(':').map(Number);
+            now.setHours(h, m, 0, 0);
+            newStart = now.getTime();
+        }
+
         const d = doors[orig];
         const now = Date.now();
         let newAssignments = [...(d.assignments || [])];
         
+        // If start time changed, update first assignment's start time (assuming it's the initial)
+        if (newStart !== doors[orig].start && newAssignments.length > 0) {
+            newAssignments[0].start = newStart;
+        }
+
         if (d.unloader !== unl) {
             if (newAssignments.length > 0) {
                 newAssignments[newAssignments.length - 1].end = now;
@@ -2336,7 +2524,7 @@ v3.56:
         }
 
         const data = { 
-            status: 'active', start: doors[orig].start, id: byId('edit-active-id').value.trim().toUpperCase(), 
+            status: 'active', start: newStart, id: byId('edit-active-id').value.trim().toUpperCase(), 
             account: byId('edit-active-account').value.trim().toUpperCase(), type: type, unloader: unl, 
             unavailable: false, lastCompletionTime: doors[orig].lastCompletionTime, cpuOptions: cpuOpts,
             assignments: newAssignments
@@ -2413,6 +2601,8 @@ v3.56:
         else { form.style.display='block'; msg.style.display='none'; btn.innerText="Mark Unavailable"; btn.style.background="white"; btn.style.color="#ff3b30"; btn.style.border="2px solid #e5e5ea"; }
         setType('Wally'); byId('input-modal').style.display = 'flex';
         if (!doors[currentDoor].unavailable) setTimeout(() => { const f=byId('input-wally-id'); if(f) f.focus(); }, 100);
+        // Clear any previous badge
+        byId('onboarding-note-badge').style.display = 'none';
     }
 
     function handleAvailabilityToggle() { doors[currentDoor].unavailable = !doors[currentDoor].unavailable; saveDoors(); renderDashboard(); showSaveToast(); closeModal('input-modal'); }
@@ -2633,6 +2823,9 @@ v3.56:
         byId('edit-log-chk-recycle').checked = opts.includes('RECYCLE');
         byId('edit-log-chk-gv').checked = opts.includes('GV');
 
+        // Set completion hour dropdown
+        byId('edit-completion-hour').value = l.completionHour;
+
         byId('edit-log-modal').style.display='flex';
     }
 
@@ -2647,8 +2840,30 @@ v3.56:
             if(byId('edit-log-chk-gv').checked) cpuOpts.push('GV');
         }
 
-        historyLog[i].id = id; historyLog[i].unloader = unl; historyLog[i].type = type; historyLog[i].cpuOptions = cpuOpts;
-        saveHistory(); closeModal('edit-log-modal'); renderLogs();
+        // Get new completion hour
+        const newHour = parseInt(byId('edit-completion-hour').value);
+        const oldHour = historyLog[i].completionHour;
+        const oldOffset = historyLog[i].statOffset || 0;
+
+        // Adjust statOffset so that effective time aligns with new hour
+        // effective time = end - offset
+        // We want effective time to fall within new hour: shiftStart + (newHour-1)*3600000
+        const { shiftStart } = getShiftTimeWindows();
+        const targetEffective = shiftStart.getTime() + (newHour - 1) * 3600000;
+        const newOffset = historyLog[i].end - targetEffective;
+
+        historyLog[i].id = id;
+        historyLog[i].unloader = unl;
+        historyLog[i].type = type;
+        historyLog[i].cpuOptions = cpuOpts;
+        historyLog[i].statOffset = newOffset;
+        historyLog[i].completionHour = newHour;
+
+        saveHistory();
+        closeModal('edit-log-modal');
+        renderLogs();
+        renderDashboard(); // Update stats
+        showSaveToast();
     }
 
     function openExportModal() { byId('export-modal').style.display = 'flex'; }
