@@ -492,7 +492,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 4.0</div>
+            <div class="app-version">Version 4.1</div>
         </div>
 
         <div class="section-title">Sort Statistics</div>
@@ -767,6 +767,17 @@
     </div>
 </div>
 
+<!-- Move Count Modal (New) -->
+<div class="modal-overlay z-high" id="move-count-modal">
+    <div class="modal-sheet">
+        <h2 style="margin: 0 0 10px 0; font-size:24px; text-align:center;">Move Door</h2>
+        <p style="text-align:center; color:#757575; margin-bottom:25px; padding: 0 10px;">Count this door as a completion?</p>
+        <button class="btn-primary" onclick="handleMoveCount(true)">Yes</button>
+        <button class="btn-primary" onclick="handleMoveCount(false)" style="background:#f2f2f7; color:#000; margin-top:10px;">No</button>
+        <button class="btn-cancel" onclick="closeModal('move-count-modal')">Cancel</button>
+    </div>
+</div>
+
 <div class="modal-overlay" id="start-sort-modal-1">
     <div class="modal-sheet">
         <h2 style="text-align:center; margin-bottom:20px;">Start Sort (1/2)</h2>
@@ -904,20 +915,12 @@
 <div class="modal-overlay" id="move-menu-modal">
     <div class="modal-sheet">
         <h2 style="margin: 0 0 20px 0; font-size:24px; text-align:center;">Move/Transfer</h2>
-        <p style="text-align:center; color:#757575; margin-bottom:20px;">Moving a door ends the current session but does not count towards total completions.</p>
-        <select id="move-dest-select" class="form-input" onchange="toggleMoveOther(this)">
+        <p style="text-align:center; color:#757575; margin-bottom:20px;">Select destination.</p>
+        <select id="move-dest-select" class="form-input">
             <option value="Small Sort">Small Sort</option>
             <option value="Bulk Directs">Bulk Directs</option>
-            <option value="Metros">Metros</option>
-            <option value="PS1">PS1</option>
-            <option value="PS3">PS3</option>
-            <option value="PS5">PS5</option>
-            <option value="PS7">PS7</option>
-            <option value="PS11">PS11</option>
-            <option value="Other">Other</option>
         </select>
-        <input type="text" id="move-custom-other" class="form-input" style="display:none; margin-top:10px;" placeholder="Specify Location">
-        <button class="btn-primary" onclick="confirmMoveDoor()">Confirm Move</button>
+        <button class="btn-primary" onclick="confirmMoveDoor()">Confirm</button>
         <button class="btn-cancel" onclick="closeModal('move-menu-modal')">Cancel</button>
     </div>
 </div>
@@ -1029,14 +1032,17 @@
     // Manual Add state
     let manualType = 'Wally';
 
+    // Pending move destination (for move count modal)
+    let pendingMoveDest = null;
+
     // --- CONFIG ---
-    const APP_VERSION = '4.0';
+    const APP_VERSION = '4.1';
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Robert W", "Trevon C", "Russell H", "Fonseca J", "Eddie F", "Juan F", "Arce J"];
 
-    // Hardcoded webhook URL for Google Sheets integration (version 4)
-    const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw5UaF04G2OAY9Rpfr8GhGCuWtyrm_zOpVdi_SEjEJa-3s8gRvjfMDdVe0RQMvAUN4/exec';
+    // Hardcoded webhook URL for Google Sheets integration (version 4.1)
+    const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbwTbOru9vk6h2-uNmSF6-uJR1hLhTVxwlKG933cauvAQ5KeUXqR1Ke8EGj4cejFgoj6PA/exec';
 
     // --- HELPER FUNCTIONS ---
     const byId = (id) => document.getElementById(id);
@@ -1057,16 +1063,15 @@
 
     // --- CHANGELOG ---
     const CHANGELOG = `
+v4.1:
+- Updated webhook URL for Google Sheets.
+- Simplified move destinations: only "Small Sort" and "Bulk Directs".
+- Added confirmation modal when moving a door: ask if it should count as a completion.
+- Improved UI consistency.
+
 v4.0:
 - Added Google Sheets integration: every completion (including moves and manual entries) is sent to a configured webhook.
 - Hardcoded webhook URL for automatic data logging.
-- Version bump to 4.0.
-
-v3.62:
-- In edit active modal, ID field label now changes based on type: "Wally Number" for Wally, "Trailer Number" for CPU.
-- Removed "Assist" feature for unloaders completely.
-- Removed "Disable hardcoded times" toggle from demo settings; all times now strictly based on shift start.
-- Removed all references to hardcoded times in code.
     `;
 
     // --- STATE ---
@@ -1242,6 +1247,27 @@ v3.62:
         }
         badgeContainer.style.display = 'flex';
         badgeContainer.innerHTML = badges.map(b => `<span class="type-badge-small">${b}</span>`).join('');
+    }
+
+    // --- MOVE COUNT HANDLER ---
+    function confirmMoveDoor() {
+        const dest = byId('move-dest-select').value;
+        if (!dest) return alert("Please select a destination");
+        pendingMoveDest = dest;
+        closeModal('move-menu-modal');
+        byId('move-count-modal').style.display = 'flex';
+    }
+
+    function handleMoveCount(countAsCompletion) {
+        closeModal('move-count-modal');
+        if (countAsCompletion) {
+            // Complete the door normally
+            completeDoor(detailDoor, true);
+        } else {
+            // Move without counting as completion
+            moveDoor(pendingMoveDest);
+        }
+        pendingMoveDest = null;
     }
 
     // --- INIT ---
@@ -1949,15 +1975,15 @@ v3.62:
     function openMoveMenu() { 
         closeModal('active-detail-modal'); 
         byId('move-dest-select').value = 'Small Sort';
-        toggleMoveOther(byId('move-dest-select'));
         byId('move-menu-modal').style.display = 'flex'; 
     }
     
     function confirmMoveDoor() {
         let dest = byId('move-dest-select').value;
-        if(dest === 'Other') dest = byId('move-custom-other').value.trim();
-        if(!dest) return alert("Please specify a destination");
-        moveDoor(dest);
+        if(!dest) return alert("Please select a destination");
+        pendingMoveDest = dest;
+        closeModal('move-menu-modal');
+        byId('move-count-modal').style.display = 'flex';
     }
 
     function addSavedAccount() {
@@ -2262,9 +2288,7 @@ v3.62:
         pendingCompletion = null;
     }
 
-    function openMoveMenu() { closeModal('active-detail-modal'); byId('move-menu-modal').style.display = 'flex'; }
     function moveDoor(destination) {
-        closeModal('move-menu-modal');
         const d = doors[detailDoor];
         
         const now = Date.now();
