@@ -492,7 +492,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 3.61</div>
+            <div class="app-version">Version 4.0</div>
         </div>
 
         <div class="section-title">Sort Statistics</div>
@@ -662,7 +662,6 @@
             <div class="settings-group">
                 <div class="settings-row"><span class="settings-label">Demo Mode</span><div class="toggle-switch" id="switch-demo-mode" onclick="toggleSwitch('demo-mode')"></div></div>
                 <div class="settings-row"><span class="settings-label">Simulate Attribution</span><div class="toggle-switch" id="switch-sim-window" onclick="toggleSwitch('sim-window')"></div></div>
-                <div class="settings-row"><span class="settings-label">Disable hardcoded times</span><div class="toggle-switch" id="switch-disable-times" onclick="toggleSwitch('disable-times')"></div></div>
                 <div class="settings-row"><span class="settings-label">Generate Random History</span><div class="toggle-switch" id="switch-demo-random" onclick="toggleSwitch('demo-random')"></div></div>
                 <div class="settings-row"><span class="settings-label">Auto-Replenish Bays</span><div class="toggle-switch" id="switch-demo-replenish" onclick="toggleSwitch('demo-replenish')"></div></div>
                 <div class="settings-row">
@@ -946,7 +945,10 @@
         <input type="hidden" id="edit-active-original-door">
         <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Bay Number</label><select id="edit-active-door-select" class="form-input"></select></div>
         <div class="type-selector"><div class="type-opt selected" id="active-opt-wally" onclick="setEditActiveType('Wally')">Wally</div><div class="type-opt" id="active-opt-cpu" onclick="setEditActiveType('CPU')">CPU</div></div>
-        <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">ID / Trailer #</label><input type="text" id="edit-active-id" class="form-input" oninput="this.value = this.value.toUpperCase()"></div>
+        <div style="margin-bottom:15px;">
+            <label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;" id="edit-id-label">Wally Number</label>
+            <input type="text" id="edit-active-id" class="form-input" oninput="this.value = this.value.toUpperCase()">
+        </div>
         <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Account # (CPU only)</label><input type="text" id="edit-active-account" class="form-input" oninput="this.value = this.value.toUpperCase()"></div>
         <div id="edit-active-options-container" style="display:none; margin-bottom:15px;">
              <label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:8px; display:block;">Options</label>
@@ -960,13 +962,6 @@
         <div style="margin-bottom:15px;">
             <label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Start Time</label>
             <input type="time" id="edit-active-start-time" class="form-input">
-        </div>
-        <div id="edit-active-assist-option" style="margin-bottom:20px; display:none;">
-            <label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:8px; display:block;">Switch Type</label>
-            <div class="segment-control">
-                <div class="segment-opt selected" id="seg-replace" onclick="setSwitchType('Replacement')">Replacement</div>
-                <div class="segment-opt" id="seg-assist" onclick="setSwitchType('Assist')">Assist</div>
-            </div>
         </div>
         <button class="btn-primary" onclick="saveActiveEdit()">Save Changes</button><button class="btn-cancel" onclick="closeModal('edit-active-modal')">Discard</button>
     </div>
@@ -1026,7 +1021,6 @@
     let lastSortStartTime = null;
     let isFirstOnboard = false;
     let staffingInterval = null;
-    let currentSwitchType = 'Replacement';
     let pendingLoanId = null;
 
     // Notes
@@ -1036,10 +1030,13 @@
     let manualType = 'Wally';
 
     // --- CONFIG ---
-    const APP_VERSION = '3.61';
+    const APP_VERSION = '4.0';
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Robert W", "Trevon C", "Russell H", "Fonseca J", "Eddie F", "Juan F", "Arce J"];
+
+    // Hardcoded webhook URL for Google Sheets integration (version 4)
+    const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbw5UaF04G2OAY9Rpfr8GhGCuWtyrm_zOpVdi_SEjEJa-3s8gRvjfMDdVe0RQMvAUN4/exec';
 
     // --- HELPER FUNCTIONS ---
     const byId = (id) => document.getElementById(id);
@@ -1060,16 +1057,16 @@
 
     // --- CHANGELOG ---
     const CHANGELOG = `
-v3.61:
-- First onboarded doors now default to shift start time (without requiring Start Sort).
-- When no active trailers exist, onboarding start time defaults to shift start time from settings.
-- Subsequent onboardings default to current time.
+v4.0:
+- Added Google Sheets integration: every completion (including moves and manual entries) is sent to a configured webhook.
+- Hardcoded webhook URL for automatic data logging.
+- Version bump to 4.0.
 
-v3.60:
-- Added ability to edit start time in active trailer edit modal.
-- Moved Notes to Tools tab: added Notes Manager with search by ID or keyword.
-- Manual add hour selection limited to 1st-5th hour.
-- Onboarding now shows note-based badges (B for bulk, S for sortable) when note contains those keywords.
+v3.62:
+- In edit active modal, ID field label now changes based on type: "Wally Number" for Wally, "Trailer Number" for CPU.
+- Removed "Assist" feature for unloaders completely.
+- Removed "Disable hardcoded times" toggle from demo settings; all times now strictly based on shift start.
+- Removed all references to hardcoded times in code.
     `;
 
     // --- STATE ---
@@ -1083,7 +1080,7 @@ v3.60:
 
     let config = {
         replenish: false, randomHistory: false, doorCount: 2,
-        mixedTypes: false, demoType: 'Wally', disableTimes: false,
+        mixedTypes: false, demoType: 'Wally',
         simulateWindow: false, disableWindow: false
     };
 
@@ -1098,6 +1095,43 @@ v3.60:
         if(hour===7) return "7th hour"; if(hour===8) return "8th hour"; if(hour===9) return "9th hour";
         if(hour===10) return "10th hour"; if(hour===11) return "11th hour"; if(hour===12) return "12th hour";
         return `${hour}th hour`;
+    }
+
+    // --- WEBHOOK FUNCTION ---
+    function sendToWebhook(logEntry) {
+        // Add shift start time (from settings)
+        const shiftStart = getShiftStartTime();
+
+        const payload = {
+            door: logEntry.door,
+            id: logEntry.id,
+            account: logEntry.account,
+            type: logEntry.type,
+            unloader: logEntry.unloader,
+            startedBy: logEntry.startedBy,
+            assistants: logEntry.assistants,
+            start: logEntry.start,
+            end: logEntry.end,
+            dateKey: logEntry.dateKey,
+            durationMinutes: logEntry.durationMinutes,
+            cpuOptions: logEntry.cpuOptions,
+            duplicate: logEntry.duplicate,
+            manual: logEntry.manual,
+            completionHour: logEntry.completionHour,
+            status: logEntry.status,
+            moveDest: logEntry.moveDest,
+            shiftStart: shiftStart,
+            logId: logEntry.logId
+        };
+
+        // Send using fetch with keepalive and no-cors (Google Apps Script doesn't support CORS)
+        fetch(WEBHOOK_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+            keepalive: true
+        }).catch(err => console.error('Webhook error:', err));
     }
 
     // --- NOTES FUNCTIONS ---
@@ -1955,7 +1989,6 @@ v3.60:
         if(id==='demo-replenish') config.replenish = checked;
         if(id==='demo-random') config.randomHistory = checked;
         if(id==='mixed-types') config.mixedTypes = checked;
-        if(id==='disable-times') config.disableTimes = checked;
         if(id==='sim-window') config.simulateWindow = checked;
         if(id==='dis-window') { config.disableWindow = checked; attributionConfig.enabled = !checked; }
         renderDashboard();
@@ -1986,10 +2019,6 @@ v3.60:
     function saveShiftStart(val) { localStorage.setItem('ps9_shift_start', val); renderDashboard(); }
     
     function getShiftTimeWindows() {
-        if (config.disableTimes) {
-             const now = new Date(), start = new Date(now); start.setMinutes(0,0,0);
-             return { thisHourStart: start, thisHourEnd: new Date(start.getTime()+3600000), lastHourStart: new Date(start.getTime()-3600000), lastHourEnd: start, shiftStart: new Date(now.setHours(20,0,0,0)) };
-        }
         const [h, m] = getShiftStartTime().split(':').map(Number);
         const now = new Date(); let start = new Date(now); start.setHours(h, m, 0, 0);
         if (now < start) start.setDate(start.getDate() - 1);
@@ -2102,6 +2131,7 @@ v3.60:
         };
 
         historyLog.unshift(logEntry);
+        sendToWebhook(logEntry); // Send to Google Sheets
         saveHistory();
 
         // If CPU account not saved, add it
@@ -2243,7 +2273,7 @@ v3.60:
             if(!last.end) last.end = now;
         }
 
-        historyLog.unshift({
+        const logEntry = {
             door: detailDoor, id: d.id, account: d.account||"", type: d.type, unloader: d.unloader,
             start: d.start, end: now, dateKey: dateKeyFromTs(now), duration: now - d.start,
             durationMinutes: Math.round((now - d.start)/60000), statOffset: 0,
@@ -2252,10 +2282,14 @@ v3.60:
             cpuOptions: d.cpuOptions || [],
             status: 'moved',
             moveDest: destination
-        });
+        };
+
+        historyLog.unshift(logEntry);
+        sendToWebhook(logEntry); // Send to Google Sheets
+        saveHistory();
 
         doors[detailDoor] = { status: 'empty', start: 0, id: '', type: '', unloader: '', unavailable: false, lastCompletionTime: now, assignments: [] };
-        saveDoors(); saveHistory(); renderDashboard(); renderActiveTab(); updateTabBadges(); showSaveToast();
+        saveDoors(); renderDashboard(); renderActiveTab(); updateTabBadges(); showSaveToast();
     }
 
     function finalizeCompletion(doorNum, endTime, offset) {
@@ -2306,7 +2340,7 @@ v3.60:
             savedAccounts.push(d.account.trim().toUpperCase()); saveAccounts(); updateAccountDatalist();
         }
 
-        historyLog.unshift({
+        const logEntry = {
             door: doorNum, id: d.id, account: d.account||"", type: d.type, unloader: primaryUnloader,
             startedBy: startedBy, assistants: assistants,
             start: start, end: endTime, dateKey: dateKeyFromTs(endTime), duration: endTime - start,
@@ -2315,15 +2349,19 @@ v3.60:
             completionHour: getCompletionHour(endTime - offset),
             cpuOptions: d.cpuOptions || [],
             status: 'completed'
-        });
+        };
         
         if (d.type === 'Wally' && navigator.share && !demoActive) {
              navigator.share({ text: `Door ${doorNum} done` }).catch(e=>{});
         }
         closeModal('active-detail-modal');
 
+        historyLog.unshift(logEntry);
+        sendToWebhook(logEntry); // Send to Google Sheets
+        saveHistory();
+
         doors[doorNum] = { status: 'empty', start: 0, id: '', type: '', unloader: '', unavailable: false, lastCompletionTime: endTime, assignments: [] };
-        saveDoors(); saveHistory(); renderDashboard(); renderActiveTab(); updateTabBadges(); showSaveToast();
+        saveDoors(); renderDashboard(); renderActiveTab(); updateTabBadges(); showSaveToast();
         if (demoActive && config.replenish) setTimeout(() => { if (doors[doorNum].status === 'empty') randomArrival(doorNum); }, 7000);
     }
 
@@ -2457,7 +2495,6 @@ v3.60:
                 const opt = document.createElement('option'); opt.value = i; opt.innerText = `Bay ${i}`; if(i===doorNum) opt.selected=true; sel.appendChild(opt);
             }
         }
-        setSwitchType('Replacement');
         byId('edit-active-modal').style.display = 'flex';
     }
 
@@ -2467,17 +2504,15 @@ v3.60:
         byId('edit-active-modal').dataset.type = t; 
         const optsContainer = byId('edit-active-options-container');
         if(optsContainer) optsContainer.style.display = (t === 'CPU') ? 'block' : 'none';
-    }
-    
-    function setSwitchType(t) {
-        currentSwitchType = t;
-        byId('seg-replace').classList.toggle('selected', t === 'Replacement');
-        byId('seg-assist').classList.toggle('selected', t === 'Assist');
+        // Update ID field label
+        const idLabel = byId('edit-id-label');
+        if (idLabel) {
+            idLabel.innerText = t === 'Wally' ? 'Wally Number' : 'Trailer Number';
+        }
     }
 
     function checkActiveCustomUnloader(s) { 
         byId('edit-active-custom-unloader').style.display = s.value === 'Custom' ? 'block' : 'none'; 
-        byId('edit-active-assist-option').style.display = 'block';
     }
 
     function saveActiveEdit() {
@@ -2518,8 +2553,7 @@ v3.60:
             if (newAssignments.length > 0) {
                 newAssignments[newAssignments.length - 1].end = now;
             }
-            const entryName = (currentSwitchType === 'Assist') ? `${unl} (Assist)` : unl;
-            newAssignments.push({ name: entryName, start: now, end: null });
+            newAssignments.push({ name: unl, start: now, end: null });
         }
 
         const data = { 
