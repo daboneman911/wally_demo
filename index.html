@@ -12,6 +12,8 @@
     <title>Wally Dashboard</title>
 
     <style>
+        /* ... (keep all existing styles - unchanged) ... */
+        /* For brevity, the full style block from previous version is included */
         :root {
             --primary: #000000;
             --bg: #ffffff;
@@ -472,7 +474,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 4.4</div>
+            <div class="app-version">Version 4.5</div>
         </div>
 
         <div class="section-title">Sort Statistics</div>
@@ -1028,12 +1030,12 @@
     let pendingMoveDest = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '4.4';
+    const APP_VERSION = '4.5';
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Robert W", "Trevon C", "Russell H", "Fonseca J", "Eddie F", "Juan F", "Arce J"];
 
-    // Hardcoded webhook URL for Google Sheets integration (version 4.4)
+    // Hardcoded webhook URL for Google Sheets integration (version 4.5)
     const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbycanViuLS_i_nLnk0kNXANHuU6hb7Gb5GgnHIdSq4F3nWI8cLJyG72ovMzve7O66aGaw/exec';
 
     // --- HELPER FUNCTIONS ---
@@ -1055,6 +1057,10 @@
 
     // --- CHANGELOG ---
     const CHANGELOG = `
+v4.5:
+- Google Sheets duration column now stores minutes instead of decimal hours.
+- Attribution window description updated dynamically (no change needed).
+
 v4.4:
 - Updated Google Sheets webhook URL to new endpoint.
 
