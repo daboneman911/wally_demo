@@ -40,7 +40,6 @@
             overflow: hidden;
         }
 
-        /* --- LAYOUT --- */
         .app-container {
             display: flex;
             flex-direction: column;
@@ -63,7 +62,6 @@
 
         .tab-content.active { display: block; }
 
-        /* --- BUTTONS & ACTIONS --- */
         .top-actions {
             display: flex;
             gap: 12px;
@@ -89,7 +87,6 @@
         .action-btn:active { transform: scale(0.96); }
         .action-btn i { font-size: 18px; }
 
-        /* --- HEADER --- */
         .dashboard-header {
             background: #f2f2f7;
             border-radius: 20px;
@@ -126,7 +123,6 @@
 
         .section-title { font-size: 20px; font-weight: 800; margin-bottom: 20px; color: #000; text-align: center; }
 
-        /* --- STATS GRID --- */
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px; }
         .stat-card {
             background: var(--card-bg); border-radius: 20px; padding: 20px;
@@ -137,7 +133,6 @@
         .stat-label { font-size: 13px; color: var(--text-sub); font-weight: 600; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
         .stat-value { font-size: 32px; font-weight: 800; color: #000; line-height: 1; }
 
-        /* --- BAYS GRID --- */
         .bays-grid { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; margin-bottom: 40px; min-height: 60px; }
         .empty-state-text { color: var(--text-sub); font-size: 16px; font-weight: 500; text-align: center; width: 100%; padding: 20px 0; }
 
@@ -154,7 +149,6 @@
         .bay-circle.unavailable { background-color: #8e8e93 !important; opacity: 0.5; color: #666; border: none !important; }
         .bay-circle.unavailable .bay-timer { color: #666; }
 
-        /* Optimized Status Classes */
         .bay-circle.status-ok { border: 4px solid #34c759; }
         .bay-circle.status-warn { border: 4px solid #ff9500; }
         .bay-circle.status-crit { border: 4px solid #ff3b30; }
@@ -183,7 +177,6 @@
             padding: 1px 4px; border-radius: 4px; min-width: 20px; text-align: center;
         }
 
-        /* --- ACTIVE TAB --- */
         .active-tab-list { display: flex; flex-direction: column; gap: 15px; }
         .active-card {
             background: white; border: 2px solid #000; border-radius: 20px;
@@ -223,7 +216,6 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.15);
         }
 
-        /* --- STAFFING --- */
         .staffing-header-card { background: #000; color: #fff; border-radius: 20px; padding: 20px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         .staffing-header-title { font-size: 14px; opacity: 0.8; font-weight: 600; text-transform: uppercase; margin-bottom: 5px; }
         .staffing-header-val { font-size: 32px; font-weight: 800; }
@@ -255,14 +247,12 @@
         .staff-role-select { background: #f2f2f7; border: none; padding: 8px; border-radius: 8px; font-size: 13px; font-weight: 600; width: 110px; color: #000; }
         .staff-other-input { background: #fff; border: 1px solid #000; padding: 8px; border-radius: 8px; font-size: 13px; width: 100px; color: #000; margin-left: 5px; display: none; }
         
-        /* Loaned Staff Styling */
         .loaned-card {
             background: #fff; border: 1px dashed #ccc; border-radius: 18px; padding: 16px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.02); display: flex; justify-content: space-between; align-items: center;
         }
         .loan-dest-pill { background: #e5e5ea; color: #555; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; margin-left: 6px; }
 
-        /* --- TOOLS GRID --- */
         .tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 10px 0; }
         .tool-card {
             background: #fff; border-radius: 24px; padding: 20px;
@@ -279,7 +269,6 @@
         .tool-card.add { border: 2px dashed #ccc; background: transparent; box-shadow: none; }
         .tool-card.add .tool-icon-wrapper { background: #e5e5ea; color: #000; }
 
-        /* --- LOGS --- */
         .stats-collapse-btn { width: 100%; background: #f2f2f7; border: none; border-radius: 16px; padding: 18px; display: flex; justify-content: space-between; align-items: center; font-size: 16px; font-weight: 700; color: #000; cursor: pointer; margin-bottom: 20px; }
         .stats-content-area { background: white; border: 1px solid #e5e5ea; border-radius: 16px; padding: 20px; margin-bottom: 25px; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
         .stats-table { width: 100%; border-collapse: collapse; font-size: 15px; }
@@ -289,7 +278,6 @@
         .active-filter-display { display: flex; align-items: center; justify-content: space-between; background: #000; color: white; padding: 12px 20px; border-radius: 16px; margin-bottom: 20px; font-weight: 600; }
         .logs-list { display: flex; flex-direction: column; gap: 15px; }
         
-        /* LOG CARD STYLES */
         .log-card {
             background: white; border: 1px solid #e5e5ea; border-radius: 20px; padding: 16px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.03); display: flex; justify-content: space-between; align-items: center; gap: 15px;
@@ -317,7 +305,6 @@
         .search-bar { width: 100%; padding: 14px; border: 1px solid #e5e5ea; border-radius: 12px; background: #f9f9f9; font-size: 16px; margin-bottom: 20px; outline: none; }
         .load-more-btn { width: 100%; padding: 15px; background: #f2f2f7; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; margin-top: 10px; color: #555; }
 
-        /* --- UPDATED: Aesthetic Option Pills --- */
         .options-grid { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 5px; }
         .option-toggle { flex: 1; position: relative; cursor: pointer; min-width: 80px; }
         .option-toggle input { position: absolute; opacity: 0; width: 0; height: 0; }
@@ -337,7 +324,6 @@
         }
         .option-toggle:active span { transform: scale(0.96); }
 
-        /* --- NAV --- */
         .tab-bar { position: fixed; bottom: 30px; left: 20px; right: 20px; background: white; border-radius: 40px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); display: flex; justify-content: space-around; align-items: center; height: 70px; z-index: 1000; padding-bottom: 0; }
         .tab-btn { background: none; border: none; display: flex; flex-direction: column; align-items: center; color: #ccc; font-size: 11px; font-weight: 600; width: 60px; cursor: pointer; gap: 4px; position: relative; }
         .tab-btn i { font-size: 26px; }
@@ -350,12 +336,10 @@
         .save-toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; z-index: 3000; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
         .save-toast.visible { opacity: 1; }
 
-        /* --- MODALS --- */
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 2000; display: none; justify-content: center; align-items: flex-end; backdrop-filter: blur(4px); }
         .modal-sheet { background: white; width: 100%; max-width: 600px; border-top-left-radius: 28px; border-top-right-radius: 28px; padding: 30px; padding-bottom: max(40px, var(--safe-bottom)); animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
-        /* High Z-Index for Alerts to prevent freezing */
         .z-high { z-index: 3000 !important; }
 
         .form-input { width: 100%; padding: 18px; background: #f2f2f7; border: none; border-radius: 16px; font-size: 18px; margin-bottom: 15px; box-sizing: border-box; outline: none; appearance: none; color: #000; font-weight: 500; }
@@ -377,7 +361,6 @@
         .filter-btn { background: #f2f2f7; padding: 15px 0; border-radius: 12px; text-align: center; font-weight: 700; font-size: 16px; cursor: pointer; }
         .filter-btn.active { background: #000; color: white; }
 
-        /* Settings */
         .settings-header { font-size: 22px; font-weight: 800; margin: 30px 0 10px 0; color: #000; }
         .settings-group { background: #fff; border-radius: 16px; overflow: hidden; margin-bottom: 20px; border: 1px solid #e5e5ea; }
         .settings-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #f2f2f7; background: #fff; }
@@ -400,7 +383,6 @@
         .saved-acct-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f2f2f7; font-size: 16px; font-weight: 500; }
         .delete-acct-btn { color: #ff3b30; font-size: 20px; cursor: pointer; }
 
-        /* Slider */
         .settings-slider-container { display: flex; flex-direction: column; gap: 15px; padding: 15px 20px; }
         .slider-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
         .slider-value { font-size: 16px; font-weight: 700; color: #000; background: #f2f2f7; padding: 4px 10px; border-radius: 8px; min-width: 60px; text-align: center; }
@@ -413,7 +395,6 @@
         .slider-tick-label { position: absolute; top: 12px; font-size: 11px; color: #8e8e93; transform: translateX(-50%); white-space: nowrap; font-weight: 600; }
         #restore-file-input { display: none; }
 
-        /* Notes Manager */
         .notes-list {
             max-height: 400px;
             overflow-y: auto;
@@ -451,7 +432,6 @@
             margin-left: 10px;
         }
 
-        /* Onboarding note badge */
         .note-badge-container {
             display: flex;
             align-items: center;
@@ -492,7 +472,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 4.2</div>
+            <div class="app-version">Version 4.4</div>
         </div>
 
         <div class="section-title">Sort Statistics</div>
@@ -631,7 +611,6 @@
         </div>
         <div style="padding: 20px 20px 120px 20px;">
 
-            <!-- New Shift Management Section -->
             <div class="settings-header">Shift Management</div>
             <div class="settings-group">
                 <div class="settings-row" onclick="newShift()" style="cursor:pointer;">
@@ -1049,13 +1028,13 @@
     let pendingMoveDest = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '4.2';
+    const APP_VERSION = '4.4';
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Robert W", "Trevon C", "Russell H", "Fonseca J", "Eddie F", "Juan F", "Arce J"];
 
-    // Hardcoded webhook URL for Google Sheets integration (version 4.2)
-    const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbwTbOru9vk6h2-uNmSF6-uJR1hLhTVxwlKG933cauvAQ5KeUXqR1Ke8EGj4cejFgoj6PA/exec';
+    // Hardcoded webhook URL for Google Sheets integration (version 4.4)
+    const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbycanViuLS_i_nLnk0kNXANHuU6hb7Gb5GgnHIdSq4F3nWI8cLJyG72ovMzve7O66aGaw/exec';
 
     // --- HELPER FUNCTIONS ---
     const byId = (id) => document.getElementById(id);
@@ -1076,6 +1055,14 @@
 
     // --- CHANGELOG ---
     const CHANGELOG = `
+v4.4:
+- Updated Google Sheets webhook URL to new endpoint.
+
+v4.3:
+- Two‑stage webhook: onboarding sends start data, completion sends update to same row.
+- logId is stored in door object and reused at completion.
+- Apps Script updated to find and update existing rows.
+
 v4.2:
 - Added "Start New Shift" button in Settings to reset shift data while preserving notes, accounts, and team names.
 - Moved Reset All Data button next to New Shift for easier access.
@@ -1120,12 +1107,13 @@ v4.0:
         return `${hour}th hour`;
     }
 
-    // --- WEBHOOK FUNCTION ---
-    function sendToWebhook(logEntry) {
+    // --- WEBHOOK FUNCTION (now with stage) ---
+    function sendToWebhook(logEntry, stage = 'end') {
         // Add shift start time (from settings)
         const shiftStart = getShiftStartTime();
 
         const payload = {
+            stage: stage,  // 'start' or 'end'
             door: logEntry.door,
             id: logEntry.id,
             account: logEntry.account,
@@ -2216,7 +2204,7 @@ v4.0:
         };
 
         historyLog.unshift(logEntry);
-        sendToWebhook(logEntry); // Send to Google Sheets
+        sendToWebhook(logEntry, 'end'); // Manual add is a complete event, so stage='end'
         saveHistory();
 
         // If CPU account not saved, add it
@@ -2360,7 +2348,8 @@ v4.0:
             door: detailDoor, id: d.id, account: d.account||"", type: d.type, unloader: d.unloader,
             start: d.start, end: now, dateKey: dateKeyFromTs(now), duration: now - d.start,
             durationMinutes: Math.round((now - d.start)/60000), statOffset: 0,
-            logId: Date.now().toString(36), duplicate: false,
+            logId: d.logId, // reuse the same logId
+            duplicate: false,
             completionHour: getCompletionHour(now),
             cpuOptions: d.cpuOptions || [],
             status: 'moved',
@@ -2368,7 +2357,7 @@ v4.0:
         };
 
         historyLog.unshift(logEntry);
-        sendToWebhook(logEntry); // Send to Google Sheets
+        sendToWebhook(logEntry, 'end'); // Send update
         saveHistory();
 
         doors[detailDoor] = { status: 'empty', start: 0, id: '', type: '', unloader: '', unavailable: false, lastCompletionTime: now, assignments: [] };
@@ -2428,7 +2417,8 @@ v4.0:
             startedBy: startedBy, assistants: assistants,
             start: start, end: endTime, dateKey: dateKeyFromTs(endTime), duration: endTime - start,
             durationMinutes: Math.round((endTime - start)/60000), statOffset: offset,
-            logId: Date.now().toString(36), duplicate: d.isDuplicate||false,
+            logId: d.logId, // reuse the same logId
+            duplicate: d.isDuplicate||false,
             completionHour: getCompletionHour(endTime - offset),
             cpuOptions: d.cpuOptions || [],
             status: 'completed'
@@ -2440,7 +2430,7 @@ v4.0:
         closeModal('active-detail-modal');
 
         historyLog.unshift(logEntry);
-        sendToWebhook(logEntry); // Send to Google Sheets
+        sendToWebhook(logEntry, 'end'); // Send update
         saveHistory();
 
         doors[doorNum] = { status: 'empty', start: 0, id: '', type: '', unloader: '', unavailable: false, lastCompletionTime: endTime, assignments: [] };
@@ -2643,7 +2633,8 @@ v4.0:
             status: 'active', start: newStart, id: byId('edit-active-id').value.trim().toUpperCase(), 
             account: byId('edit-active-account').value.trim().toUpperCase(), type: type, unloader: unl, 
             unavailable: false, lastCompletionTime: doors[orig].lastCompletionTime, cpuOptions: cpuOpts,
-            assignments: newAssignments
+            assignments: newAssignments,
+            logId: d.logId // keep the same logId
         };
 
         if(dest !== orig) { doors[dest] = data; doors[orig] = {status:'empty', start:0, id:'', type:'', unloader:'', unavailable: false, lastCompletionTime: doors[orig].lastCompletionTime, assignments:[]}; }
@@ -2683,12 +2674,27 @@ v4.0:
             const d = new Date(now); d.setHours(h, m, 0, 0);
             if (d > now) d.setDate(d.getDate() - 1); startTime = d.getTime();
         }
+
+        // Generate a unique logId for this trailer
+        const logId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+
         doors[currentDoor] = { 
             status: 'active', start: startTime, id: fId, account: fAcc, type: currentType, 
             unloader: unl||"Unassigned", isDuplicate: false, unavailable: false, 
             lastCompletionTime: null, cpuOptions: cpuOpts,
-            assignments: [{ name: unl||"Unassigned", start: startTime, end: null }]
+            assignments: [{ name: unl||"Unassigned", start: startTime, end: null }],
+            logId: logId
         };
+
+        // Send start event to webhook
+        const startEntry = {
+            door: currentDoor, id: fId, account: fAcc, type: currentType, unloader: unl||"Unassigned",
+            startedBy: null, assistants: [], start: startTime, end: null, dateKey: dateKeyFromTs(startTime),
+            durationMinutes: null, statOffset: 0, logId: logId, duplicate: false, completionHour: null,
+            cpuOptions: cpuOpts, status: 'active', manual: false
+        };
+        sendToWebhook(startEntry, 'start');
+
         if(isFirstOnboard) { isFirstOnboard = false; localStorage.setItem('ps9_is_first_onboard', 'false'); }
         saveDoors(); closeModal('input-modal'); renderDashboard(); updateTabBadges(); showSaveToast();
     }
@@ -2931,7 +2937,8 @@ v4.0:
         doors[l.door] = { 
             status:'active', start:l.start, id:l.id, account:l.account, type:l.type, 
             unloader:l.unloader, unavailable:false, lastCompletionTime:null, 
-            cpuOptions: l.cpuOptions || [], assignments: [{name: l.unloader, start: l.start, end: null}] 
+            cpuOptions: l.cpuOptions || [], assignments: [{name: l.unloader, start: l.start, end: null}],
+            logId: l.logId
         };
         historyLog.splice(i, 1); saveDoors(); saveHistory(); renderDashboard(); renderLogs(); updateTabBadges();
     }
