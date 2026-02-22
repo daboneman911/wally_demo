@@ -492,7 +492,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 4.1</div>
+            <div class="app-version">Version 4.2</div>
         </div>
 
         <div class="section-title">Sort Statistics</div>
@@ -630,6 +630,20 @@
             <div class="header-bar" style="margin:0;"><h1>Settings</h1></div>
         </div>
         <div style="padding: 20px 20px 120px 20px;">
+
+            <!-- New Shift Management Section -->
+            <div class="settings-header">Shift Management</div>
+            <div class="settings-group">
+                <div class="settings-row" onclick="newShift()" style="cursor:pointer;">
+                    <span class="settings-label">Start New Shift</span>
+                    <i class="ph ph-arrow-clockwise" style="color:#000; font-size:20px;"></i>
+                </div>
+                <div class="settings-row" onclick="resetData()" style="cursor:pointer;">
+                    <span class="settings-label">Reset All Data</span>
+                    <i class="ph ph-trash" style="color:#ff3b30; font-size:20px;"></i>
+                </div>
+            </div>
+
             <div class="settings-header">Data Management</div>
             <div class="settings-group">
                 <div class="settings-row" onclick="backupData('full')" style="cursor:pointer;"><span class="settings-label">Save Full Backup File</span><i class="ph ph-download-simple" style="color:#000; font-size:20px;"></i></div>
@@ -676,7 +690,6 @@
             </div>
             <div class="settings-header">Changelog</div>
             <div class="settings-group"><div class="settings-row" onclick="viewChangelog()" style="cursor:pointer;"><span class="settings-label">View Version History</span><i class="ph ph-caret-right" style="color:#ccc;"></i></div></div>
-            <button class="btn-primary" onclick="resetData()" style="background:#ff3b30; margin-bottom:100px;">Reset All Data</button>
         </div>
     </div>
 </div>
@@ -767,7 +780,7 @@
     </div>
 </div>
 
-<!-- Move Count Modal (New) -->
+<!-- Move Count Modal -->
 <div class="modal-overlay z-high" id="move-count-modal">
     <div class="modal-sheet">
         <h2 style="margin: 0 0 10px 0; font-size:24px; text-align:center;">Move Door</h2>
@@ -1036,12 +1049,12 @@
     let pendingMoveDest = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '4.1';
+    const APP_VERSION = '4.2';
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Robert W", "Trevon C", "Russell H", "Fonseca J", "Eddie F", "Juan F", "Arce J"];
 
-    // Hardcoded webhook URL for Google Sheets integration (version 4.1)
+    // Hardcoded webhook URL for Google Sheets integration (version 4.2)
     const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbwTbOru9vk6h2-uNmSF6-uJR1hLhTVxwlKG933cauvAQ5KeUXqR1Ke8EGj4cejFgoj6PA/exec';
 
     // --- HELPER FUNCTIONS ---
@@ -1063,6 +1076,11 @@
 
     // --- CHANGELOG ---
     const CHANGELOG = `
+v4.2:
+- Added "Start New Shift" button in Settings to reset shift data while preserving notes, accounts, and team names.
+- Moved Reset All Data button next to New Shift for easier access.
+- Notes now persist across new shifts.
+
 v4.1:
 - Updated webhook URL for Google Sheets.
 - Simplified move destinations: only "Small Sort" and "Bulk Directs".
@@ -1247,6 +1265,47 @@ v4.0:
         }
         badgeContainer.style.display = 'flex';
         badgeContainer.innerHTML = badges.map(b => `<span class="type-badge-small">${b}</span>`).join('');
+    }
+
+    // --- NEW SHIFT FUNCTION ---
+    function newShift() {
+        if (!confirm("Start a new shift? This will clear all active trailers, logs, and staffing, but keep your notes, accounts, and team names.")) return;
+
+        // Reset doors to initial empty state
+        for (let i = DOORS_START; i <= DOORS_END; i++) {
+            doors[i] = { status: 'empty', start: 0, id: '', type: '', unloader: '', unavailable: false, lastCompletionTime: null, assignments: [] };
+        }
+
+        // Reset history
+        historyLog = [];
+
+        // Reset staffing
+        staffing = [];
+
+        // Reset DOP to default
+        currentDOP = '5-2';
+        byId('dop-select').value = '5-2';
+
+        // Reset attribution config to default
+        attributionConfig = { minutes: 0, enabled: true };
+        updateAttributionUI();
+
+        // Reset shift‑specific flags
+        lastSortStartTime = null;
+        isFirstOnboard = false;
+
+        // Save everything (notes, accounts, team names are preserved because they are not overwritten)
+        saveDoors();
+        saveHistory();
+        saveStaffing();
+        saveData(); // saves DOP etc.
+
+        // Re‑render UI
+        renderDashboard();
+        renderActiveTab();
+        renderStaffingView();
+        updateTabBadges();
+        showSaveToast();
     }
 
     // --- MOVE COUNT HANDLER ---
