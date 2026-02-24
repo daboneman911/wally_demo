@@ -10,7 +10,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <title>Wally Dashboard</title>
     <style>
-        /* Full styles – same as before, keep as is */
+        /* Full styles – same as before */
         :root {
             --primary: #000000;
             --bg: #ffffff;
@@ -396,7 +396,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 4.9</div>
+            <div class="app-version">Version 4.10</div>
         </div>
         <div class="section-title">Sort Statistics</div>
         <div class="stats-grid">
@@ -514,13 +514,13 @@
     </div>
 </div>
 
-<!-- Tab Bar -->
+<!-- Tab Bar – badges only on Active tab -->
 <nav class="tab-bar">
-    <button class="tab-btn active" onclick="switchTab('dashboard', this)" id="tab-btn-dashboard"><i class="ph ph-chart-pie-slice"></i><span>Home</span><span class="tab-badge" id="badge-dashboard">0</span></button>
+    <button class="tab-btn active" onclick="switchTab('dashboard', this)" id="tab-btn-dashboard"><i class="ph ph-chart-pie-slice"></i><span>Home</span></button>
     <button class="tab-btn" onclick="switchTab('active', this)" id="tab-btn-active"><i class="ph ph-truck-trailer"></i><span>Active</span><span class="tab-badge" id="badge-active">0</span></button>
-    <button class="tab-btn" onclick="switchTab('logs', this)" id="tab-btn-logs"><i class="ph ph-list-dashes"></i><span>Logs</span><span class="tab-badge" id="badge-logs">0</span></button>
-    <button class="tab-btn" onclick="switchTab('tools', this)" id="tab-btn-tools"><i class="ph ph-toolbox"></i><span>Tools</span><span class="tab-badge" id="badge-tools">0</span></button>
-    <button class="tab-btn" onclick="switchTab('settings', this)" id="tab-btn-settings"><i class="ph ph-gear"></i><span>Settings</span><span class="tab-badge" id="badge-settings">0</span></button>
+    <button class="tab-btn" onclick="switchTab('logs', this)" id="tab-btn-logs"><i class="ph ph-list-dashes"></i><span>Logs</span></button>
+    <button class="tab-btn" onclick="switchTab('tools', this)" id="tab-btn-tools"><i class="ph ph-toolbox"></i><span>Tools</span></button>
+    <button class="tab-btn" onclick="switchTab('settings', this)" id="tab-btn-settings"><i class="ph ph-gear"></i><span>Settings</span></button>
 </nav>
 
 <!-- ==================== ALL MODALS (FULLY RESTORED) ==================== -->
@@ -789,7 +789,7 @@
     let pendingMoveDest = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '4.9';  // Updated
+    const APP_VERSION = '4.10';  // Updated
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Robert W", "Trevon C", "Russell H", "Fonseca J", "Eddie F", "Juan F", "Arce J"];
@@ -816,11 +816,17 @@
 
     // --- CHANGELOG (updated) ---
     const CHANGELOG = `
-v4.9:
-- Fixed move functionality – now reliably logs moved trailers to Small Sort / Bulk Directs.
+v4.10:
+- Fixed move button – now reliably logs moved trailers to Small Sort / Bulk Directs.
 - Added "Incomplete" option to directly mark a door as incomplete (logs status "incomplete").
+- Removed number badges from Home and Logs tabs (only Active tab shows a badge).
 - Duration now stored as minutes in the sheet (change your column header to "DurationMinutes").
-- Updated webhook to send correct status.
+- Webhook sends correct status for moved/incomplete.
+
+v4.9:
+- Fixed move functionality.
+- Added Incomplete option.
+- Duration now stored as minutes.
 
 v4.8:
 - Updated webhook URL.
@@ -1013,7 +1019,7 @@ v4.7:
         showSaveToast();
     }
 
-    // --- MOVE COUNT HANDLER (updated for Incomplete) ---
+    // --- MOVE COUNT HANDLER (fixed) ---
     function confirmMoveDoor() {
         const dest = byId('move-dest-select').value;
         if (!dest) return alert("Please select a destination");
@@ -1217,32 +1223,30 @@ v4.7:
         track.addEventListener('click', (e)=>updateSlider(e.clientX, true));
     }
 
-    // --- TAB BADGES ---
+    // --- TAB BADGES (only Active tab gets a badge) ---
     function updateTabBadges() {
         let activeCount = 0;
         for(let i=DOORS_START; i<=DOORS_END; i++) if(doors[i].status === 'active') activeCount++;
-        updateBadge('active', activeCount, 'activeTrailers');
-        updateBadge('tools', 0, 'default');
-        updateBadge('settings', demoActive ? 1 : 0, 'demo');
-    }
-    function updateBadge(tabId, count, type) {
-        const badge = byId(`badge-${tabId}`);
-        if (!badge) return;
-        if (tabId === 'logs') { badge.style.display = 'none'; return; }
-        if (count === 0) {
-            badge.textContent = '0'; badge.classList.add('zero');
-            badge.classList.remove('warning', 'success'); badge.style.display = 'none';
-        } else {
-            badge.textContent = count > 99 ? '99+' : count.toString();
-            badge.classList.remove('zero');
-            if (type === 'activeTrailers') {
-                if (count >= 6) badge.classList.add('warning');
-                else if (count >= 3) badge.classList.add('success');
-                else badge.classList.remove('warning', 'success');
-            } else if (type === 'demo') badge.classList.add('warning');
-            else badge.classList.remove('warning', 'success');
-            badge.style.display = 'flex';
+        const badge = byId('badge-active');
+        if (badge) {
+            if (activeCount === 0) {
+                badge.style.display = 'none';
+            } else {
+                badge.textContent = activeCount > 99 ? '99+' : activeCount.toString();
+                badge.style.display = 'flex';
+                // Optional: add color classes based on count
+                if (activeCount >= 6) {
+                    badge.classList.add('warning');
+                    badge.classList.remove('success', 'zero');
+                } else if (activeCount >= 3) {
+                    badge.classList.add('success');
+                    badge.classList.remove('warning', 'zero');
+                } else {
+                    badge.classList.remove('warning', 'success', 'zero');
+                }
+            }
         }
+        // No badges on other tabs – they are removed from HTML
     }
 
     // --- ACCOUNTS ---
