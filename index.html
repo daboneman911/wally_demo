@@ -10,7 +10,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <title>Wally Dashboard</title>
     <style>
-        /* Full styles – same as before */
+        /* Full styles – same as before, keep as is */
         :root {
             --primary: #000000;
             --bg: #ffffff;
@@ -2111,6 +2111,13 @@ v4.7:
         byId('edit-log-modal').dataset.type = t; 
         const c = byId('edit-log-options-container');
         if(c) c.style.display = (t === 'CPU') ? 'block' : 'none';
+    }
+
+    // --- ADDED CONSOLE LOG FOR DEBUGGING MOVE BUTTON ---
+    function openMoveMenu() {
+        console.log('openMoveMenu called'); // Add this line
+        closeModal('active-detail-modal');
+        byId('move-menu-modal').style.display = 'flex';
     }
 
     init();
