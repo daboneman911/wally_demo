@@ -396,7 +396,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 4.16</div>
+            <div class="app-version">Version 4.17</div>
         </div>
         <div class="section-title">Sort Statistics</div>
         <div class="stats-grid">
@@ -789,7 +789,7 @@
     let pendingMoveDest = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '4.16';  // Updated
+    const APP_VERSION = '4.17';  // Updated
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Robert W", "Trevon C", "Russell H", "Fonseca J", "Eddie F", "Juan F", "Arce J"];
@@ -816,10 +816,14 @@
 
     // --- CHANGELOG (updated) ---
     const CHANGELOG = `
+v4.17:
+- When moving a door and selecting "No" (do not count as completion), the CompletionHour field in the sheet is now left blank.
+- These moves are excluded from all statistics (totals, unloader stats, hourly breakdowns).
+- Log entries still show the move destination for audit purposes.
+
 v4.16:
 - When editing a log entry, changing the completion hour now automatically adjusts the end time to 5 minutes before the end of that hour.
 - The Google Sheet is now updated via webhook when a log is edited (all changes are pushed).
-- Fixed issue where edited logs were not reflected in the sheet.
 
 v4.15:
 - Fixed issue where unloader name was not updating in Google Sheets when a door started as "Unassigned" and later assigned at completion.
@@ -1040,7 +1044,7 @@ v4.7:
         showSaveToast();
     }
 
-    // --- MOVE COUNT HANDLER (fixed) ---
+    // --- MOVE COUNT HANDLER (updated) ---
     function confirmMoveDoor() {
         const dest = byId('move-dest-select').value;
         if (!dest) return alert("Please select a destination");
@@ -1048,19 +1052,14 @@ v4.7:
         closeModal('move-menu-modal');
         if (dest === 'Incomplete') {
             // Incomplete is a direct action – no completion question
-            moveDoor(dest);
+            moveDoor(dest, false);
         } else {
             byId('move-count-modal').style.display = 'flex';
         }
     }
     function handleMoveCount(countAsCompletion) {
         closeModal('move-count-modal');
-        if (countAsCompletion) {
-            // We still call moveDoor (status 'moved') but now it will be counted in stats
-            moveDoor(pendingMoveDest);
-        } else {
-            moveDoor(pendingMoveDest);
-        }
+        moveDoor(pendingMoveDest, countAsCompletion);
         pendingMoveDest = null;
     }
 
@@ -1550,7 +1549,9 @@ v4.7:
         finalizeCompletion(pendingCompletion.doorNum, pendingCompletion.time, offset);
         pendingCompletion = null;
     }
-    function moveDoor(destination) {
+
+    // --- UPDATED moveDoor function with countAsCompletion parameter ---
+    function moveDoor(destination, countAsCompletion = false) {
         const d = doors[detailDoor];
         const now = Date.now();
         if(d.assignments && d.assignments.length > 0) {
@@ -1564,7 +1565,7 @@ v4.7:
             durationMinutes: Math.round((now - d.start)/60000), statOffset: 0,
             logId: d.logId,
             duplicate: false,
-            completionHour: getCompletionHour(now),
+            completionHour: countAsCompletion ? getCompletionHour(now) : '', // blank if not counted
             cpuOptions: d.cpuOptions || [],
             status: status,
             moveDest: destination
@@ -1575,6 +1576,7 @@ v4.7:
         doors[detailDoor] = { status: 'empty', start: 0, id: '', type: '', unloader: '', unavailable: false, lastCompletionTime: now, assignments: [] };
         saveDoors(); renderDashboard(); renderActiveTab(); updateTabBadges(); showSaveToast();
     }
+
     function finalizeCompletion(doorNum, endTime, offset) {
         const d = doors[doorNum];
         let start = d.start;
@@ -1635,13 +1637,13 @@ v4.7:
         if (demoActive && config.replenish) setTimeout(() => { if (doors[doorNum].status === 'empty') randomArrival(doorNum); }, 7000);
     }
 
-    // --- STATISTICS (updated to include moved as completions) ---
+    // --- STATISTICS (updated to only count entries with completionHour) ---
     function updateStats() {
         const { thisHourStart, thisHourEnd, lastHourStart, lastHourEnd } = getShiftTimeWindows();
         let tw=0, tc=0, hw=0, lhw=0;
         historyLog.forEach(l => {
-            // Count both completed and moved (if moved and counted as completion)
-            if (l.status && l.status !== 'completed' && l.status !== 'moved') return; 
+            // Only count if completionHour is present (truthy)
+            if (!l.completionHour) return; 
             const t = l.end - (l.statOffset || 0); 
             if (l.type === 'Wally') {
                 tw++;
@@ -1659,7 +1661,7 @@ v4.7:
     function calculateAndRenderStats() {
          const stats = {};
          historyLog.forEach(l => { 
-             if(l.status === 'incomplete') return; // incomplete should not count
+             if (!l.completionHour) return; // only count if completionHour present
              const n = l.unloader; 
              if(!stats[n]) stats[n]={w:0,c:0,t:0}; 
              if(l.type==='Wally') stats[n].w++; 
@@ -1672,7 +1674,7 @@ v4.7:
     function calculateAndRenderHourlyStats() {
         const { shiftStart } = getShiftTimeWindows(); const h = {};
         historyLog.forEach(l => { 
-            if(l.status === 'incomplete') return; // exclude incomplete
+            if (!l.completionHour) return; // exclude if no completionHour
             const idx = Math.floor((l.end-(l.statOffset||0)-shiftStart.getTime())/3600000)+1; 
             if(!h[idx]) h[idx]=0; 
             h[idx]++; 
@@ -1958,30 +1960,6 @@ v4.7:
         const show = c.style.display!=='block'; c.style.display=show?'block':'none'; i.className=show?'ph ph-caret-up':'ph ph-caret-down';
         if(show) sec==='unloader' ? calculateAndRenderStats() : calculateAndRenderHourlyStats();
     }
-    function calculateAndRenderStats() {
-         const stats = {};
-         historyLog.forEach(l => { 
-             if(l.status === 'incomplete') return; // incomplete should not count
-             const n = l.unloader; 
-             if(!stats[n]) stats[n]={w:0,c:0,t:0}; 
-             if(l.type==='Wally') stats[n].w++; 
-             else if(l.type==='CPU') stats[n].c++; 
-             stats[n].t++; 
-         });
-         const tb = byId('unloader-stats-body'); tb.innerHTML='';
-         Object.entries(stats).sort((a,b)=>b[1].t-a[1].t).forEach(([n,d])=>tb.innerHTML+=`<tr><td>${n}</td><td style="text-align:center">${d.w}</td><td style="text-align:center">${d.c}</td><td style="text-align:right">${d.t}</td></tr>`);
-    }
-    function calculateAndRenderHourlyStats() {
-        const { shiftStart } = getShiftTimeWindows(); const h = {};
-        historyLog.forEach(l => { 
-            if(l.status === 'incomplete') return; // exclude incomplete
-            const idx = Math.floor((l.end-(l.statOffset||0)-shiftStart.getTime())/3600000)+1; 
-            if(!h[idx]) h[idx]=0; 
-            h[idx]++; 
-        });
-        const tb = byId('hourly-stats-body'); tb.innerHTML='';
-        Object.keys(h).sort((a,b)=>a-b).forEach(k=>tb.innerHTML+=`<tr><td>${getHourText(parseInt(k))}</td><td style="text-align:center">${h[k]}</td></tr>`);
-    }
 
     // --- RENDER LOGS ---
     let currentVisibleLogs = 50;
@@ -2055,7 +2033,7 @@ v4.7:
                      l.cpuOptions.forEach(opt => { statusPill += ` <span class="log-tag tag-gray">${opt}</span>`; });
                 }
             }
-            statusPill += `<span class="log-tag" style="background:#fff; border:1px solid #e5e5ea;">${getHourText(l.completionHour)}</span>`;
+            statusPill += `<span class="log-tag" style="background:#fff; border:1px solid #e5e5ea;">${l.completionHour ? getHourText(l.completionHour) : '—'}</span>`;
             let userStr = l.unloader;
             const timeRange = `${new Date(l.start).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} - ${new Date(l.end).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
             if (l.manual) {
@@ -2176,7 +2154,7 @@ v4.7:
         let csv = "Type,ID,Account,Door,Unloader,Duration(mins),StartTime,EndTime,StartHour,EndHour,Duplicate,Hour,Options,Status,Manual,MoveDest\n";
         historyLog.forEach(l => {
             const opts = (l.cpuOptions || []).join(';');
-            csv += `${l.type},${l.id},${l.account||''},${l.door},${l.unloader},${Math.round(l.duration/60000)},${new Date(l.start).toLocaleString()},${new Date(l.end).toLocaleString()},${new Date(l.start).getHours()},${new Date(l.end).getHours()},${l.duplicate?'Yes':'No'},${l.completionHour},${opts},${l.status||'completed'},${l.manual?'Yes':'No'},${l.moveDest||''}\n`
+            csv += `${l.type},${l.id},${l.account||''},${l.door},${l.unloader},${Math.round(l.duration/60000)},${new Date(l.start).toLocaleString()},${new Date(l.end).toLocaleString()},${new Date(l.start).getHours()},${new Date(l.end).getHours()},${l.duplicate?'Yes':'No'},${l.completionHour || ''},${opts},${l.status||'completed'},${l.manual?'Yes':'No'},${l.moveDest||''}\n`
         });
         const a = document.createElement('a'); a.href=window.URL.createObjectURL(new Blob([csv], {type:'text/csv'})); a.download='wally-logs.csv'; a.click();
     }
@@ -2187,7 +2165,7 @@ v4.7:
         doc.setFontSize(18); doc.text(`PS9 Wally Tracker Report - ${now.toLocaleDateString()}`, 14, 20);
         doc.setFontSize(12); doc.text(`Generated: ${now.toLocaleTimeString()}`, 14, 30);
         const stats={}; historyLog.forEach(l=>{ 
-            if(l.status === 'incomplete') return;
+            if (!l.completionHour) return;
             const n=l.unloader; if(!stats[n])stats[n]={w:0,c:0,t:0}; if(l.type==='Wally')stats[n].w++; else if(l.type==='CPU')stats[n].c++; stats[n].t++; 
         });
         doc.autoTable({ startY: 45, head:[['Name','Wally','CPU','Total']], body:Object.entries(stats).sort((a,b)=>b[1].t-a[1].t).map(([n,d])=>[n,d.w,d.c,d.t]) });
@@ -2196,7 +2174,7 @@ v4.7:
              if(l.status === 'moved') typeStr = `MOVED: ${l.moveDest}`;
              else if(l.status === 'incomplete') typeStr = 'INCOMPLETE';
              else if(l.type === 'CPU' && l.cpuOptions && l.cpuOptions.length>0) typeStr += `\n${l.cpuOptions.join(',')}`;
-             return [new Date(l.end).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}), l.door, typeStr, l.id, l.unloader, Math.round(l.duration/60000)+"m", getHourText(l.completionHour)];
+             return [new Date(l.end).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}), l.door, typeStr, l.id, l.unloader, Math.round(l.duration/60000)+"m", l.completionHour ? getHourText(l.completionHour) : '—'];
         });
         doc.autoTable({ startY: doc.lastAutoTable.finalY+15, head:[['Time','Door','Type','ID','Unloader','Duration','Hour']], body:logsBody });
         doc.save(`wally-report-${now.toISOString().split('T')[0]}.pdf`);
