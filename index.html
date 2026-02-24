@@ -396,7 +396,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 4.11</div>
+            <div class="app-version">Version 4.12</div>
         </div>
         <div class="section-title">Sort Statistics</div>
         <div class="stats-grid">
@@ -789,7 +789,7 @@
     let pendingMoveDest = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '4.11';  // Updated
+    const APP_VERSION = '4.12';  // Updated
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Robert W", "Trevon C", "Russell H", "Fonseca J", "Eddie F", "Juan F", "Arce J"];
@@ -816,6 +816,10 @@
 
     // --- CHANGELOG (updated) ---
     const CHANGELOG = `
+v4.12:
+- Fixed missing open bays on dashboard (regression).
+- All move functionality and statistics remain intact.
+
 v4.11:
 - Moved trailers now count toward all statistics (totals, unloader stats, hourly) when "Yes" (count as completion) is selected.
 - The sheet records status "moved" with destination, and stats treat them as completions.
