@@ -10,7 +10,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <title>Wally Dashboard</title>
     <style>
-        /* Full styles – same as before */
+        /* (same styles – unchanged) */
         :root {
             --primary: #000000;
             --bg: #ffffff;
@@ -396,7 +396,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 4.14</div>
+            <div class="app-version">Version 4.16</div>
         </div>
         <div class="section-title">Sort Statistics</div>
         <div class="stats-grid">
@@ -789,7 +789,7 @@
     let pendingMoveDest = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '4.14';  // Updated
+    const APP_VERSION = '4.16';  // Updated
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Robert W", "Trevon C", "Russell H", "Fonseca J", "Eddie F", "Juan F", "Arce J"];
@@ -816,22 +816,27 @@
 
     // --- CHANGELOG (updated) ---
     const CHANGELOG = `
+v4.16:
+- When editing a log entry, changing the completion hour now automatically adjusts the end time to 5 minutes before the end of that hour.
+- The Google Sheet is now updated via webhook when a log is edited (all changes are pushed).
+- Fixed issue where edited logs were not reflected in the sheet.
+
+v4.15:
+- Fixed issue where unloader name was not updating in Google Sheets when a door started as "Unassigned" and later assigned at completion.
+- Updated Apps Script to include Unloader column in row updates.
+
 v4.14:
 - Added extra safeguards to ensure bay doors (9-16) are always displayed.
 - Added console logging for debugging door rendering.
-- Fixed issue where open bays would not appear.
 
 v4.13:
 - Fixed bay population issue – open bays and active trailers now display correctly.
-- Added safety checks to ensure doors always render.
 
 v4.12:
 - Fixed missing open bays on dashboard (regression).
-- All move functionality and statistics remain intact.
 
 v4.11:
 - Moved trailers now count toward all statistics (totals, unloader stats, hourly) when "Yes" (count as completion) is selected.
-- The sheet records status "moved" with destination, and stats treat them as completions.
 
 v4.10:
 - Fixed move button – now reliably logs moved trailers to Small Sort / Bulk Directs.
@@ -1064,7 +1069,6 @@ v4.7:
         console.log(`Wally Dashboard v${APP_VERSION} initialized`);
 
         // --- FORCE DOORS TO EXIST ---
-        // Ensure the doors object is properly initialized, even if localStorage was corrupted
         const sDoors = localStorage.getItem('ps9_doors');
         if (sDoors) {
             try {
@@ -1075,7 +1079,6 @@ v4.7:
                 doors = {};
             }
         }
-        // If doors is not an object or missing entries, create default empty doors
         if (!doors || typeof doors !== 'object') {
             doors = {};
         }
@@ -1958,8 +1961,12 @@ v4.7:
     function calculateAndRenderStats() {
          const stats = {};
          historyLog.forEach(l => { 
-             if(l.status === 'moved' || l.status === 'incomplete') return; // only count completions
-             const n = l.unloader; if(!stats[n]) stats[n]={w:0,c:0,t:0}; if(l.type==='Wally') stats[n].w++; else stats[n].c++; stats[n].t++; 
+             if(l.status === 'incomplete') return; // incomplete should not count
+             const n = l.unloader; 
+             if(!stats[n]) stats[n]={w:0,c:0,t:0}; 
+             if(l.type==='Wally') stats[n].w++; 
+             else if(l.type==='CPU') stats[n].c++; 
+             stats[n].t++; 
          });
          const tb = byId('unloader-stats-body'); tb.innerHTML='';
          Object.entries(stats).sort((a,b)=>b[1].t-a[1].t).forEach(([n,d])=>tb.innerHTML+=`<tr><td>${n}</td><td style="text-align:center">${d.w}</td><td style="text-align:center">${d.c}</td><td style="text-align:right">${d.t}</td></tr>`);
@@ -1967,8 +1974,10 @@ v4.7:
     function calculateAndRenderHourlyStats() {
         const { shiftStart } = getShiftTimeWindows(); const h = {};
         historyLog.forEach(l => { 
-            if(l.status !== 'completed') return; // only completions count for hourly stats
-            const idx = Math.floor((l.end-(l.statOffset||0)-shiftStart.getTime())/3600000)+1; if(!h[idx]) h[idx]=0; h[idx]++; 
+            if(l.status === 'incomplete') return; // exclude incomplete
+            const idx = Math.floor((l.end-(l.statOffset||0)-shiftStart.getTime())/3600000)+1; 
+            if(!h[idx]) h[idx]=0; 
+            h[idx]++; 
         });
         const tb = byId('hourly-stats-body'); tb.innerHTML='';
         Object.keys(h).sort((a,b)=>a-b).forEach(k=>tb.innerHTML+=`<tr><td>${getHourText(parseInt(k))}</td><td style="text-align:center">${h[k]}</td></tr>`);
@@ -2097,9 +2106,14 @@ v4.7:
         };
         historyLog.splice(i, 1); saveDoors(); saveHistory(); renderDashboard(); renderLogs(); updateTabBadges();
     }
+
+    // --- MODIFIED: EDIT LOG FUNCTION WITH WEBHOOK AND END TIME ADJUSTMENT ---
     function openEditLogModal(i) {
-        const l = historyLog[i]; byId('edit-log-index').value = i; byId('edit-input-id').value = l.id;
-        const sel = byId('edit-select-unloader'); sel.innerHTML='<option value="">Unassigned</option>';
+        const l = historyLog[i]; 
+        byId('edit-log-index').value = i; 
+        byId('edit-input-id').value = l.id;
+        const sel = byId('edit-select-unloader'); 
+        sel.innerHTML='<option value="">Unassigned</option>';
         teamNamesSorted.forEach(n => { const o=document.createElement('option'); o.value=n; o.innerText=n; sel.appendChild(o); });
         sel.value = l.unloader;
         setEditType(l.type);
@@ -2110,8 +2124,11 @@ v4.7:
         byId('edit-completion-hour').value = l.completionHour;
         byId('edit-log-modal').style.display='flex';
     }
+
     function confirmLogEdit() {
-        const i = parseInt(byId('edit-log-index').value), id = byId('edit-input-id').value.toUpperCase(), unl = byId('edit-select-unloader').value;
+        const i = parseInt(byId('edit-log-index').value);
+        const id = byId('edit-input-id').value.toUpperCase();
+        const unl = byId('edit-select-unloader').value;
         const type = byId('edit-log-modal').dataset.type;
         let cpuOpts = [];
         if(type === 'CPU') {
@@ -2119,20 +2136,36 @@ v4.7:
             if(byId('edit-log-chk-recycle').checked) cpuOpts.push('RECYCLE');
             if(byId('edit-log-chk-gv').checked) cpuOpts.push('GV');
         }
+
         const newHour = parseInt(byId('edit-completion-hour').value);
         const { shiftStart } = getShiftTimeWindows();
-        const targetEffective = shiftStart.getTime() + (newHour - 1) * 3600000;
-        const newOffset = historyLog[i].end - targetEffective;
+
+        // Calculate new end time: 5 minutes before the end of the selected hour
+        // End of hour N = shiftStart + (N * 3600000)
+        const newEnd = shiftStart.getTime() + (newHour * 3600000) - 5 * 60000;
+        // Keep the same start time
+        const start = historyLog[i].start;
+
+        // Update log entry
         historyLog[i].id = id;
         historyLog[i].unloader = unl;
         historyLog[i].type = type;
         historyLog[i].cpuOptions = cpuOpts;
-        historyLog[i].statOffset = newOffset;
+        historyLog[i].end = newEnd;
+        historyLog[i].duration = newEnd - start;
+        historyLog[i].durationMinutes = Math.round(historyLog[i].duration / 60000);
         historyLog[i].completionHour = newHour;
+        historyLog[i].dateKey = dateKeyFromTs(newEnd);
+        historyLog[i].statOffset = 0; // Reset offset since we set explicit end
+
         saveHistory();
+
+        // Send update to webhook
+        sendToWebhook(historyLog[i], 'end');
+
         closeModal('edit-log-modal');
         renderLogs();
-        renderDashboard();
+        renderDashboard(); // Update stats
         showSaveToast();
     }
 
