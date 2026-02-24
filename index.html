@@ -396,7 +396,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 4.8</div>
+            <div class="app-version">Version 4.9</div>
         </div>
         <div class="section-title">Sort Statistics</div>
         <div class="stats-grid">
@@ -713,12 +713,16 @@
     </div>
 </div>
 
-<!-- Move Menu Modal -->
+<!-- Move Menu Modal (updated with Incomplete option) -->
 <div class="modal-overlay" id="move-menu-modal">
     <div class="modal-sheet">
-        <h2 style="margin: 0 0 20px; font-size:24px; text-align:center;">Move/Transfer</h2>
-        <p style="text-align:center; color:#757575; margin-bottom:20px;">Select destination.</p>
-        <select id="move-dest-select" class="form-input"><option value="Small Sort">Small Sort</option><option value="Bulk Directs">Bulk Directs</option></select>
+        <h2 style="margin: 0 0 20px; font-size:24px; text-align:center;">Move / Mark Incomplete</h2>
+        <p style="text-align:center; color:#757575; margin-bottom:20px;">Select destination or mark as incomplete.</p>
+        <select id="move-dest-select" class="form-input">
+            <option value="Small Sort">Small Sort</option>
+            <option value="Bulk Directs">Bulk Directs</option>
+            <option value="Incomplete">Incomplete (no unload)</option>
+        </select>
         <button class="btn-primary" onclick="confirmMoveDoor()">Confirm</button>
         <button class="btn-cancel" onclick="closeModal('move-menu-modal')">Cancel</button>
     </div>
@@ -785,7 +789,7 @@
     let pendingMoveDest = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '4.8';
+    const APP_VERSION = '4.9';  // Updated
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Robert W", "Trevon C", "Russell H", "Fonseca J", "Eddie F", "Juan F", "Arce J"];
@@ -810,11 +814,17 @@
         };
     }
 
-    // --- CHANGELOG ---
+    // --- CHANGELOG (updated) ---
     const CHANGELOG = `
+v4.9:
+- Fixed move functionality – now reliably logs moved trailers to Small Sort / Bulk Directs.
+- Added "Incomplete" option to directly mark a door as incomplete (logs status "incomplete").
+- Duration now stored as minutes in the sheet (change your column header to "DurationMinutes").
+- Updated webhook to send correct status.
+
 v4.8:
 - Updated webhook URL.
-- Improved attribution window description: now a 10‑minute grace period for attributing completions after the hour.
+- Improved attribution window description.
 - Slider ticks clearly show 0, 5, 10 minutes.
 
 v4.7:
@@ -850,7 +860,7 @@ v4.7:
         return `${hour}th hour`;
     }
 
-    // --- WEBHOOK FUNCTION (sends durationMinutes, script converts to hours) ---
+    // --- WEBHOOK FUNCTION (sends durationMinutes) ---
     function sendToWebhook(logEntry, stage = 'end') {
         const shiftStart = getShiftStartTime();
         const payload = {
@@ -1003,13 +1013,18 @@ v4.7:
         showSaveToast();
     }
 
-    // --- MOVE COUNT HANDLER ---
+    // --- MOVE COUNT HANDLER (updated for Incomplete) ---
     function confirmMoveDoor() {
         const dest = byId('move-dest-select').value;
         if (!dest) return alert("Please select a destination");
         pendingMoveDest = dest;
         closeModal('move-menu-modal');
-        byId('move-count-modal').style.display = 'flex';
+        if (dest === 'Incomplete') {
+            // Incomplete is a direct action – no completion question
+            moveDoor(dest);
+        } else {
+            byId('move-count-modal').style.display = 'flex';
+        }
     }
     function handleMoveCount(countAsCompletion) {
         closeModal('move-count-modal');
@@ -1507,6 +1522,7 @@ v4.7:
             const last = d.assignments[d.assignments.length - 1];
             if(!last.end) last.end = now;
         }
+        const status = (destination === 'Incomplete') ? 'incomplete' : 'moved';
         const logEntry = {
             door: detailDoor, id: d.id, account: d.account||"", type: d.type, unloader: d.unloader,
             start: d.start, end: now, dateKey: dateKeyFromTs(now), duration: now - d.start,
@@ -1515,7 +1531,7 @@ v4.7:
             duplicate: false,
             completionHour: getCompletionHour(now),
             cpuOptions: d.cpuOptions || [],
-            status: 'moved',
+            status: status,
             moveDest: destination
         };
         historyLog.unshift(logEntry);
@@ -1874,7 +1890,7 @@ v4.7:
     function calculateAndRenderStats() {
          const stats = {};
          historyLog.forEach(l => { 
-             if(l.status === 'moved') return;
+             if(l.status === 'moved' || l.status === 'incomplete') return; // only count completions
              const n = l.unloader; if(!stats[n]) stats[n]={w:0,c:0,t:0}; if(l.type==='Wally') stats[n].w++; else stats[n].c++; stats[n].t++; 
          });
          const tb = byId('unloader-stats-body'); tb.innerHTML='';
@@ -1883,7 +1899,7 @@ v4.7:
     function calculateAndRenderHourlyStats() {
         const { shiftStart } = getShiftTimeWindows(); const h = {};
         historyLog.forEach(l => { 
-            if(l.status === 'moved') return;
+            if(l.status !== 'completed') return; // only completions count for hourly stats
             const idx = Math.floor((l.end-(l.statOffset||0)-shiftStart.getTime())/3600000)+1; if(!h[idx]) h[idx]=0; h[idx]++; 
         });
         const tb = byId('hourly-stats-body'); tb.innerHTML='';
@@ -1953,6 +1969,8 @@ v4.7:
             let statusPill = '';
             if (l.status === 'moved') {
                 statusPill = `<span class="log-tag tag-gray"><i class="ph ph-arrows-left-right"></i> ${l.moveDest}</span>`;
+            } else if (l.status === 'incomplete') {
+                statusPill = `<span class="log-tag tag-red"><i class="ph ph-x-circle"></i> Incomplete</span>`;
             } else {
                 statusPill = `<span class="log-tag tag-black">${l.type}</span>`;
                 if(l.duplicate) statusPill += ` <span class="log-tag tag-red">DUP</span>`;
@@ -1986,7 +2004,7 @@ v4.7:
                         <div class="log-duration-label">Duration</div>
                     </div>
                     <div class="log-actions-row">
-                         ${(Date.now()-l.end < 120000 && !demoActive) ? `<button class="log-mini-btn" onclick="revertLog(${historyLog.indexOf(l)})"><i class="ph ph-arrow-u-up-left"></i></button>` : ''}
+                         ${(Date.now()-l.end < 120000 && !demoActive && l.status==='completed') ? `<button class="log-mini-btn" onclick="revertLog(${historyLog.indexOf(l)})"><i class="ph ph-arrow-u-up-left"></i></button>` : ''}
                         <button class="log-mini-btn" onclick="openEditLogModal(${historyLog.indexOf(l)})"><i class="ph ph-pencil-simple"></i></button>
                     </div>
                 </div>
@@ -2054,10 +2072,10 @@ v4.7:
     function openExportModal() { byId('export-modal').style.display = 'flex'; }
     function exportLogsCSV() {
         closeModal('export-modal');
-        let csv = "Type,ID,Account,Door,Unloader,Duration(mins),StartTime,EndTime,StartHour,EndHour,Duplicate,Hour,Options,Status,Manual\n";
+        let csv = "Type,ID,Account,Door,Unloader,Duration(mins),StartTime,EndTime,StartHour,EndHour,Duplicate,Hour,Options,Status,Manual,MoveDest\n";
         historyLog.forEach(l => {
             const opts = (l.cpuOptions || []).join(';');
-            csv += `${l.type},${l.id},${l.account||''},${l.door},${l.unloader},${Math.round(l.duration/60000)},${new Date(l.start).toLocaleString()},${new Date(l.end).toLocaleString()},${new Date(l.start).getHours()},${new Date(l.end).getHours()},${l.duplicate?'Yes':'No'},${l.completionHour},${opts},${l.status||'completed'},${l.manual?'Yes':'No'}\n`
+            csv += `${l.type},${l.id},${l.account||''},${l.door},${l.unloader},${Math.round(l.duration/60000)},${new Date(l.start).toLocaleString()},${new Date(l.end).toLocaleString()},${new Date(l.start).getHours()},${new Date(l.end).getHours()},${l.duplicate?'Yes':'No'},${l.completionHour},${opts},${l.status||'completed'},${l.manual?'Yes':'No'},${l.moveDest||''}\n`
         });
         const a = document.createElement('a'); a.href=window.URL.createObjectURL(new Blob([csv], {type:'text/csv'})); a.download='wally-logs.csv'; a.click();
     }
@@ -2068,13 +2086,14 @@ v4.7:
         doc.setFontSize(18); doc.text(`PS9 Wally Tracker Report - ${now.toLocaleDateString()}`, 14, 20);
         doc.setFontSize(12); doc.text(`Generated: ${now.toLocaleTimeString()}`, 14, 30);
         const stats={}; historyLog.forEach(l=>{ 
-            if(l.status === 'moved') return;
+            if(l.status !== 'completed') return;
             const n=l.unloader; if(!stats[n])stats[n]={w:0,c:0,t:0}; if(l.type==='Wally')stats[n].w++; else stats[n].c++; stats[n].t++; 
         });
         doc.autoTable({ startY: 45, head:[['Name','Wally','CPU','Total']], body:Object.entries(stats).sort((a,b)=>b[1].t-a[1].t).map(([n,d])=>[n,d.w,d.c,d.t]) });
         const logsBody = historyLog.map(l => {
              let typeStr = l.type + (l.duplicate?' (DUP)':'');
              if(l.status === 'moved') typeStr = `MOVED: ${l.moveDest}`;
+             else if(l.status === 'incomplete') typeStr = 'INCOMPLETE';
              else if(l.type === 'CPU' && l.cpuOptions && l.cpuOptions.length>0) typeStr += `\n${l.cpuOptions.join(',')}`;
              return [new Date(l.end).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}), l.door, typeStr, l.id, l.unloader, Math.round(l.duration/60000)+"m", getHourText(l.completionHour)];
         });
