@@ -10,7 +10,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <title>Wally Dashboard</title>
     <style>
-        /* Full styles – same as before, keep as is */
+        /* Full styles – same as before */
         :root {
             --primary: #000000;
             --bg: #ffffff;
@@ -396,7 +396,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 4.12</div>
+            <div class="app-version">Version 4.13</div>
         </div>
         <div class="section-title">Sort Statistics</div>
         <div class="stats-grid">
@@ -789,7 +789,7 @@
     let pendingMoveDest = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '4.12';  // Updated
+    const APP_VERSION = '4.13';  // Updated
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Robert W", "Trevon C", "Russell H", "Fonseca J", "Eddie F", "Juan F", "Arce J"];
@@ -816,6 +816,10 @@
 
     // --- CHANGELOG (updated) ---
     const CHANGELOG = `
+v4.13:
+- Fixed bay population issue – open bays and active trailers now display correctly.
+- Added safety checks to ensure doors always render.
+
 v4.12:
 - Fixed missing open bays on dashboard (regression).
 - All move functionality and statistics remain intact.
@@ -1082,6 +1086,12 @@ v4.7:
         if (sDoors) doors = JSON.parse(sDoors);
         else {
             for(let i=DOORS_START; i<=DOORS_END; i++) {
+                doors[i] = { status: 'empty', start: 0, id: '', type: '', unloader: '', unavailable: false, lastCompletionTime: null, assignments: [] };
+            }
+        }
+        // Ensure doors object has entries for all doors
+        for(let i=DOORS_START; i<=DOORS_END; i++) {
+            if (!doors[i]) {
                 doors[i] = { status: 'empty', start: 0, id: '', type: '', unloader: '', unavailable: false, lastCompletionTime: null, assignments: [] };
             }
         }
