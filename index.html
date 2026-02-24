@@ -396,7 +396,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 4.13</div>
+            <div class="app-version">Version 4.14</div>
         </div>
         <div class="section-title">Sort Statistics</div>
         <div class="stats-grid">
@@ -789,7 +789,7 @@
     let pendingMoveDest = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '4.13';  // Updated
+    const APP_VERSION = '4.14';  // Updated
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Robert W", "Trevon C", "Russell H", "Fonseca J", "Eddie F", "Juan F", "Arce J"];
@@ -816,6 +816,11 @@
 
     // --- CHANGELOG (updated) ---
     const CHANGELOG = `
+v4.14:
+- Added extra safeguards to ensure bay doors (9-16) are always displayed.
+- Added console logging for debugging door rendering.
+- Fixed issue where open bays would not appear.
+
 v4.13:
 - Fixed bay population issue – open bays and active trailers now display correctly.
 - Added safety checks to ensure doors always render.
@@ -1057,6 +1062,30 @@ v4.7:
     // --- INIT ---
     function init() {
         console.log(`Wally Dashboard v${APP_VERSION} initialized`);
+
+        // --- FORCE DOORS TO EXIST ---
+        // Ensure the doors object is properly initialized, even if localStorage was corrupted
+        const sDoors = localStorage.getItem('ps9_doors');
+        if (sDoors) {
+            try {
+                doors = JSON.parse(sDoors);
+                console.log('Doors loaded from localStorage:', doors);
+            } catch (e) {
+                console.error('Error parsing doors from localStorage, reinitializing');
+                doors = {};
+            }
+        }
+        // If doors is not an object or missing entries, create default empty doors
+        if (!doors || typeof doors !== 'object') {
+            doors = {};
+        }
+        for (let i = DOORS_START; i <= DOORS_END; i++) {
+            if (!doors[i]) {
+                doors[i] = { status: 'empty', start: 0, id: '', type: '', unloader: '', unavailable: false, lastCompletionTime: null, assignments: [] };
+            }
+        }
+        console.log('Doors after initialization:', doors);
+
         byId('active-trailers-grid').addEventListener('click', (e) => {
             const btn = e.target.closest('.bay-circle');
             if(btn) openActiveDetails(parseInt(btn.dataset.door));
@@ -1077,29 +1106,12 @@ v4.7:
         if (sAccts) savedAccounts = JSON.parse(sAccts);
         initAttributionSettings();
         loadNotes();
-        const sDoors = localStorage.getItem('ps9_doors');
         const sHistory = localStorage.getItem('ps9_history');
         const sTeam = localStorage.getItem('ps9_team');
         const shiftStart = localStorage.getItem('ps9_shift_start') || "20:00";
         lastSortStartTime = localStorage.getItem('ps9_last_sort_start');
         isFirstOnboard = localStorage.getItem('ps9_is_first_onboard') === 'true';
-        if (sDoors) doors = JSON.parse(sDoors);
-        else {
-            for(let i=DOORS_START; i<=DOORS_END; i++) {
-                doors[i] = { status: 'empty', start: 0, id: '', type: '', unloader: '', unavailable: false, lastCompletionTime: null, assignments: [] };
-            }
-        }
-        // Ensure doors object has entries for all doors
-        for(let i=DOORS_START; i<=DOORS_END; i++) {
-            if (!doors[i]) {
-                doors[i] = { status: 'empty', start: 0, id: '', type: '', unloader: '', unavailable: false, lastCompletionTime: null, assignments: [] };
-            }
-        }
-        for(let i=DOORS_START; i<=DOORS_END; i++) {
-            if(doors[i].status === 'active' && (!doors[i].assignments || doors[i].assignments.length===0)) {
-                doors[i].assignments = [{ name: doors[i].unloader || "Unassigned", start: doors[i].start, end: null }];
-            }
-        }
+
         if (sHistory) historyLog = JSON.parse(sHistory);
         if (Array.isArray(historyLog)) {
             historyLog.forEach(l => {
@@ -1244,7 +1256,7 @@ v4.7:
     // --- TAB BADGES (only Active tab gets a badge) ---
     function updateTabBadges() {
         let activeCount = 0;
-        for(let i=DOORS_START; i<=DOORS_END; i++) if(doors[i].status === 'active') activeCount++;
+        for(let i=DOORS_START; i<=DOORS_END; i++) if(doors[i] && doors[i].status === 'active') activeCount++;
         const badge = byId('badge-active');
         if (badge) {
             if (activeCount === 0) {
@@ -1252,7 +1264,6 @@ v4.7:
             } else {
                 badge.textContent = activeCount > 99 ? '99+' : activeCount.toString();
                 badge.style.display = 'flex';
-                // Optional: add color classes based on count
                 if (activeCount >= 6) {
                     badge.classList.add('warning');
                     badge.classList.remove('success', 'zero');
@@ -1264,7 +1275,6 @@ v4.7:
                 }
             }
         }
-        // No badges on other tabs – they are removed from HTML
     }
 
     // --- ACCOUNTS ---
@@ -1663,6 +1673,302 @@ v4.7:
             const idx = Math.floor((l.end-(l.statOffset||0)-shiftStart.getTime())/3600000)+1; 
             if(!h[idx]) h[idx]=0; 
             h[idx]++; 
+        });
+        const tb = byId('hourly-stats-body'); tb.innerHTML='';
+        Object.keys(h).sort((a,b)=>a-b).forEach(k=>tb.innerHTML+=`<tr><td>${getHourText(parseInt(k))}</td><td style="text-align:center">${h[k]}</td></tr>`);
+    }
+
+    // --- RENDER DASHBOARD ---
+    function renderDashboard() {
+        console.log('renderDashboard called, doors:', doors);
+        updateStats();
+        const openGrid = byId('open-bays-grid'), activeGrid = byId('active-trailers-grid');
+        openGrid.innerHTML = ''; activeGrid.innerHTML = '';
+        let hasOpen = false, hasActive = false;
+
+        for(let i=DOORS_START; i<=DOORS_END; i++) {
+            const d = doors[i];
+            if (!d) {
+                console.warn(`Door ${i} missing in doors object, creating default`);
+                doors[i] = { status: 'empty', start: 0, id: '', type: '', unloader: '', unavailable: false, lastCompletionTime: null, assignments: [] };
+            }
+            const btn = document.createElement('div');
+            btn.className = `bay-circle bay-${i} ${d.unavailable ? 'unavailable' : ''}`;
+            btn.dataset.door = i; 
+
+            if (d.status === 'active') {
+                hasActive = true;
+                btn.innerHTML = `${i}<div class="type-badge ${d.type==='Wally'?'badge-w':'badge-c'}">${d.type==='Wally'?'W':'C'}</div>`;
+                if (d.start > 0) {
+                     const min = (Date.now() - d.start) / 60000;
+                     if (min > 60) btn.classList.add('status-crit');
+                     else if (min > 45) btn.classList.add('status-warn');
+                     else btn.classList.add('status-ok');
+                }
+                activeGrid.appendChild(btn);
+            } else {
+                hasOpen = true;
+                btn.innerText = i;
+                if (d.lastCompletionTime && d.status === 'empty' && !d.unavailable) {
+                    const idle = Math.floor((Date.now() - d.lastCompletionTime) / 60000);
+                    btn.innerHTML += `<div class="bay-timer">${idle}m</div>`;
+                }
+                openGrid.appendChild(btn);
+            }
+        }
+        if(!hasOpen) openGrid.innerHTML = '<div class="empty-state-text">All bays full.</div>';
+        if(!hasActive) activeGrid.innerHTML = '<div class="empty-state-text">No active trailers.</div>';
+    }
+
+    // --- RENDER ACTIVE TAB ---
+    function renderActiveTab() {
+        const list = byId('active-tab-list'); list.innerHTML = '';
+        let hasActive = false;
+        for(let i=DOORS_START; i<=DOORS_END; i++) {
+            if(doors[i].status === 'active') {
+                hasActive = true;
+                const d = doors[i], start = new Date(d.start).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                const noteIcon = d.type === 'Wally' ? 
+                    `<button class="note-icon-btn ${wallyNotes[d.id] ? 'has-note' : ''}" onclick="openNoteModal('${d.id}')"><i class="ph ph-note${wallyNotes[d.id] ? '-pencil' : ''}"></i></button>` : '';
+                list.innerHTML += `<div class="active-card"><div class="active-card-info"><div class="active-card-header"><span class="door-pill">Door ${i}</span><span class="active-card-title">${d.type} ${d.id}${noteIcon}</span></div><div class="active-card-details">${d.unloader}${d.account ? ' | '+d.account : ''}</div><div class="active-card-time">Started: ${start}</div></div><div class="active-card-actions"><button class="icon-btn" onclick="openEditActiveModal(${i})"><i class="ph ph-pencil-simple"></i></button><button class="btn-primary" style="width:auto; padding:10px 16px; margin:0;" onclick="completeDoor(${i})">Finish</button></div></div>`;
+            }
+        }
+        if(!hasActive) list.innerHTML = '<div style="text-align:center; color:#999; margin-top:40px;">No active trailers</div>';
+    }
+
+    // --- ACTIVE DETAILS ---
+    function openActiveDetails(doorNum) {
+        detailDoor = doorNum; const d = doors[doorNum];
+        byId('detail-door-num').innerText = doorNum;
+        byId('detail-type').innerText = d.type;
+        byId('detail-id').innerText = d.id;
+        byId('detail-unloader').innerText = d.unloader || "Unassigned";
+        byId('detail-time').innerText = new Date(d.start).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        byId('detail-duration').innerText = Math.floor((Date.now() - d.start)/60000) + "m";
+        const ar = byId('row-account');
+        if (d.account) { ar.style.display = 'flex'; byId('detail-account').innerText = d.account; } else ar.style.display = 'none';
+        const rowOpts = byId('row-cpu-opts');
+        if (d.type === 'CPU' && d.cpuOptions && d.cpuOptions.length > 0) {
+            rowOpts.style.display = 'flex';
+            byId('detail-cpu-opts').innerText = d.cpuOptions.join(', ');
+        } else {
+            rowOpts.style.display = 'none';
+        }
+        byId('active-detail-modal').style.display = 'flex';
+    }
+
+    // --- EDIT ACTIVE ---
+    function openEditActiveModalFromDetail() { closeModal('active-detail-modal'); openEditActiveModal(detailDoor); }
+    function openEditActiveModal(doorNum) {
+        const d = doors[doorNum];
+        byId('edit-active-original-door').value = doorNum;
+        byId('edit-active-id').value = d.id;
+        byId('edit-active-account').value = d.account || "";
+        const us = byId('edit-active-unloader'); us.value = d.unloader || "";
+        if(us.selectedIndex === -1) { us.value = 'Custom'; checkActiveCustomUnloader(us); byId('edit-active-custom-unloader').value = d.unloader; }
+        else checkActiveCustomUnloader(us);
+        setEditActiveType(d.type);
+        const opts = d.cpuOptions || [];
+        byId('edit-active-chk-hott').checked = opts.includes('HOTT');
+        byId('edit-active-chk-recycle').checked = opts.includes('RECYCLE');
+        byId('edit-active-chk-gv').checked = opts.includes('GV');
+        const startDate = new Date(d.start);
+        byId('edit-active-start-time').value = `${startDate.getHours().toString().padStart(2,'0')}:${startDate.getMinutes().toString().padStart(2,'0')}`;
+        const sel = byId('edit-active-door-select'); sel.innerHTML = '';
+        for(let i=DOORS_START; i<=DOORS_END; i++) {
+            if(i===doorNum || doors[i].status==='empty') {
+                const opt = document.createElement('option'); opt.value = i; opt.innerText = `Bay ${i}`; if(i===doorNum) opt.selected=true; sel.appendChild(opt);
+            }
+        }
+        byId('edit-active-modal').style.display = 'flex';
+    }
+    function setEditActiveType(t) { 
+        byId('active-opt-wally').classList.toggle('selected', t==='Wally'); 
+        byId('active-opt-cpu').classList.toggle('selected', t==='CPU'); 
+        byId('edit-active-modal').dataset.type = t; 
+        const optsContainer = byId('edit-active-options-container');
+        if(optsContainer) optsContainer.style.display = (t === 'CPU') ? 'block' : 'none';
+        const idLabel = byId('edit-id-label');
+        if (idLabel) {
+            idLabel.innerText = t === 'Wally' ? 'Wally Number' : 'Trailer Number';
+        }
+    }
+    function checkActiveCustomUnloader(s) { 
+        byId('edit-active-custom-unloader').style.display = s.value === 'Custom' ? 'block' : 'none'; 
+    }
+    function saveActiveEdit() {
+        const orig = parseInt(byId('edit-active-original-door').value), dest = parseInt(byId('edit-active-door-select').value);
+        let unl = byId('edit-active-unloader').value;
+        if(unl === 'Custom') unl = byId('edit-active-custom-unloader').value.trim();
+        if (!unl) unl = "Unassigned";
+        else if (unl !== "Unassigned" && unl === byId('edit-active-custom-unloader').value.trim()) unl = unl.toLowerCase().split(' ').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ');
+        const type = byId('edit-active-modal').dataset.type;
+        let cpuOpts = [];
+        if(type === 'CPU') {
+            if(byId('edit-active-chk-hott').checked) cpuOpts.push('HOTT');
+            if(byId('edit-active-chk-recycle').checked) cpuOpts.push('RECYCLE');
+            if(byId('edit-active-chk-gv').checked) cpuOpts.push('GV');
+        }
+        const startTimeInput = byId('edit-active-start-time').value;
+        let newStart = doors[orig].start;
+        if (startTimeInput) {
+            const now = new Date(doors[orig].start);
+            const [h, m] = startTimeInput.split(':').map(Number);
+            now.setHours(h, m, 0, 0);
+            newStart = now.getTime();
+        }
+        const d = doors[orig];
+        const now = Date.now();
+        let newAssignments = [...(d.assignments || [])];
+        if (newStart !== doors[orig].start && newAssignments.length > 0) {
+            newAssignments[0].start = newStart;
+        }
+        if (d.unloader !== unl) {
+            if (newAssignments.length > 0) {
+                newAssignments[newAssignments.length - 1].end = now;
+            }
+            newAssignments.push({ name: unl, start: now, end: null });
+        }
+        const data = { 
+            status: 'active', start: newStart, id: byId('edit-active-id').value.trim().toUpperCase(), 
+            account: byId('edit-active-account').value.trim().toUpperCase(), type: type, unloader: unl, 
+            unavailable: false, lastCompletionTime: doors[orig].lastCompletionTime, cpuOptions: cpuOpts,
+            assignments: newAssignments,
+            logId: d.logId
+        };
+        if(dest !== orig) { doors[dest] = data; doors[orig] = {status:'empty', start:0, id:'', type:'', unloader:'', unavailable: false, lastCompletionTime: doors[orig].lastCompletionTime, assignments:[]}; }
+        else doors[orig] = data;
+        saveDoors(); closeModal('edit-active-modal'); renderActiveTab(); renderDashboard(); updateTabBadges(); showSaveToast();
+    }
+
+    // --- ARRIVAL MODAL ---
+    function checkCustomUnloader(s) { byId('input-custom-unloader').style.display = s.value === 'Custom' ? 'block' : 'none'; }
+    function confirmArrival() {
+        const idVal = currentType === 'Wally' ? byId('input-wally-id').value : byId('input-trailer-id').value;
+        if(!idVal) return alert("Missing ID");
+        const fId = idVal.toUpperCase(), fAcc = (currentType==='CPU'?byId('input-account-id').value:'').toUpperCase();
+        let unl = byId('select-unloader').value;
+        if(unl === 'Custom') { unl = byId('input-custom-unloader').value; if(unl) unl = unl.toLowerCase().split(' ').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' '); }
+        if (currentType === 'Wally') {
+            const dup = checkDuplicateWally(fId);
+            if (dup) {
+                pendingWallyDuplicate = { doorNum: currentDoor, wallyId: fId, unloader: unl||"Unassigned", startTime: Date.now() };
+                byId('dup-wally-id').textContent = fId; byId('dup-door').textContent = `Door ${dup.door}`;
+                byId('dup-time').textContent = new Date(dup.end).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); byId('dup-unloader').textContent = dup.unloader;
+                byId('duplicate-wally-modal').style.display = 'flex'; 
+                return;
+            }
+        }
+        let cpuOpts = [];
+        if (currentType === 'CPU') {
+            if(byId('chk-hott').checked) cpuOpts.push('HOTT');
+            if(byId('chk-recycle').checked) cpuOpts.push('RECYCLE');
+            if(byId('chk-gv').checked) cpuOpts.push('GV');
+        }
+        let startTime = Date.now(), cTime = byId('input-onboard-time').value;
+        if (cTime) {
+            const now = new Date(), [h, m] = cTime.split(':').map(Number);
+            const d = new Date(now); d.setHours(h, m, 0, 0);
+            if (d > now) d.setDate(d.getDate() - 1); startTime = d.getTime();
+        }
+        const logId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+        doors[currentDoor] = { 
+            status: 'active', start: startTime, id: fId, account: fAcc, type: currentType, 
+            unloader: unl||"Unassigned", isDuplicate: false, unavailable: false, 
+            lastCompletionTime: null, cpuOptions: cpuOpts,
+            assignments: [{ name: unl||"Unassigned", start: startTime, end: null }],
+            logId: logId
+        };
+        const startEntry = {
+            door: currentDoor, id: fId, account: fAcc, type: currentType, unloader: unl||"Unassigned",
+            assistants: [], start: startTime, end: null, dateKey: dateKeyFromTs(startTime),
+            durationMinutes: null, statOffset: 0, logId: logId, duplicate: false, completionHour: null,
+            cpuOptions: cpuOpts, status: 'active', manual: false
+        };
+        sendToWebhook(startEntry, 'start');
+        if(isFirstOnboard) { isFirstOnboard = false; localStorage.setItem('ps9_is_first_onboard', 'false'); }
+        saveDoors(); closeModal('input-modal'); renderDashboard(); updateTabBadges(); showSaveToast();
+    }
+    function openArrivalModal(specificDoor = null) {
+        if (specificDoor) currentDoor = specificDoor;
+        else {
+             currentDoor = null;
+             for(let i=DOORS_START; i<=DOORS_END; i++) if(doors[i].status==='empty'&&!doors[i].unavailable) { currentDoor=i; break; }
+        }
+        if(!currentDoor) return alert("No bays available!");
+        byId('modal-door-num').innerText = currentDoor;
+        byId('input-wally-id').value = ''; byId('input-trailer-id').value = ''; byId('input-account-id').value = '';
+        byId('select-unloader').value = ""; byId('input-custom-unloader').style.display = 'none';
+        byId('chk-hott').checked = false;
+        byId('chk-recycle').checked = false;
+        byId('chk-gv').checked = false;
+        const tIn = byId('input-onboard-time');
+        if (historyLog.length === 0) {
+            const shiftStart = getShiftStartTime();
+            tIn.value = shiftStart;
+        } else {
+            const now = new Date();
+            tIn.value = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+        }
+        const form = byId('onboard-form-container'), msg = byId('unavailable-msg'), btn = byId('btn-toggle-availability');
+        if (doors[currentDoor].unavailable) { form.style.display='none'; msg.style.display='block'; btn.innerText="Mark Available"; btn.style.background="#34c759"; btn.style.color="white"; btn.style.border="none"; }
+        else { form.style.display='block'; msg.style.display='none'; btn.innerText="Mark Unavailable"; btn.style.background="white"; btn.style.color="#ff3b30"; btn.style.border="2px solid #e5e5ea"; }
+        setType('Wally'); byId('input-modal').style.display = 'flex';
+        if (!doors[currentDoor].unavailable) setTimeout(() => { const f=byId('input-wally-id'); if(f) f.focus(); }, 100);
+        byId('onboarding-note-badge').style.display = 'none';
+    }
+    function handleAvailabilityToggle() { doors[currentDoor].unavailable = !doors[currentDoor].unavailable; saveDoors(); renderDashboard(); showSaveToast(); closeModal('input-modal'); }
+    function setType(t) {
+        currentType = t;
+        byId('opt-wally').classList.toggle('selected', t==='Wally'); 
+        byId('opt-cpu').classList.toggle('selected', t==='CPU'); 
+        byId('wally-inputs').style.display = t==='Wally'?'block':'none'; 
+        byId('cpu-inputs').style.display = t==='CPU'?'block':'none';
+    }
+
+    // --- VIEW STATS/LOGS ---
+    function viewStatLogs(type) {
+        closeModal('input-modal'); closeModal('active-detail-modal');
+        activeLogFilter = { door: 'All', type: 'All', timeRange: 'All', unloader: 'All', search: '', date: 'All' };
+        if(type==='Wally'||type==='CPU') activeLogFilter.type = type;
+        else if(type==='Hour-0') { activeLogFilter.timeRange = 'ThisHour'; activeLogFilter.type = 'Wally'; }
+        else if(type==='Hour-1') { activeLogFilter.timeRange = 'LastHour'; activeLogFilter.type = 'Wally'; }
+        switchTab('logs');
+    }
+    function viewDoorLogs(n) { closeModal('input-modal'); closeModal('active-detail-modal'); setLogFilter(n); switchTab('logs'); }
+    function openFilterModal() {
+        const g = byId('filter-grid'); g.innerHTML = `<div class="filter-btn ${currentLogFilter==='All'?'active':''}" onclick="setLogFilter('All')">All</div>`;
+        for(let i=DOORS_START; i<=DOORS_END; i++) g.innerHTML += `<div class="filter-btn ${currentLogFilter==i?'active':''}" onclick="setLogFilter(${i})">Door ${i}</div>`;
+        byId('filter-unloader-select').value = activeLogFilter.unloader;
+        byId('filter-date-input').value = activeLogFilter.date !== 'All' ? activeLogFilter.date : '';
+        byId('filter-modal').style.display='flex';
+    }
+    function applyFilter() {
+        activeLogFilter.unloader = byId('filter-unloader-select').value;
+        const d = byId('filter-date-input').value; activeLogFilter.date = d || 'All';
+        closeModal('filter-modal'); renderLogs();
+    }
+    function clearLogFilter() { currentLogFilter='All'; activeLogFilter={door:'All',unloader:'All',type:'All',timeRange:'All',search:'',date:'All'}; byId('log-search').value=''; renderLogs(); }
+    function setLogFilter(v) { currentLogFilter = v; activeLogFilter.door = v; renderLogs(); }
+    function toggleStats(sec) {
+        const c = byId(sec==='unloader'?'stats-content':'hourly-content'), i = byId(sec==='unloader'?'stats-caret':'hourly-caret');
+        const show = c.style.display!=='block'; c.style.display=show?'block':'none'; i.className=show?'ph ph-caret-up':'ph ph-caret-down';
+        if(show) sec==='unloader' ? calculateAndRenderStats() : calculateAndRenderHourlyStats();
+    }
+    function calculateAndRenderStats() {
+         const stats = {};
+         historyLog.forEach(l => { 
+             if(l.status === 'moved' || l.status === 'incomplete') return; // only count completions
+             const n = l.unloader; if(!stats[n]) stats[n]={w:0,c:0,t:0}; if(l.type==='Wally') stats[n].w++; else stats[n].c++; stats[n].t++; 
+         });
+         const tb = byId('unloader-stats-body'); tb.innerHTML='';
+         Object.entries(stats).sort((a,b)=>b[1].t-a[1].t).forEach(([n,d])=>tb.innerHTML+=`<tr><td>${n}</td><td style="text-align:center">${d.w}</td><td style="text-align:center">${d.c}</td><td style="text-align:right">${d.t}</td></tr>`);
+    }
+    function calculateAndRenderHourlyStats() {
+        const { shiftStart } = getShiftTimeWindows(); const h = {};
+        historyLog.forEach(l => { 
+            if(l.status !== 'completed') return; // only completions count for hourly stats
+            const idx = Math.floor((l.end-(l.statOffset||0)-shiftStart.getTime())/3600000)+1; if(!h[idx]) h[idx]=0; h[idx]++; 
         });
         const tb = byId('hourly-stats-body'); tb.innerHTML='';
         Object.keys(h).sort((a,b)=>a-b).forEach(k=>tb.innerHTML+=`<tr><td>${getHourText(parseInt(k))}</td><td style="text-align:center">${h[k]}</td></tr>`);
