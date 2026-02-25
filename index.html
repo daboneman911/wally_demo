@@ -776,15 +776,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
 
 <script>
-    // (Full JavaScript from previous version – unchanged except version number and changelog)
-    // ... (all functions remain the same as v4.17)
-    // For brevity, we include the same script as before, but with version 4.18 and updated changelog.
-    // In practice, you would copy the entire script from the previous answer.
-    // Since the user asked for a fix to the modal scrolling, we only modified the CSS.
-    // The JavaScript remains exactly as in v4.17 (except the version constant and changelog).
-    // To keep the answer concise, I'm not repeating the entire JS, but you should use the same JS as v4.17.
-    // I'll provide the updated version constant and changelog below, and assume the rest is unchanged.
-
     // --- GLOBAL VARIABLES ---
     let demoActive = false;
     let duplicateWallyFlag = false;
@@ -816,6 +807,23 @@
 
     // *** HARDCODED WEBHOOK URL ***
     const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbzB3QyyQl2N_kpuM1wO9j6qO9HH5RODDLxhqlo36DHq2N0gYYdFIj7DyZhOp1bqivJ4/exec';
+
+    // --- HELPER FUNCTIONS ---
+    const byId = (id) => document.getElementById(id);
+    function dateKeyFromTs(ts) {
+        const d = new Date(ts);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+    }
+    function debounce(func, wait) {
+        let timeout;
+        return function(...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), wait);
+        };
+    }
 
     // --- CHANGELOG (updated) ---
     const CHANGELOG = `
@@ -871,8 +879,1336 @@ v4.7:
 - Duration consistently displayed in minutes.
     `;
 
-    // ... (rest of the JavaScript from v4.17 remains exactly the same)
-    // ...
+    // --- STATE ---
+    let doors = {};
+    let historyLog = [];
+    let teamNames = [];
+    let savedAccounts = [];
+    let teamNamesSorted = [];
+
+    let config = {
+        replenish: false, randomHistory: false, doorCount: 2,
+        mixedTypes: false, demoType: 'Wally',
+        simulateWindow: false, disableWindow: false
+    };
+
+    let attributionConfig = { minutes: 0, enabled: true };
+    let pendingCompletion = null;
+    let tempSortStartTime = "";
+
+    function getHourText(hour) {
+        if(hour===1) return "1st hour"; if(hour===2) return "2nd hour"; if(hour===3) return "3rd hour";
+        if(hour===4) return "4th hour"; if(hour===5) return "5th hour"; if(hour===6) return "6th hour";
+        if(hour===7) return "7th hour"; if(hour===8) return "8th hour"; if(hour===9) return "9th hour";
+        if(hour===10) return "10th hour"; if(hour===11) return "11th hour"; if(hour===12) return "12th hour";
+        return `${hour}th hour`;
+    }
+
+    // --- WEBHOOK FUNCTION (sends durationMinutes) ---
+    function sendToWebhook(logEntry, stage = 'end') {
+        const shiftStart = getShiftStartTime();
+        const payload = {
+            stage: stage,
+            door: logEntry.door,
+            id: logEntry.id,
+            account: logEntry.account,
+            type: logEntry.type,
+            unloader: logEntry.unloader,
+            assistants: logEntry.assistants,
+            start: logEntry.start,
+            end: logEntry.end,
+            dateKey: logEntry.dateKey,
+            durationMinutes: logEntry.durationMinutes,
+            cpuOptions: logEntry.cpuOptions,
+            duplicate: logEntry.duplicate,
+            manual: logEntry.manual,
+            completionHour: logEntry.completionHour,
+            status: logEntry.status,
+            moveDest: logEntry.moveDest,
+            shiftStart: shiftStart,
+            logId: logEntry.logId
+        };
+        fetch(WEBHOOK_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+            keepalive: true
+        }).catch(err => console.error('Webhook error:', err));
+    }
+
+    // --- NOTES FUNCTIONS ---
+    function loadNotes() {
+        const saved = localStorage.getItem('ps9_wally_notes');
+        if (saved) {
+            try { wallyNotes = JSON.parse(saved); } catch (e) { wallyNotes = {}; }
+        } else {
+            wallyNotes = {};
+        }
+    }
+    function saveNotes() {
+        localStorage.setItem('ps9_wally_notes', JSON.stringify(wallyNotes));
+    }
+    function openNoteModal(id) {
+        byId('note-wally-id').innerText = id;
+        byId('note-text').value = wallyNotes[id] || '';
+        byId('note-modal').style.display = 'flex';
+    }
+    function saveNote() {
+        const id = byId('note-wally-id').innerText;
+        const text = byId('note-text').value.trim();
+        if (text) {
+            wallyNotes[id] = text;
+        } else {
+            delete wallyNotes[id];
+        }
+        saveNotes();
+        closeModal('note-modal');
+        showSaveToast();
+        if (byId('tab-active').classList.contains('active')) renderActiveTab();
+        if (byId('tab-logs').classList.contains('active')) renderLogs();
+    }
+    function deleteNote() {
+        const id = byId('note-wally-id').innerText;
+        delete wallyNotes[id];
+        saveNotes();
+        closeModal('note-modal');
+        showSaveToast();
+        if (byId('tab-active').classList.contains('active')) renderActiveTab();
+        if (byId('tab-logs').classList.contains('active')) renderLogs();
+    }
+    function openNotesManager() {
+        renderNotesList();
+        byId('notes-manager-modal').style.display = 'flex';
+    }
+    function renderNotesList() {
+        const search = byId('notes-search').value.toLowerCase();
+        const container = byId('notes-list-container');
+        container.innerHTML = '';
+        const entries = Object.entries(wallyNotes)
+            .filter(([id, note]) => {
+                if (!search) return true;
+                return id.toLowerCase().includes(search) || note.toLowerCase().includes(search);
+            })
+            .sort((a, b) => a[0].localeCompare(b[0]));
+        if (entries.length === 0) {
+            container.innerHTML = '<div style="padding:20px; text-align:center; color:#8e8e93;">No notes found</div>';
+            return;
+        }
+        entries.forEach(([id, note]) => {
+            const preview = note.length > 50 ? note.substring(0, 50) + '…' : note;
+            const div = document.createElement('div');
+            div.className = 'note-item';
+            div.onclick = () => {
+                closeModal('notes-manager-modal');
+                openNoteModal(id);
+            };
+            div.innerHTML = `
+                <div>
+                    <span class="note-id">${id}</span>
+                    <span class="note-preview">${preview}</span>
+                </div>
+                <span class="note-badge">${note.length}</span>
+            `;
+            container.appendChild(div);
+        });
+    }
+    function updateOnboardingNoteIndicator(wallyId) {
+        const badgeContainer = byId('onboarding-note-badge');
+        if (!badgeContainer) return;
+        if (!wallyId) {
+            badgeContainer.style.display = 'none';
+            return;
+        }
+        const note = wallyNotes[wallyId];
+        if (!note) {
+            badgeContainer.style.display = 'none';
+            return;
+        }
+        const noteLower = note.toLowerCase();
+        let badges = [];
+        if (noteLower.includes('bulk')) badges.push('B');
+        if (noteLower.includes('sortable')) badges.push('S');
+        if (badges.length === 0) {
+            badgeContainer.style.display = 'none';
+            return;
+        }
+        badgeContainer.style.display = 'flex';
+        badgeContainer.innerHTML = badges.map(b => `<span class="type-badge-small">${b}</span>`).join('');
+    }
+
+    // --- NEW SHIFT ---
+    function newShift() {
+        if (!confirm("Start a new shift? This will clear all active trailers and logs, but keep your notes, accounts, and team names.")) return;
+        for (let i = DOORS_START; i <= DOORS_END; i++) {
+            doors[i] = { status: 'empty', start: 0, id: '', type: '', unloader: '', unavailable: false, lastCompletionTime: null, assignments: [] };
+        }
+        historyLog = [];
+        attributionConfig = { minutes: 0, enabled: true };
+        updateAttributionUI();
+        lastSortStartTime = null;
+        isFirstOnboard = false;
+        saveDoors();
+        saveHistory();
+        saveData();
+        renderDashboard();
+        renderActiveTab();
+        updateTabBadges();
+        showSaveToast();
+    }
+
+    // --- MOVE COUNT HANDLER (updated) ---
+    function confirmMoveDoor() {
+        const dest = byId('move-dest-select').value;
+        if (!dest) return alert("Please select a destination");
+        pendingMoveDest = dest;
+        closeModal('move-menu-modal');
+        if (dest === 'Incomplete') {
+            // Incomplete is a direct action – no completion question
+            moveDoor(dest, false);
+        } else {
+            byId('move-count-modal').style.display = 'flex';
+        }
+    }
+    function handleMoveCount(countAsCompletion) {
+        closeModal('move-count-modal');
+        moveDoor(pendingMoveDest, countAsCompletion);
+        pendingMoveDest = null;
+    }
+
+    // --- INIT ---
+    function init() {
+        console.log(`Wally Dashboard v${APP_VERSION} initialized`);
+
+        // --- FORCE DOORS TO EXIST ---
+        const sDoors = localStorage.getItem('ps9_doors');
+        if (sDoors) {
+            try {
+                doors = JSON.parse(sDoors);
+                console.log('Doors loaded from localStorage:', doors);
+            } catch (e) {
+                console.error('Error parsing doors from localStorage, reinitializing');
+                doors = {};
+            }
+        }
+        if (!doors || typeof doors !== 'object') {
+            doors = {};
+        }
+        for (let i = DOORS_START; i <= DOORS_END; i++) {
+            if (!doors[i]) {
+                doors[i] = { status: 'empty', start: 0, id: '', type: '', unloader: '', unavailable: false, lastCompletionTime: null, assignments: [] };
+            }
+        }
+        console.log('Doors after initialization:', doors);
+
+        byId('active-trailers-grid').addEventListener('click', (e) => {
+            const btn = e.target.closest('.bay-circle');
+            if(btn) openActiveDetails(parseInt(btn.dataset.door));
+        });
+        byId('open-bays-grid').addEventListener('click', (e) => {
+             const btn = e.target.closest('.bay-circle');
+             if(btn) openArrivalModal(parseInt(btn.dataset.door));
+        });
+        const searchInput = byId('log-search');
+        if(searchInput) {
+            searchInput.addEventListener('input', debounce(() => renderLogs(), 300));
+        }
+        const notesSearch = byId('notes-search');
+        if(notesSearch) {
+            notesSearch.addEventListener('input', debounce(() => renderNotesList(), 300));
+        }
+        const sAccts = localStorage.getItem('ps9_accounts');
+        if (sAccts) savedAccounts = JSON.parse(sAccts);
+        initAttributionSettings();
+        loadNotes();
+        const sHistory = localStorage.getItem('ps9_history');
+        const sTeam = localStorage.getItem('ps9_team');
+        const shiftStart = localStorage.getItem('ps9_shift_start') || "20:00";
+        lastSortStartTime = localStorage.getItem('ps9_last_sort_start');
+        isFirstOnboard = localStorage.getItem('ps9_is_first_onboard') === 'true';
+
+        if (sHistory) historyLog = JSON.parse(sHistory);
+        if (Array.isArray(historyLog)) {
+            historyLog.forEach(l => {
+                if (!l.dateKey) l.dateKey = dateKeyFromTs(l.end);
+                if (!l.completionHour) l.completionHour = getCompletionHour(l.end - (l.statOffset || 0));
+                if (!l.cpuOptions) l.cpuOptions = []; 
+                if (!l.status) l.status = 'completed'; 
+            });
+        }
+        if (sTeam) teamNames = JSON.parse(sTeam); else teamNames = [...DEFAULT_TEAM];
+        refreshTeamNamesSorted();
+        const startInput = byId('setting-shift-start');
+        if(startInput) startInput.value = shiftStart;
+        renderSavedAccounts();
+        updateAccountDatalist();
+        populateUnloaderSelect();
+        renderDashboard();
+        setTimeout(() => {
+            updateAttributionUI();
+            setupAttributionSlider();
+        }, 100);
+        setInterval(updateTabBadges, 2000);
+        updateTabBadges();
+    }
+
+    // --- GRANULAR SAVING ---
+    function saveDoors() { localStorage.setItem('ps9_doors', JSON.stringify(doors)); }
+    function saveHistory() { localStorage.setItem('ps9_history', JSON.stringify(historyLog)); }
+    function saveTeam() { localStorage.setItem('ps9_team', JSON.stringify(teamNames)); }
+    function saveAccounts() { localStorage.setItem('ps9_accounts', JSON.stringify(savedAccounts)); }
+    function saveData() { saveDoors(); saveHistory(); saveTeam(); saveAccounts(); }
+    function refreshTeamNamesSorted() { teamNamesSorted = [...teamNames].sort((a, b) => a.localeCompare(b)); }
+    function resetData() {
+        if(confirm("Reset all data? This will preserve saved account numbers.")) {
+            const savedAccountsBackup = [...savedAccounts];
+            localStorage.clear();
+            if (savedAccountsBackup.length > 0) {
+                localStorage.setItem('ps9_accounts', JSON.stringify(savedAccountsBackup));
+            }
+            localStorage.setItem('ps9_shift_start', "20:00");
+            location.reload();
+        }
+    }
+
+    // --- BACKUP & RESTORE ---
+    function backupData(mode) {
+        const data = {};
+        if (mode === 'logs') {
+             data['ps9_history'] = localStorage.getItem('ps9_history');
+        } else {
+             for(let i=0; i<localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if(key.startsWith('ps9_')) data[key] = localStorage.getItem(key);
+            }
+        }
+        data['ps9_wally_notes'] = JSON.stringify(wallyNotes);
+        const blob = new Blob([JSON.stringify(data, null, 2)], {type : 'application/json'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `wally-${mode}-backup-${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        showSaveToast();
+    }
+    function triggerRestore() { byId('restore-file-input').click(); }
+    function restoreData(input) {
+        const file = input.files[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = JSON.parse(e.target.result);
+                if(!data || Object.keys(data).length === 0) throw new Error("Empty file");
+                if(confirm("Overwrite current data with backup?")) {
+                    Object.keys(data).forEach(k => localStorage.setItem(k, data[k]));
+                    alert("Data restored!"); location.reload();
+                }
+            } catch(err) { alert("Error: " + err.message); }
+        };
+        reader.readAsText(file);
+        input.value = '';
+    }
+    function showSaveToast() {
+        const t = byId('save-toast'); t.classList.add('visible');
+        setTimeout(() => t.classList.remove('visible'), 2000);
+    }
+    function viewChangelog() {
+        byId('changelog-content').textContent = CHANGELOG;
+        byId('changelog-modal').style.display = 'flex';
+    }
+
+    // --- ATTRIBUTION SLIDER ---
+    function initAttributionSettings() {
+        const saved = localStorage.getItem('ps9_attribution_config_v2');
+        if (saved) attributionConfig = JSON.parse(saved);
+        if (attributionConfig.minutes === undefined) attributionConfig.minutes = 0;
+        updateAttributionUI();
+    }
+    function updateAttributionUI() {
+        const start = attributionConfig.minutes;
+        const end = start + 10;
+        byId('attribution-value').textContent = start + "m";
+        const rangeStart = byId('attr-range-start');
+        const rangeEnd = byId('attr-range-end');
+        if (rangeStart) rangeStart.textContent = start;
+        if (rangeEnd) rangeEnd.textContent = end;
+        const pct = (start / 10) * 100;
+        byId('slider-fill').style.width = pct + '%';
+        byId('slider-thumb').style.left = pct + '%';
+    }
+    function saveAttributionSetting() {
+        localStorage.setItem('ps9_attribution_config_v2', JSON.stringify(attributionConfig));
+        showSaveToast();
+    }
+    function setupAttributionSlider() {
+        const track = document.querySelector('.slider-track');
+        const thumb = byId('slider-thumb');
+        if (!track || !thumb) return;
+        let isDragging = false, saveTimer = null;
+        function updateSlider(clientX, persist) {
+            const rect = track.getBoundingClientRect();
+            let pct = ((clientX - rect.left) / rect.width) * 100;
+            pct = Math.max(0, Math.min(100, pct));
+            const snapPoints = [0, 50, 100];
+            let closest = snapPoints.reduce((prev, curr) => (Math.abs(curr - pct) < Math.abs(prev - pct) ? curr : prev));
+            pct = closest;
+            const startMin = Math.round((pct / 100) * 10);
+            if (startMin === attributionConfig.minutes) return;
+            attributionConfig.minutes = startMin;
+            updateAttributionUI();
+            if (persist) saveAttributionSetting();
+            else { clearTimeout(saveTimer); saveTimer = setTimeout(saveAttributionSetting, 200); }
+        }
+        thumb.addEventListener('touchstart', (e)=>{isDragging=true;e.preventDefault();});
+        document.addEventListener('touchmove', (e)=>{if(!isDragging)return; updateSlider(e.touches[0].clientX, false);},{passive:false});
+        document.addEventListener('touchend', ()=>{if(!isDragging)return; isDragging=false; saveAttributionSetting();});
+        thumb.addEventListener('mousedown', (e)=>{isDragging=true;e.preventDefault();});
+        document.addEventListener('mousemove', (e)=>{if(!isDragging)return; updateSlider(e.clientX, false);});
+        document.addEventListener('mouseup', ()=>{if(!isDragging)return; isDragging=false; saveAttributionSetting();});
+        track.addEventListener('click', (e)=>updateSlider(e.clientX, true));
+    }
+
+    // --- TAB BADGES (only Active tab gets a badge) ---
+    function updateTabBadges() {
+        let activeCount = 0;
+        for(let i=DOORS_START; i<=DOORS_END; i++) if(doors[i] && doors[i].status === 'active') activeCount++;
+        const badge = byId('badge-active');
+        if (badge) {
+            if (activeCount === 0) {
+                badge.style.display = 'none';
+            } else {
+                badge.textContent = activeCount > 99 ? '99+' : activeCount.toString();
+                badge.style.display = 'flex';
+                if (activeCount >= 6) {
+                    badge.classList.add('warning');
+                    badge.classList.remove('success', 'zero');
+                } else if (activeCount >= 3) {
+                    badge.classList.add('success');
+                    badge.classList.remove('warning', 'zero');
+                } else {
+                    badge.classList.remove('warning', 'success', 'zero');
+                }
+            }
+        }
+    }
+
+    // --- ACCOUNTS ---
+    function addSavedAccount() {
+        const val = byId('new-account-input').value.trim().toUpperCase();
+        if(val && !savedAccounts.includes(val)) {
+            savedAccounts.push(val); saveAccounts(); renderSavedAccounts(); updateAccountDatalist();
+            byId('new-account-input').value = '';
+        }
+    }
+    function removeAccount(acct) { savedAccounts = savedAccounts.filter(a => a !== acct); saveAccounts(); renderSavedAccounts(); updateAccountDatalist(); }
+    function renderSavedAccounts() {
+        const list = byId('saved-accounts-list'); list.innerHTML = '';
+        if(savedAccounts.length===0) return list.innerHTML = '<div style="padding:15px 0; color:#8e8e93; text-align:center;">No saved accounts</div>';
+        savedAccounts.forEach(acct => {
+            const div = document.createElement('div'); div.className = 'saved-acct-item';
+            div.innerHTML = `<span>${acct}</span><i class="ph ph-minus-circle delete-acct-btn" onclick="removeAccount('${acct}')"></i>`;
+            list.appendChild(div);
+        });
+    }
+    function updateAccountDatalist() {
+        const dl = byId('saved-accounts-datalist'); dl.innerHTML = '';
+        savedAccounts.forEach(acct => { const opt = document.createElement('option'); opt.value = acct; dl.appendChild(opt); });
+    }
+
+    // --- TOGGLES ---
+    function toggleSwitch(id) {
+        const el = byId('switch-'+id); 
+        if (!el) return;
+        el.classList.toggle('checked');
+        const checked = el.classList.contains('checked');
+        if(id==='demo-mode') { demoActive = checked; updateTabBadges(); }
+        if(id==='demo-replenish') config.replenish = checked;
+        if(id==='demo-random') config.randomHistory = checked;
+        if(id==='mixed-types') config.mixedTypes = checked;
+        if(id==='sim-window') config.simulateWindow = checked;
+        if(id==='dis-window') { config.disableWindow = checked; attributionConfig.enabled = !checked; }
+        renderDashboard();
+    }
+    function stepDoor(delta) {
+        let val = parseInt(byId('demo-door-val').innerText) + delta;
+        if(val<1) val=1; if(val>8) val=8;
+        byId('demo-door-val').innerText = val; config.doorCount = val;
+    }
+    function setDemoType(t) { config.demoType = t; byId('seg-wally').classList.toggle('selected', t==='Wally'); byId('seg-cpu').classList.toggle('selected', t==='CPU'); }
+    function startDemo() {
+        demoActive = true;
+        for(let i=DOORS_START; i<=DOORS_END; i++) if(doors[i].status==='empty' && (i-DOORS_START)<config.doorCount) randomArrival(i);
+        saveDoors(); alert("Demo Started"); switchTab('dashboard'); updateTabBadges();
+    }
+    function randomArrival(doorNum) {
+        let type = config.mixedTypes ? (Math.random()>0.5?'Wally':'CPU') : config.demoType;
+        const id = Math.floor(1000 + Math.random() * 9000).toString();
+        const unloader = teamNames[Math.floor(Math.random() * teamNames.length)];
+        doors[doorNum] = { status: 'active', start: Date.now(), id: id.toUpperCase(), account: type==='CPU'?"DEMO"+Math.floor(Math.random()*100):"", type: type, unloader: unloader, unavailable: false, lastCompletionTime: null, cpuOptions: [], assignments: [{ name: unloader, start: Date.now(), end: null }] };
+        renderDashboard(); updateTabBadges();
+    }
+
+    // --- SHIFT TIME ---
+    function getShiftStartTime() { return localStorage.getItem('ps9_shift_start') || "20:00"; }
+    function saveShiftStart(val) { localStorage.setItem('ps9_shift_start', val); renderDashboard(); }
+    function getShiftTimeWindows() {
+        const [h, m] = getShiftStartTime().split(':').map(Number);
+        const now = new Date(); let start = new Date(now); start.setHours(h, m, 0, 0);
+        if (now < start) start.setDate(start.getDate() - 1);
+        const hoursElapsed = Math.floor((now - start) / 3600000);
+        const thisHourStart = new Date(start.getTime() + (hoursElapsed * 3600000));
+        return { thisHourStart, thisHourEnd: new Date(thisHourStart.getTime() + 3600000), lastHourStart: new Date(thisHourStart.getTime() - 3600000), lastHourEnd: thisHourStart, shiftStart: start };
+    }
+    function getCompletionHour(ts) {
+        const { shiftStart } = getShiftTimeWindows();
+        return Math.floor((ts - shiftStart.getTime()) / 3600000) + 1;
+    }
+
+    // --- UNLOADER SELECT ---
+    function populateUnloaderSelect() {
+        const ids = ['select-unloader', 'edit-select-unloader', 'edit-active-unloader', 'filter-unloader-select', 'req-unloader-select', 'manual-unloader'];
+        ids.forEach(id => {
+            const el = byId(id); if(!el) return;
+            const isFilter = id === 'filter-unloader-select';
+            el.innerHTML = isFilter ? '<option value="All">All Unloaders</option>' : '<option value="" selected>Unassigned</option>';
+            teamNamesSorted.forEach(name => {
+                const opt = document.createElement('option'); opt.value = name; opt.innerText = name; el.appendChild(opt);
+            });
+            if(!isFilter) el.innerHTML += '<option value="Custom">Custom / Other</option>';
+        });
+    }
+    function checkManualCustomUnloader(s) {
+        byId('manual-custom-unloader').style.display = s.value === 'Custom' ? 'block' : 'none';
+    }
+
+    // --- MANUAL ADD ---
+    function openManualAddModal() {
+        byId('manual-wally-id').value = '';
+        byId('manual-trailer-id').value = '';
+        byId('manual-account-id').value = '';
+        byId('manual-unloader').value = '';
+        byId('manual-custom-unloader').style.display = 'none';
+        byId('manual-chk-hott').checked = false;
+        byId('manual-chk-recycle').checked = false;
+        byId('manual-chk-gv').checked = false;
+        setManualType('Wally');
+        byId('manual-hour-select').value = '1';
+        byId('manual-add-modal').style.display = 'flex';
+    }
+    function setManualType(t) {
+        manualType = t;
+        byId('manual-opt-wally').classList.toggle('selected', t==='Wally');
+        byId('manual-opt-cpu').classList.toggle('selected', t==='CPU');
+        byId('manual-wally-inputs').style.display = t==='Wally' ? 'block' : 'none';
+        byId('manual-cpu-inputs').style.display = t==='CPU' ? 'block' : 'none';
+    }
+    function confirmManualAdd() {
+        let id = manualType === 'Wally' ? byId('manual-wally-id').value : byId('manual-trailer-id').value;
+        if (!id) return alert("Please enter an ID");
+        id = id.toUpperCase();
+        let account = '';
+        let cpuOpts = [];
+        if (manualType === 'CPU') {
+            account = byId('manual-account-id').value.toUpperCase();
+            if (byId('manual-chk-hott').checked) cpuOpts.push('HOTT');
+            if (byId('manual-chk-recycle').checked) cpuOpts.push('RECYCLE');
+            if (byId('manual-chk-gv').checked) cpuOpts.push('GV');
+        }
+        let unl = byId('manual-unloader').value;
+        if (unl === 'Custom') {
+            unl = byId('manual-custom-unloader').value.trim();
+            if (!unl) return alert("Please enter custom unloader name");
+            unl = unl.toLowerCase().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        }
+        if (!unl) unl = "Unassigned";
+        const selectedHour = parseInt(byId('manual-hour-select').value);
+        const now = Date.now();
+        const { shiftStart } = getShiftTimeWindows();
+        const targetEffective = shiftStart.getTime() + (selectedHour - 1) * 3600000;
+        let offset = now - targetEffective;
+        if (offset < 0) offset = 0;
+        const logEntry = {
+            door: 0,
+            id: id,
+            account: account,
+            type: manualType,
+            unloader: unl,
+            assistants: [],
+            start: now - 15*60000,
+            end: now,
+            dateKey: dateKeyFromTs(now),
+            duration: 15*60000,
+            durationMinutes: 15,
+            statOffset: offset,
+            logId: Date.now().toString(36) + Math.random().toString(36).substr(2),
+            duplicate: false,
+            completionHour: getCompletionHour(now - offset),
+            cpuOptions: cpuOpts,
+            status: 'completed',
+            manual: true
+        };
+        historyLog.unshift(logEntry);
+        sendToWebhook(logEntry, 'end');
+        saveHistory();
+        if (manualType === 'CPU' && account && !savedAccounts.includes(account)) {
+            savedAccounts.push(account);
+            saveAccounts();
+            updateAccountDatalist();
+        }
+        closeModal('manual-add-modal');
+        renderDashboard();
+        if (byId('tab-logs').classList.contains('active')) renderLogs();
+        showSaveToast();
+    }
+
+    // --- ADD UNLOADER ---
+    function openAddUnloaderModal() { byId('input-new-unloader-name').value=''; byId('add-unloader-modal').style.display='flex'; }
+    function confirmAddUnloader() {
+        const val = byId('input-new-unloader-name').value.trim();
+        if(val){
+            const cap = val.toLowerCase().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+            if(!teamNames.includes(cap)){
+                teamNames.push(cap); refreshTeamNamesSorted(); saveTeam(); populateUnloaderSelect();
+            }
+            closeModal('add-unloader-modal');
+        }
+    }
+
+    // --- TAB SWITCHING ---
+    function switchTab(tabId, btn) {
+        document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
+        byId(`tab-${tabId}`).classList.add('active');
+        document.querySelectorAll('.tab-btn').forEach(el=>el.classList.remove('active'));
+        if(btn) btn.classList.add('active');
+        else {
+             const icons=document.querySelectorAll('.tab-btn');
+             const idx = ['dashboard','active','logs','tools','settings'].indexOf(tabId);
+             if(idx>=0) icons[idx].classList.add('active');
+        }
+        if(tabId==='dashboard') renderDashboard();
+        if(tabId==='active') renderActiveTab();
+        if(tabId==='logs') { currentVisibleLogs = 50; renderLogs(); }
+    }
+
+    // --- MODAL CLOSE ---
+    function closeModal(id) { const m = byId(id); if(m) m.style.display='none'; window.scrollTo(0,0); }
+
+    // --- DUPLICATE WALLY ---
+    function checkDuplicateWally(id) {
+        const { shiftStart } = getShiftTimeWindows();
+        return historyLog.find(l => l.type === 'Wally' && l.id === id && l.end >= shiftStart.getTime());
+    }
+    function continueWithDuplicate() {
+        closeModal('duplicate-wally-modal');
+        if (pendingWallyDuplicate) {
+            const { doorNum, wallyId, unloader, startTime } = pendingWallyDuplicate;
+            doors[doorNum] = { status: 'active', start: startTime, id: wallyId, account: "", type: 'Wally', unloader: unloader || "Unassigned", isDuplicate: true, unavailable: false, lastCompletionTime: null, cpuOptions: [], assignments: [{ name: unloader||"Unassigned", start: startTime, end: null }] };
+            if(isFirstOnboard) { isFirstOnboard = false; localStorage.setItem('ps9_is_first_onboard', 'false'); }
+            saveDoors(); closeModal('input-modal'); renderDashboard(); updateTabBadges(); showSaveToast(); pendingWallyDuplicate = null;
+        }
+    }
+
+    // --- COMPLETE DOOR ---
+    function confirmCompleteDoor() { if(detailDoor) completeDoor(detailDoor); }
+    function completeDoor(doorNum, force = false) {
+        const d = doors[doorNum];
+        if (!force && (!d.unloader || d.unloader === 'Unassigned')) {
+             closeModal('active-detail-modal');
+             byId('req-unloader-select').value = "";
+             byId('unloader-required-modal').style.display = 'flex';
+             return;
+        }
+        const now = new Date();
+        const mins = now.getMinutes();
+        const { shiftStart } = getShiftTimeWindows();
+        const startOffset = attributionConfig.minutes;
+        const endOffset = startOffset + 10;
+        const shouldCheck = !config.disableWindow && (now - shiftStart > 3600000) && attributionConfig.enabled && 
+                            mins >= startOffset && mins < endOffset || config.simulateWindow;
+        if (shouldCheck) {
+            byId('attribution-window-text').textContent = `${startOffset.toString().padStart(2,'0')}-${endOffset.toString().padStart(2,'0')}`;
+            pendingCompletion = { doorNum, time: now.getTime() };
+            byId('hour-attribution-modal').style.display = 'flex';
+        } else finalizeCompletion(doorNum, now.getTime(), 0);
+    }
+    function checkReqCustom(s) { byId('req-custom-unloader').style.display = s.value === 'Custom' ? 'block' : 'none'; }
+    function saveRequiredUnloader() {
+        let unl = byId('req-unloader-select').value;
+        if(unl === 'Custom') unl = byId('req-custom-unloader').value.trim();
+        if(!unl) return alert("Please select an unloader");
+        if(unl !== "Unassigned" && unl === byId('req-custom-unloader').value.trim()) {
+            unl = unl.toLowerCase().split(' ').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ');
+        }
+        const d = doors[detailDoor];
+        d.unloader = unl;
+        if(d.assignments.length > 0) {
+            if (d.assignments[d.assignments.length-1].name === 'Unassigned') {
+                 d.assignments[d.assignments.length-1].name = unl;
+            } else {
+                 d.assignments.push({ name: unl, start: Date.now(), end: null });
+            }
+        } else {
+             d.assignments = [{ name: unl, start: d.start, end: null }];
+        }
+        saveDoors();
+        closeModal('unloader-required-modal');
+        completeDoor(detailDoor, true);
+    }
+    function resolveAttribution(choice) {
+        closeModal('hour-attribution-modal');
+        if (!pendingCompletion) return;
+        let offset = 0;
+        if (choice === 'Previous') offset = (new Date(pendingCompletion.time).getMinutes() + 1) * 60000;
+        finalizeCompletion(pendingCompletion.doorNum, pendingCompletion.time, offset);
+        pendingCompletion = null;
+    }
+
+    // --- UPDATED moveDoor function with countAsCompletion parameter ---
+    function moveDoor(destination, countAsCompletion = false) {
+        const d = doors[detailDoor];
+        const now = Date.now();
+        if(d.assignments && d.assignments.length > 0) {
+            const last = d.assignments[d.assignments.length - 1];
+            if(!last.end) last.end = now;
+        }
+        const status = (destination === 'Incomplete') ? 'incomplete' : 'moved';
+        const logEntry = {
+            door: detailDoor, id: d.id, account: d.account||"", type: d.type, unloader: d.unloader,
+            start: d.start, end: now, dateKey: dateKeyFromTs(now), duration: now - d.start,
+            durationMinutes: Math.round((now - d.start)/60000), statOffset: 0,
+            logId: d.logId,
+            duplicate: false,
+            completionHour: countAsCompletion ? getCompletionHour(now) : '', // blank if not counted
+            cpuOptions: d.cpuOptions || [],
+            status: status,
+            moveDest: destination
+        };
+        historyLog.unshift(logEntry);
+        sendToWebhook(logEntry, 'end');
+        saveHistory();
+        doors[detailDoor] = { status: 'empty', start: 0, id: '', type: '', unloader: '', unavailable: false, lastCompletionTime: now, assignments: [] };
+        saveDoors(); renderDashboard(); renderActiveTab(); updateTabBadges(); showSaveToast();
+    }
+
+    function finalizeCompletion(doorNum, endTime, offset) {
+        const d = doors[doorNum];
+        let start = d.start;
+        if(d.assignments && d.assignments.length > 0) {
+            const last = d.assignments[d.assignments.length - 1];
+            if(!last.end) last.end = endTime;
+        }
+        const durationMap = {};
+        const realAssignments = (d.assignments || []).filter(a => a.name && a.name !== 'Unassigned');
+        if (d.assignments && d.assignments.length > 0) {
+            d.assignments.forEach(a => {
+                if (a.name === 'Unassigned') return;
+                const dur = (a.end || endTime) - a.start;
+                if (!durationMap[a.name]) durationMap[a.name] = 0;
+                durationMap[a.name] += dur;
+            });
+        } else {
+            if(d.unloader !== 'Unassigned') durationMap[d.unloader] = endTime - start;
+        }
+        let primaryUnloader = d.unloader;
+        let maxDur = -1;
+        Object.keys(durationMap).forEach(name => {
+            if (durationMap[name] > maxDur) {
+                maxDur = durationMap[name];
+                primaryUnloader = name;
+            }
+        });
+        if (!primaryUnloader || primaryUnloader === 'Unassigned') primaryUnloader = "Unknown";
+        const assistants = Object.keys(durationMap).filter(n => n !== primaryUnloader);
+        if(config.randomHistory && demoActive) {
+             const {shiftStart} = getShiftTimeWindows();
+             endTime = Math.floor(Math.random()*(Date.now()-shiftStart.getTime()) + shiftStart.getTime());
+             start = endTime - (Math.floor(Math.random()*30+15)*60000); offset=0;
+        }
+        if (d.type === 'CPU' && d.account && !savedAccounts.includes(d.account.trim().toUpperCase())) {
+            savedAccounts.push(d.account.trim().toUpperCase()); saveAccounts(); updateAccountDatalist();
+        }
+        const logEntry = {
+            door: doorNum, id: d.id, account: d.account||"", type: d.type, unloader: primaryUnloader,
+            assistants: assistants,
+            start: start, end: endTime, dateKey: dateKeyFromTs(endTime), duration: endTime - start,
+            durationMinutes: Math.round((endTime - start)/60000), statOffset: offset,
+            logId: d.logId,
+            duplicate: d.isDuplicate||false,
+            completionHour: getCompletionHour(endTime - offset),
+            cpuOptions: d.cpuOptions || [],
+            status: 'completed'
+        };
+        if (d.type === 'Wally' && navigator.share && !demoActive) {
+             navigator.share({ text: `Door ${doorNum} done` }).catch(e=>{});
+        }
+        closeModal('active-detail-modal');
+        historyLog.unshift(logEntry);
+        sendToWebhook(logEntry, 'end');
+        saveHistory();
+        doors[doorNum] = { status: 'empty', start: 0, id: '', type: '', unloader: '', unavailable: false, lastCompletionTime: endTime, assignments: [] };
+        saveDoors(); renderDashboard(); renderActiveTab(); updateTabBadges(); showSaveToast();
+        if (demoActive && config.replenish) setTimeout(() => { if (doors[doorNum].status === 'empty') randomArrival(doorNum); }, 7000);
+    }
+
+    // --- STATISTICS (updated to only count entries with completionHour) ---
+    function updateStats() {
+        const { thisHourStart, thisHourEnd, lastHourStart, lastHourEnd } = getShiftTimeWindows();
+        let tw=0, tc=0, hw=0, lhw=0;
+        historyLog.forEach(l => {
+            // Only count if completionHour is present (truthy)
+            if (!l.completionHour) return; 
+            const t = l.end - (l.statOffset || 0); 
+            if (l.type === 'Wally') {
+                tw++;
+                if (t >= thisHourStart.getTime() && t < thisHourEnd.getTime()) hw++;
+                else if (t >= lastHourStart.getTime() && t < lastHourEnd.getTime()) lhw++;
+            } else if (l.type === 'CPU') {
+                tc++;
+                // Hourly counts are only for Wallies, so no change
+            }
+        });
+        byId('stat-total-wally').innerText = tw; byId('stat-total-cpu').innerText = tc;
+        byId('stat-hour-wally').innerText = hw; byId('stat-last-wally').innerText = lhw;
+    }
+
+    function calculateAndRenderStats() {
+         const stats = {};
+         historyLog.forEach(l => { 
+             if (!l.completionHour) return; // only count if completionHour present
+             const n = l.unloader; 
+             if(!stats[n]) stats[n]={w:0,c:0,t:0}; 
+             if(l.type==='Wally') stats[n].w++; 
+             else if(l.type==='CPU') stats[n].c++; 
+             stats[n].t++; 
+         });
+         const tb = byId('unloader-stats-body'); tb.innerHTML='';
+         Object.entries(stats).sort((a,b)=>b[1].t-a[1].t).forEach(([n,d])=>tb.innerHTML+=`<tr><td>${n}</td><td style="text-align:center">${d.w}</td><td style="text-align:center">${d.c}</td><td style="text-align:right">${d.t}</td></tr>`);
+    }
+    function calculateAndRenderHourlyStats() {
+        const { shiftStart } = getShiftTimeWindows(); const h = {};
+        historyLog.forEach(l => { 
+            if (!l.completionHour) return; // exclude if no completionHour
+            const idx = Math.floor((l.end-(l.statOffset||0)-shiftStart.getTime())/3600000)+1; 
+            if(!h[idx]) h[idx]=0; 
+            h[idx]++; 
+        });
+        const tb = byId('hourly-stats-body'); tb.innerHTML='';
+        Object.keys(h).sort((a,b)=>a-b).forEach(k=>tb.innerHTML+=`<tr><td>${getHourText(parseInt(k))}</td><td style="text-align:center">${h[k]}</td></tr>`);
+    }
+
+    // --- RENDER DASHBOARD ---
+    function renderDashboard() {
+        console.log('renderDashboard called, doors:', doors);
+        updateStats();
+        const openGrid = byId('open-bays-grid'), activeGrid = byId('active-trailers-grid');
+        openGrid.innerHTML = ''; activeGrid.innerHTML = '';
+        let hasOpen = false, hasActive = false;
+
+        for(let i=DOORS_START; i<=DOORS_END; i++) {
+            const d = doors[i];
+            if (!d) {
+                console.warn(`Door ${i} missing in doors object, creating default`);
+                doors[i] = { status: 'empty', start: 0, id: '', type: '', unloader: '', unavailable: false, lastCompletionTime: null, assignments: [] };
+            }
+            const btn = document.createElement('div');
+            btn.className = `bay-circle bay-${i} ${d.unavailable ? 'unavailable' : ''}`;
+            btn.dataset.door = i; 
+
+            if (d.status === 'active') {
+                hasActive = true;
+                btn.innerHTML = `${i}<div class="type-badge ${d.type==='Wally'?'badge-w':'badge-c'}">${d.type==='Wally'?'W':'C'}</div>`;
+                if (d.start > 0) {
+                     const min = (Date.now() - d.start) / 60000;
+                     if (min > 60) btn.classList.add('status-crit');
+                     else if (min > 45) btn.classList.add('status-warn');
+                     else btn.classList.add('status-ok');
+                }
+                activeGrid.appendChild(btn);
+            } else {
+                hasOpen = true;
+                btn.innerText = i;
+                if (d.lastCompletionTime && d.status === 'empty' && !d.unavailable) {
+                    const idle = Math.floor((Date.now() - d.lastCompletionTime) / 60000);
+                    btn.innerHTML += `<div class="bay-timer">${idle}m</div>`;
+                }
+                openGrid.appendChild(btn);
+            }
+        }
+        if(!hasOpen) openGrid.innerHTML = '<div class="empty-state-text">All bays full.</div>';
+        if(!hasActive) activeGrid.innerHTML = '<div class="empty-state-text">No active trailers.</div>';
+    }
+
+    // --- RENDER ACTIVE TAB ---
+    function renderActiveTab() {
+        const list = byId('active-tab-list'); list.innerHTML = '';
+        let hasActive = false;
+        for(let i=DOORS_START; i<=DOORS_END; i++) {
+            if(doors[i].status === 'active') {
+                hasActive = true;
+                const d = doors[i], start = new Date(d.start).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                const noteIcon = d.type === 'Wally' ? 
+                    `<button class="note-icon-btn ${wallyNotes[d.id] ? 'has-note' : ''}" onclick="openNoteModal('${d.id}')"><i class="ph ph-note${wallyNotes[d.id] ? '-pencil' : ''}"></i></button>` : '';
+                list.innerHTML += `<div class="active-card"><div class="active-card-info"><div class="active-card-header"><span class="door-pill">Door ${i}</span><span class="active-card-title">${d.type} ${d.id}${noteIcon}</span></div><div class="active-card-details">${d.unloader}${d.account ? ' | '+d.account : ''}</div><div class="active-card-time">Started: ${start}</div></div><div class="active-card-actions"><button class="icon-btn" onclick="openEditActiveModal(${i})"><i class="ph ph-pencil-simple"></i></button><button class="btn-primary" style="width:auto; padding:10px 16px; margin:0;" onclick="completeDoor(${i})">Finish</button></div></div>`;
+            }
+        }
+        if(!hasActive) list.innerHTML = '<div style="text-align:center; color:#999; margin-top:40px;">No active trailers</div>';
+    }
+
+    // --- ACTIVE DETAILS ---
+    function openActiveDetails(doorNum) {
+        detailDoor = doorNum; const d = doors[doorNum];
+        byId('detail-door-num').innerText = doorNum;
+        byId('detail-type').innerText = d.type;
+        byId('detail-id').innerText = d.id;
+        byId('detail-unloader').innerText = d.unloader || "Unassigned";
+        byId('detail-time').innerText = new Date(d.start).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        byId('detail-duration').innerText = Math.floor((Date.now() - d.start)/60000) + "m";
+        const ar = byId('row-account');
+        if (d.account) { ar.style.display = 'flex'; byId('detail-account').innerText = d.account; } else ar.style.display = 'none';
+        const rowOpts = byId('row-cpu-opts');
+        if (d.type === 'CPU' && d.cpuOptions && d.cpuOptions.length > 0) {
+            rowOpts.style.display = 'flex';
+            byId('detail-cpu-opts').innerText = d.cpuOptions.join(', ');
+        } else {
+            rowOpts.style.display = 'none';
+        }
+        byId('active-detail-modal').style.display = 'flex';
+    }
+
+    // --- EDIT ACTIVE ---
+    function openEditActiveModalFromDetail() { closeModal('active-detail-modal'); openEditActiveModal(detailDoor); }
+    function openEditActiveModal(doorNum) {
+        const d = doors[doorNum];
+        byId('edit-active-original-door').value = doorNum;
+        byId('edit-active-id').value = d.id;
+        byId('edit-active-account').value = d.account || "";
+        const us = byId('edit-active-unloader'); us.value = d.unloader || "";
+        if(us.selectedIndex === -1) { us.value = 'Custom'; checkActiveCustomUnloader(us); byId('edit-active-custom-unloader').value = d.unloader; }
+        else checkActiveCustomUnloader(us);
+        setEditActiveType(d.type);
+        const opts = d.cpuOptions || [];
+        byId('edit-active-chk-hott').checked = opts.includes('HOTT');
+        byId('edit-active-chk-recycle').checked = opts.includes('RECYCLE');
+        byId('edit-active-chk-gv').checked = opts.includes('GV');
+        const startDate = new Date(d.start);
+        byId('edit-active-start-time').value = `${startDate.getHours().toString().padStart(2,'0')}:${startDate.getMinutes().toString().padStart(2,'0')}`;
+        const sel = byId('edit-active-door-select'); sel.innerHTML = '';
+        for(let i=DOORS_START; i<=DOORS_END; i++) {
+            if(i===doorNum || doors[i].status==='empty') {
+                const opt = document.createElement('option'); opt.value = i; opt.innerText = `Bay ${i}`; if(i===doorNum) opt.selected=true; sel.appendChild(opt);
+            }
+        }
+        byId('edit-active-modal').style.display = 'flex';
+    }
+    function setEditActiveType(t) { 
+        byId('active-opt-wally').classList.toggle('selected', t==='Wally'); 
+        byId('active-opt-cpu').classList.toggle('selected', t==='CPU'); 
+        byId('edit-active-modal').dataset.type = t; 
+        const optsContainer = byId('edit-active-options-container');
+        if(optsContainer) optsContainer.style.display = (t === 'CPU') ? 'block' : 'none';
+        const idLabel = byId('edit-id-label');
+        if (idLabel) {
+            idLabel.innerText = t === 'Wally' ? 'Wally Number' : 'Trailer Number';
+        }
+    }
+    function checkActiveCustomUnloader(s) { 
+        byId('edit-active-custom-unloader').style.display = s.value === 'Custom' ? 'block' : 'none'; 
+    }
+    function saveActiveEdit() {
+        const orig = parseInt(byId('edit-active-original-door').value), dest = parseInt(byId('edit-active-door-select').value);
+        let unl = byId('edit-active-unloader').value;
+        if(unl === 'Custom') unl = byId('edit-active-custom-unloader').value.trim();
+        if (!unl) unl = "Unassigned";
+        else if (unl !== "Unassigned" && unl === byId('edit-active-custom-unloader').value.trim()) unl = unl.toLowerCase().split(' ').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ');
+        const type = byId('edit-active-modal').dataset.type;
+        let cpuOpts = [];
+        if(type === 'CPU') {
+            if(byId('edit-active-chk-hott').checked) cpuOpts.push('HOTT');
+            if(byId('edit-active-chk-recycle').checked) cpuOpts.push('RECYCLE');
+            if(byId('edit-active-chk-gv').checked) cpuOpts.push('GV');
+        }
+        const startTimeInput = byId('edit-active-start-time').value;
+        let newStart = doors[orig].start;
+        if (startTimeInput) {
+            const now = new Date(doors[orig].start);
+            const [h, m] = startTimeInput.split(':').map(Number);
+            now.setHours(h, m, 0, 0);
+            newStart = now.getTime();
+        }
+        const d = doors[orig];
+        const now = Date.now();
+        let newAssignments = [...(d.assignments || [])];
+        if (newStart !== doors[orig].start && newAssignments.length > 0) {
+            newAssignments[0].start = newStart;
+        }
+        if (d.unloader !== unl) {
+            if (newAssignments.length > 0) {
+                newAssignments[newAssignments.length - 1].end = now;
+            }
+            newAssignments.push({ name: unl, start: now, end: null });
+        }
+        const data = { 
+            status: 'active', start: newStart, id: byId('edit-active-id').value.trim().toUpperCase(), 
+            account: byId('edit-active-account').value.trim().toUpperCase(), type: type, unloader: unl, 
+            unavailable: false, lastCompletionTime: doors[orig].lastCompletionTime, cpuOptions: cpuOpts,
+            assignments: newAssignments,
+            logId: d.logId
+        };
+        if(dest !== orig) { doors[dest] = data; doors[orig] = {status:'empty', start:0, id:'', type:'', unloader:'', unavailable: false, lastCompletionTime: doors[orig].lastCompletionTime, assignments:[]}; }
+        else doors[orig] = data;
+        saveDoors(); closeModal('edit-active-modal'); renderActiveTab(); renderDashboard(); updateTabBadges(); showSaveToast();
+    }
+
+    // --- ARRIVAL MODAL ---
+    function checkCustomUnloader(s) { byId('input-custom-unloader').style.display = s.value === 'Custom' ? 'block' : 'none'; }
+    function confirmArrival() {
+        const idVal = currentType === 'Wally' ? byId('input-wally-id').value : byId('input-trailer-id').value;
+        if(!idVal) return alert("Missing ID");
+        const fId = idVal.toUpperCase(), fAcc = (currentType==='CPU'?byId('input-account-id').value:'').toUpperCase();
+        let unl = byId('select-unloader').value;
+        if(unl === 'Custom') { unl = byId('input-custom-unloader').value; if(unl) unl = unl.toLowerCase().split(' ').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' '); }
+        if (currentType === 'Wally') {
+            const dup = checkDuplicateWally(fId);
+            if (dup) {
+                pendingWallyDuplicate = { doorNum: currentDoor, wallyId: fId, unloader: unl||"Unassigned", startTime: Date.now() };
+                byId('dup-wally-id').textContent = fId; byId('dup-door').textContent = `Door ${dup.door}`;
+                byId('dup-time').textContent = new Date(dup.end).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); byId('dup-unloader').textContent = dup.unloader;
+                byId('duplicate-wally-modal').style.display = 'flex'; 
+                return;
+            }
+        }
+        let cpuOpts = [];
+        if (currentType === 'CPU') {
+            if(byId('chk-hott').checked) cpuOpts.push('HOTT');
+            if(byId('chk-recycle').checked) cpuOpts.push('RECYCLE');
+            if(byId('chk-gv').checked) cpuOpts.push('GV');
+        }
+        let startTime = Date.now(), cTime = byId('input-onboard-time').value;
+        if (cTime) {
+            const now = new Date(), [h, m] = cTime.split(':').map(Number);
+            const d = new Date(now); d.setHours(h, m, 0, 0);
+            if (d > now) d.setDate(d.getDate() - 1); startTime = d.getTime();
+        }
+        const logId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+        doors[currentDoor] = { 
+            status: 'active', start: startTime, id: fId, account: fAcc, type: currentType, 
+            unloader: unl||"Unassigned", isDuplicate: false, unavailable: false, 
+            lastCompletionTime: null, cpuOptions: cpuOpts,
+            assignments: [{ name: unl||"Unassigned", start: startTime, end: null }],
+            logId: logId
+        };
+        const startEntry = {
+            door: currentDoor, id: fId, account: fAcc, type: currentType, unloader: unl||"Unassigned",
+            assistants: [], start: startTime, end: null, dateKey: dateKeyFromTs(startTime),
+            durationMinutes: null, statOffset: 0, logId: logId, duplicate: false, completionHour: null,
+            cpuOptions: cpuOpts, status: 'active', manual: false
+        };
+        sendToWebhook(startEntry, 'start');
+        if(isFirstOnboard) { isFirstOnboard = false; localStorage.setItem('ps9_is_first_onboard', 'false'); }
+        saveDoors(); closeModal('input-modal'); renderDashboard(); updateTabBadges(); showSaveToast();
+    }
+    function openArrivalModal(specificDoor = null) {
+        if (specificDoor) currentDoor = specificDoor;
+        else {
+             currentDoor = null;
+             for(let i=DOORS_START; i<=DOORS_END; i++) if(doors[i].status==='empty'&&!doors[i].unavailable) { currentDoor=i; break; }
+        }
+        if(!currentDoor) return alert("No bays available!");
+        byId('modal-door-num').innerText = currentDoor;
+        byId('input-wally-id').value = ''; byId('input-trailer-id').value = ''; byId('input-account-id').value = '';
+        byId('select-unloader').value = ""; byId('input-custom-unloader').style.display = 'none';
+        byId('chk-hott').checked = false;
+        byId('chk-recycle').checked = false;
+        byId('chk-gv').checked = false;
+        const tIn = byId('input-onboard-time');
+        if (historyLog.length === 0) {
+            const shiftStart = getShiftStartTime();
+            tIn.value = shiftStart;
+        } else {
+            const now = new Date();
+            tIn.value = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+        }
+        const form = byId('onboard-form-container'), msg = byId('unavailable-msg'), btn = byId('btn-toggle-availability');
+        if (doors[currentDoor].unavailable) { form.style.display='none'; msg.style.display='block'; btn.innerText="Mark Available"; btn.style.background="#34c759"; btn.style.color="white"; btn.style.border="none"; }
+        else { form.style.display='block'; msg.style.display='none'; btn.innerText="Mark Unavailable"; btn.style.background="white"; btn.style.color="#ff3b30"; btn.style.border="2px solid #e5e5ea"; }
+        setType('Wally'); byId('input-modal').style.display = 'flex';
+        if (!doors[currentDoor].unavailable) setTimeout(() => { const f=byId('input-wally-id'); if(f) f.focus(); }, 100);
+        byId('onboarding-note-badge').style.display = 'none';
+    }
+    function handleAvailabilityToggle() { doors[currentDoor].unavailable = !doors[currentDoor].unavailable; saveDoors(); renderDashboard(); showSaveToast(); closeModal('input-modal'); }
+    function setType(t) {
+        currentType = t;
+        byId('opt-wally').classList.toggle('selected', t==='Wally'); 
+        byId('opt-cpu').classList.toggle('selected', t==='CPU'); 
+        byId('wally-inputs').style.display = t==='Wally'?'block':'none'; 
+        byId('cpu-inputs').style.display = t==='CPU'?'block':'none';
+    }
+
+    // --- VIEW STATS/LOGS ---
+    function viewStatLogs(type) {
+        closeModal('input-modal'); closeModal('active-detail-modal');
+        activeLogFilter = { door: 'All', type: 'All', timeRange: 'All', unloader: 'All', search: '', date: 'All' };
+        if(type==='Wally'||type==='CPU') activeLogFilter.type = type;
+        else if(type==='Hour-0') { activeLogFilter.timeRange = 'ThisHour'; activeLogFilter.type = 'Wally'; }
+        else if(type==='Hour-1') { activeLogFilter.timeRange = 'LastHour'; activeLogFilter.type = 'Wally'; }
+        switchTab('logs');
+    }
+    function viewDoorLogs(n) { closeModal('input-modal'); closeModal('active-detail-modal'); setLogFilter(n); switchTab('logs'); }
+    function openFilterModal() {
+        const g = byId('filter-grid'); g.innerHTML = `<div class="filter-btn ${currentLogFilter==='All'?'active':''}" onclick="setLogFilter('All')">All</div>`;
+        for(let i=DOORS_START; i<=DOORS_END; i++) g.innerHTML += `<div class="filter-btn ${currentLogFilter==i?'active':''}" onclick="setLogFilter(${i})">Door ${i}</div>`;
+        byId('filter-unloader-select').value = activeLogFilter.unloader;
+        byId('filter-date-input').value = activeLogFilter.date !== 'All' ? activeLogFilter.date : '';
+        byId('filter-modal').style.display='flex';
+    }
+    function applyFilter() {
+        activeLogFilter.unloader = byId('filter-unloader-select').value;
+        const d = byId('filter-date-input').value; activeLogFilter.date = d || 'All';
+        closeModal('filter-modal'); renderLogs();
+    }
+    function clearLogFilter() { currentLogFilter='All'; activeLogFilter={door:'All',unloader:'All',type:'All',timeRange:'All',search:'',date:'All'}; byId('log-search').value=''; renderLogs(); }
+    function setLogFilter(v) { currentLogFilter = v; activeLogFilter.door = v; renderLogs(); }
+    function toggleStats(sec) {
+        const c = byId(sec==='unloader'?'stats-content':'hourly-content'), i = byId(sec==='unloader'?'stats-caret':'hourly-caret');
+        const show = c.style.display!=='block'; c.style.display=show?'block':'none'; i.className=show?'ph ph-caret-up':'ph ph-caret-down';
+        if(show) sec==='unloader' ? calculateAndRenderStats() : calculateAndRenderHourlyStats();
+    }
+
+    // --- RENDER LOGS ---
+    let currentVisibleLogs = 50;
+    let filteredLogsCache = []; 
+    function renderLogs() {
+        const list = byId('logs-list'); if(!list) return;
+        const filterDisplay = byId('active-filter-display'), filterText = byId('filter-text-display');
+        const sVal = byId('log-search').value.trim().toUpperCase(); activeLogFilter.search = sVal;
+        const { thisHourStart, thisHourEnd, lastHourStart, lastHourEnd } = getShiftTimeWindows();
+        filteredLogsCache = historyLog.filter(l => {
+            if (activeLogFilter.date !== 'All' && l.dateKey !== activeLogFilter.date) return false;
+            if (activeLogFilter.door !== 'All' && l.door != activeLogFilter.door) return false;
+            if (activeLogFilter.unloader !== 'All' && l.unloader !== activeLogFilter.unloader) return false;
+            if (activeLogFilter.type !== 'All' && l.type !== activeLogFilter.type) return false;
+            if (activeLogFilter.search) {
+                const note = wallyNotes[l.id] || '';
+                if (!l.id.includes(sVal) && !l.account.includes(sVal) && String(l.door)!=sVal && !note.toUpperCase().includes(sVal)) return false;
+            }
+            if (activeLogFilter.timeRange !== 'All') {
+                const t = l.end - (l.statOffset || 0);
+                if (activeLogFilter.timeRange === 'ThisHour' && (t < thisHourStart.getTime() || t >= thisHourEnd.getTime())) return false;
+                if (activeLogFilter.timeRange === 'LastHour' && (t < lastHourStart.getTime() || t >= lastHourEnd.getTime())) return false;
+            }
+            return true;
+        });
+        const isFiltering = Object.values(activeLogFilter).some(v => v !== 'All' && v !== '');
+        if (filterDisplay) {
+            filterDisplay.style.display = isFiltering ? 'flex' : 'none';
+            if (isFiltering) {
+                const p = [];
+                if(activeLogFilter.date!=='All') p.push(activeLogFilter.date);
+                if(activeLogFilter.door!=='All') p.push("Door "+activeLogFilter.door);
+                if(activeLogFilter.unloader!=='All') p.push(activeLogFilter.unloader);
+                if(activeLogFilter.type!=='All') p.push(activeLogFilter.type);
+                if(activeLogFilter.search) p.push(`"${activeLogFilter.search}"`);
+                filterText.innerText = p.join(' + ');
+            }
+        }
+        list.innerHTML = '';
+        currentVisibleLogs = 50; 
+        renderLogBatch();
+        if(statsVisible) calculateAndRenderStats();
+        if(hourlyVisible) calculateAndRenderHourlyStats();
+    }
+    function renderLogBatch() {
+        const list = byId('logs-list');
+        const loadMore = byId('logs-load-more');
+        if (filteredLogsCache.length === 0) {
+            list.innerHTML = '<div style="text-align:center; color:#999; margin-top:20px;">No logs found.</div>';
+            loadMore.style.display = 'none';
+            return;
+        }
+        const frag = document.createDocumentFragment();
+        const batch = filteredLogsCache.slice(list.children.length, currentVisibleLogs);
+        batch.forEach(l => {
+            const card = document.createElement('div'); card.className = 'log-card';
+            const dur = Math.round(l.duration/60000);
+            let typeStr = l.type + (l.duplicate ? ' DUP' : '');
+            if (l.type === 'CPU' && l.cpuOptions && l.cpuOptions.length > 0) {
+                typeStr += ` (${l.cpuOptions.join(', ')})`;
+            }
+            let statusPill = '';
+            if (l.status === 'moved') {
+                statusPill = `<span class="log-tag tag-gray"><i class="ph ph-arrows-left-right"></i> ${l.moveDest}</span>`;
+            } else if (l.status === 'incomplete') {
+                statusPill = `<span class="log-tag tag-red"><i class="ph ph-x-circle"></i> Incomplete</span>`;
+            } else {
+                statusPill = `<span class="log-tag tag-black">${l.type}</span>`;
+                if(l.duplicate) statusPill += ` <span class="log-tag tag-red">DUP</span>`;
+                if (l.type === 'CPU' && l.cpuOptions && l.cpuOptions.length > 0) {
+                     l.cpuOptions.forEach(opt => { statusPill += ` <span class="log-tag tag-gray">${opt}</span>`; });
+                }
+            }
+            statusPill += `<span class="log-tag" style="background:#fff; border:1px solid #e5e5ea;">${l.completionHour ? getHourText(l.completionHour) : '—'}</span>`;
+            let userStr = l.unloader;
+            const timeRange = `${new Date(l.start).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} - ${new Date(l.end).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
+            if (l.manual) {
+                statusPill += ` <span class="log-tag tag-gray"><i class="ph ph-pencil-simple-line"></i> Manual</span>`;
+            }
+            const noteIcon = l.type === 'Wally' ? 
+                `<button class="note-icon-btn ${wallyNotes[l.id] ? 'has-note' : ''}" onclick="openNoteModal('${l.id}')"><i class="ph ph-note${wallyNotes[l.id] ? '-pencil' : ''}"></i></button>` : '';
+            card.innerHTML = `
+                <div class="log-info">
+                    <div class="log-header-row">
+                        <span class="log-door-pill" onclick="viewDoorLogs(${l.door})">Door ${l.door}</span>
+                        <div class="log-title">${l.id}${noteIcon}<span class="log-account">${l.account ? l.account : ''}</span></div>
+                    </div>
+                    <div class="log-tags-row">${statusPill}</div>
+                    <div class="log-footer-row">
+                        <div class="log-footer-item"><i class="ph ph-user"></i> ${userStr}</div>
+                        <div class="log-footer-item"><i class="ph ph-clock"></i> ${timeRange}</div>
+                    </div>
+                </div>
+                <div class="log-right-col">
+                    <div style="text-align:right;">
+                        <div class="log-duration">${dur}<span style="font-size:14px; font-weight:700;">m</span></div>
+                        <div class="log-duration-label">Duration</div>
+                    </div>
+                    <div class="log-actions-row">
+                         ${(Date.now()-l.end < 120000 && !demoActive && l.status==='completed') ? `<button class="log-mini-btn" onclick="revertLog(${historyLog.indexOf(l)})"><i class="ph ph-arrow-u-up-left"></i></button>` : ''}
+                        <button class="log-mini-btn" onclick="openEditLogModal(${historyLog.indexOf(l)})"><i class="ph ph-pencil-simple"></i></button>
+                    </div>
+                </div>
+            `;
+            frag.appendChild(card);
+        });
+        list.appendChild(frag);
+        loadMore.style.display = (currentVisibleLogs < filteredLogsCache.length) ? 'block' : 'none';
+    }
+    function loadMoreLogs() {
+        currentVisibleLogs += 50;
+        renderLogBatch();
+    }
+    function revertLog(i) {
+        const l = historyLog[i];
+        if(!l || (Date.now()-l.end>120000 && !demoActive) || doors[l.door].status!=='empty') return alert("Cannot revert");
+        doors[l.door] = { 
+            status:'active', start:l.start, id:l.id, account:l.account, type:l.type, 
+            unloader:l.unloader, unavailable:false, lastCompletionTime:null, 
+            cpuOptions: l.cpuOptions || [], assignments: [{name: l.unloader, start: l.start, end: null}],
+            logId: l.logId
+        };
+        historyLog.splice(i, 1); saveDoors(); saveHistory(); renderDashboard(); renderLogs(); updateTabBadges();
+    }
+
+    // --- MODIFIED: EDIT LOG FUNCTION WITH WEBHOOK AND END TIME ADJUSTMENT ---
+    function openEditLogModal(i) {
+        const l = historyLog[i]; 
+        byId('edit-log-index').value = i; 
+        byId('edit-input-id').value = l.id;
+        const sel = byId('edit-select-unloader'); 
+        sel.innerHTML='<option value="">Unassigned</option>';
+        teamNamesSorted.forEach(n => { const o=document.createElement('option'); o.value=n; o.innerText=n; sel.appendChild(o); });
+        sel.value = l.unloader;
+        setEditType(l.type);
+        const opts = l.cpuOptions || [];
+        byId('edit-log-chk-hott').checked = opts.includes('HOTT');
+        byId('edit-log-chk-recycle').checked = opts.includes('RECYCLE');
+        byId('edit-log-chk-gv').checked = opts.includes('GV');
+        byId('edit-completion-hour').value = l.completionHour;
+        byId('edit-log-modal').style.display='flex';
+    }
+
+    function confirmLogEdit() {
+        const i = parseInt(byId('edit-log-index').value);
+        const id = byId('edit-input-id').value.toUpperCase();
+        const unl = byId('edit-select-unloader').value;
+        const type = byId('edit-log-modal').dataset.type;
+        let cpuOpts = [];
+        if(type === 'CPU') {
+            if(byId('edit-log-chk-hott').checked) cpuOpts.push('HOTT');
+            if(byId('edit-log-chk-recycle').checked) cpuOpts.push('RECYCLE');
+            if(byId('edit-log-chk-gv').checked) cpuOpts.push('GV');
+        }
+
+        const newHour = parseInt(byId('edit-completion-hour').value);
+        const { shiftStart } = getShiftTimeWindows();
+
+        // Calculate new end time: 5 minutes before the end of the selected hour
+        // End of hour N = shiftStart + (N * 3600000)
+        const newEnd = shiftStart.getTime() + (newHour * 3600000) - 5 * 60000;
+        // Keep the same start time
+        const start = historyLog[i].start;
+
+        // Update log entry
+        historyLog[i].id = id;
+        historyLog[i].unloader = unl;
+        historyLog[i].type = type;
+        historyLog[i].cpuOptions = cpuOpts;
+        historyLog[i].end = newEnd;
+        historyLog[i].duration = newEnd - start;
+        historyLog[i].durationMinutes = Math.round(historyLog[i].duration / 60000);
+        historyLog[i].completionHour = newHour;
+        historyLog[i].dateKey = dateKeyFromTs(newEnd);
+        historyLog[i].statOffset = 0; // Reset offset since we set explicit end
+
+        saveHistory();
+
+        // Send update to webhook
+        sendToWebhook(historyLog[i], 'end');
+
+        closeModal('edit-log-modal');
+        renderLogs();
+        renderDashboard(); // Update stats
+        showSaveToast();
+    }
+
+    // --- EXPORT ---
+    function openExportModal() { byId('export-modal').style.display = 'flex'; }
+    function exportLogsCSV() {
+        closeModal('export-modal');
+        let csv = "Type,ID,Account,Door,Unloader,Duration(mins),StartTime,EndTime,StartHour,EndHour,Duplicate,Hour,Options,Status,Manual,MoveDest\n";
+        historyLog.forEach(l => {
+            const opts = (l.cpuOptions || []).join(';');
+            csv += `${l.type},${l.id},${l.account||''},${l.door},${l.unloader},${Math.round(l.duration/60000)},${new Date(l.start).toLocaleString()},${new Date(l.end).toLocaleString()},${new Date(l.start).getHours()},${new Date(l.end).getHours()},${l.duplicate?'Yes':'No'},${l.completionHour || ''},${opts},${l.status||'completed'},${l.manual?'Yes':'No'},${l.moveDest||''}\n`
+        });
+        const a = document.createElement('a'); a.href=window.URL.createObjectURL(new Blob([csv], {type:'text/csv'})); a.download='wally-logs.csv'; a.click();
+    }
+    function exportLogsPDF() {
+        closeModal('export-modal');
+        if (!window.jspdf) return alert("PDF library loading. Please wait or check connection.");
+        const doc = new window.jspdf.jsPDF(), now = new Date();
+        doc.setFontSize(18); doc.text(`PS9 Wally Tracker Report - ${now.toLocaleDateString()}`, 14, 20);
+        doc.setFontSize(12); doc.text(`Generated: ${now.toLocaleTimeString()}`, 14, 30);
+        const stats={}; historyLog.forEach(l=>{ 
+            if (!l.completionHour) return;
+            const n=l.unloader; if(!stats[n])stats[n]={w:0,c:0,t:0}; if(l.type==='Wally')stats[n].w++; else if(l.type==='CPU')stats[n].c++; stats[n].t++; 
+        });
+        doc.autoTable({ startY: 45, head:[['Name','Wally','CPU','Total']], body:Object.entries(stats).sort((a,b)=>b[1].t-a[1].t).map(([n,d])=>[n,d.w,d.c,d.t]) });
+        const logsBody = historyLog.map(l => {
+             let typeStr = l.type + (l.duplicate?' (DUP)':'');
+             if(l.status === 'moved') typeStr = `MOVED: ${l.moveDest}`;
+             else if(l.status === 'incomplete') typeStr = 'INCOMPLETE';
+             else if(l.type === 'CPU' && l.cpuOptions && l.cpuOptions.length>0) typeStr += `\n${l.cpuOptions.join(',')}`;
+             return [new Date(l.end).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}), l.door, typeStr, l.id, l.unloader, Math.round(l.duration/60000)+"m", l.completionHour ? getHourText(l.completionHour) : '—'];
+        });
+        doc.autoTable({ startY: doc.lastAutoTable.finalY+15, head:[['Time','Door','Type','ID','Unloader','Duration','Hour']], body:logsBody });
+        doc.save(`wally-report-${now.toISOString().split('T')[0]}.pdf`);
+    }
+
+    function setEditType(t) { 
+        byId('edit-opt-wally').classList.toggle('selected', t==='Wally'); 
+        byId('edit-opt-cpu').classList.toggle('selected', t==='CPU'); 
+        byId('edit-log-modal').dataset.type = t; 
+        const c = byId('edit-log-options-container');
+        if(c) c.style.display = (t === 'CPU') ? 'block' : 'none';
+    }
+
+    // --- MOVE MENU OPENER (with console log for debugging) ---
+    function openMoveMenu() {
+        console.log('openMoveMenu called');
+        closeModal('active-detail-modal');
+        byId('move-menu-modal').style.display = 'flex';
+    }
+
+    init();
 </script>
 </body>
 </html>
