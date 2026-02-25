@@ -10,7 +10,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <title>Wally Dashboard</title>
     <style>
-        /* Full styles – same as before, with modal sheet scrolling added */
+        /* Full styles – with increased bottom padding for tab content */
         :root {
             --primary: #000000;
             --bg: #ffffff;
@@ -51,7 +51,8 @@
             overflow-y: auto;
             display: none;
             padding: 0 20px;
-            padding-bottom: calc(var(--tab-height) + var(--safe-bottom) + 20px);
+            /* Increased bottom padding to clear the fixed tab bar */
+            padding-bottom: calc(var(--tab-height) + var(--safe-bottom) + 40px);
             -webkit-overflow-scrolling: touch;
             overscroll-behavior-y: contain;
         }
@@ -407,7 +408,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 4.18</div>
+            <div class="app-version">Version 4.19</div>
         </div>
         <div class="section-title">Sort Statistics</div>
         <div class="stats-grid">
@@ -800,7 +801,7 @@
     let pendingMoveDest = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '4.18';  // Updated
+    const APP_VERSION = '4.19';  // Updated
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Robert W", "Trevon C", "Russell H", "Fonseca J", "Eddie F", "Juan F", "Arce J"];
@@ -827,13 +828,16 @@
 
     // --- CHANGELOG (updated) ---
     const CHANGELOG = `
+v4.19:
+- Fixed scrolling issue: increased bottom padding for all tab content to ensure the fixed tab bar never covers content.
+- All functionality (bays, moves, logs, editing) remains unchanged.
+
 v4.18:
 - Improved modal scrolling: all modal sheets now have max-height: 90vh and overflow-y: auto, ensuring content like the changelog is fully visible.
-- No changes to functionality.
 
 v4.17:
 - When moving a door and selecting "No" (do not count as completion), the CompletionHour field in the sheet is now left blank.
-- These moves are excluded from all statistics (totals, unloader stats, hourly breakdowns).
+- These moves are excluded from all statistics.
 
 v4.16:
 - When editing a log entry, changing the completion hour now automatically adjusts the end time to 5 minutes before the end of that hour.
