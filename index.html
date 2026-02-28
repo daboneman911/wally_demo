@@ -806,8 +806,8 @@
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Robert W", "Trevon C", "Russell H", "Fonseca J", "Eddie F", "Juan F", "Arce J"];
 
-    // *** HARDCODED WEBHOOK URL ***
-    const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbzB3QyyQl2N_kpuM1wO9j6qO9HH5RODDLxhqlo36DHq2N0gYYdFIj7DyZhOp1bqivJ4/exec';
+    // *** UPDATED WEBHOOK URL ***
+    const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbwHWou4V0UH0sMrWSlilGd2UCKUGljpcRCx3qFPVIk0MN4ZNFsqiN1aGimIgEBP-oT7bw/exec';
 
     // --- HELPER FUNCTIONS ---
     const byId = (id) => document.getElementById(id);
@@ -1864,7 +1864,34 @@ v4.7:
         };
         if(dest !== orig) { doors[dest] = data; doors[orig] = {status:'empty', start:0, id:'', type:'', unloader:'', unavailable: false, lastCompletionTime: doors[orig].lastCompletionTime, assignments:[]}; }
         else doors[orig] = data;
-        saveDoors(); closeModal('edit-active-modal'); renderActiveTab(); renderDashboard(); updateTabBadges(); showSaveToast();
+        saveDoors();
+
+        // --- Send update webhook ---
+        const updatePayload = {
+            stage: 'update',
+            door: dest,
+            id: data.id,
+            account: data.account || '',
+            type: data.type,
+            unloader: data.unloader || '',
+            assistants: data.assignments ? data.assignments.map(a => a.name).filter(n => n !== data.unloader) : [],
+            start: data.start,
+            end: null, // still active
+            dateKey: dateKeyFromTs(data.start),
+            durationMinutes: null,
+            statOffset: 0,
+            logId: data.logId,
+            duplicate: data.isDuplicate || false,
+            completionHour: null,
+            cpuOptions: data.cpuOptions || [],
+            status: 'active',
+            manual: false,
+            shiftStart: getShiftStartTime()
+        };
+        sendToWebhook(updatePayload, 'update');
+        // --- End webhook call ---
+
+        closeModal('edit-active-modal'); renderActiveTab(); renderDashboard(); updateTabBadges(); showSaveToast();
     }
 
     // --- ARRIVAL MODAL ---
