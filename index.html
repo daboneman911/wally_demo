@@ -399,7 +399,6 @@
 
 <div class="app-container">
 
-    <!-- DASHBOARD TAB -->
     <div id="tab-dashboard" class="tab-content active">
         <div class="top-actions">
             <button class="action-btn" onclick="openAddUnloaderModal()"><i class="ph ph-user-plus"></i> Add Unloader</button>
@@ -408,7 +407,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 4.24</div>
+            <div class="app-version">Version 4.25</div>
         </div>
         <div class="section-title">Sort Statistics</div>
         <div class="stats-grid">
@@ -424,13 +423,11 @@
         <div style="height: 100px;"></div>
     </div>
 
-    <!-- ACTIVE TAB -->
     <div id="tab-active" class="tab-content">
         <div class="header-bar"><h1>Active Details</h1></div>
         <div id="active-tab-list" class="active-tab-list"></div>
     </div>
 
-    <!-- LOGS TAB -->
     <div id="tab-logs" class="tab-content">
         <div class="header-bar">
             <h1>Logs</h1>
@@ -453,7 +450,6 @@
         <button id="logs-load-more" class="load-more-btn" style="display:none" onclick="loadMoreLogs()">Load More</button>
     </div>
 
-    <!-- TOOLS TAB -->
     <div id="tab-tools" class="tab-content" style="background:#f2f2f7;">
         <div style="background:white; padding:20px 20px 10px; border-bottom:1px solid #e5e5ea; margin:-20px -20px 20px;">
             <div class="header-bar" style="margin:0;"><h1>Tools</h1></div>
@@ -465,7 +461,6 @@
         </div>
     </div>
 
-    <!-- SETTINGS TAB -->
     <div id="tab-settings" class="tab-content" style="background:#f2f2f7; padding:0;">
         <div style="background:white; padding:20px 20px 10px; border-bottom:1px solid #e5e5ea;">
             <div class="header-bar" style="margin:0;"><h1>Settings</h1></div>
@@ -526,7 +521,6 @@
     </div>
 </div>
 
-<!-- Tab Bar – badges only on Active tab -->
 <nav class="tab-bar">
     <button class="tab-btn active" onclick="switchTab('dashboard', this)" id="tab-btn-dashboard"><i class="ph ph-chart-pie-slice"></i><span>Home</span></button>
     <button class="tab-btn" onclick="switchTab('active', this)" id="tab-btn-active"><i class="ph ph-truck-trailer"></i><span>Active</span><span class="tab-badge" id="badge-active">0</span></button>
@@ -535,8 +529,6 @@
     <button class="tab-btn" onclick="switchTab('settings', this)" id="tab-btn-settings"><i class="ph ph-gear"></i><span>Settings</span></button>
 </nav>
 
-<!-- ==================== ALL MODALS ==================== -->
-<!-- Note Modal -->
 <div class="modal-overlay" id="note-modal">
     <div class="modal-sheet">
         <h2 style="margin: 0 0 10px; font-size:24px; text-align:center;">Notes for <span id="note-wally-id"></span></h2>
@@ -549,7 +541,6 @@
     </div>
 </div>
 
-<!-- Notes Manager Modal -->
 <div class="modal-overlay" id="notes-manager-modal">
     <div class="modal-sheet" style="max-height:80vh; overflow-y:auto;">
         <h2 style="margin: 0 0 20px; font-size:24px; text-align:center;">Notes Manager</h2>
@@ -559,7 +550,6 @@
     </div>
 </div>
 
-<!-- Manual Add Modal -->
 <div class="modal-overlay" id="manual-add-modal">
     <div class="modal-sheet">
         <h2 style="margin: 0 0 20px; font-size:24px; text-align:center;">Manual Add</h2>
@@ -582,7 +572,6 @@
     </div>
 </div>
 
-<!-- Move Count Modal -->
 <div class="modal-overlay z-high" id="move-count-modal">
     <div class="modal-sheet">
         <h2 style="margin: 0 0 10px; font-size:24px; text-align:center;">Move Door</h2>
@@ -593,7 +582,6 @@
     </div>
 </div>
 
-<!-- Changelog Modal -->
 <div class="modal-overlay" id="changelog-modal">
     <div class="modal-sheet">
         <h2 style="margin: 0 0 20px; font-size:24px; text-align:center;">Changelog</h2>
@@ -602,7 +590,6 @@
     </div>
 </div>
 
-<!-- Export Modal -->
 <div class="modal-overlay" id="export-modal">
     <div class="modal-sheet">
         <h2 style="margin: 0 0 20px; font-size:24px; text-align:center;">Export Data</h2>
@@ -612,7 +599,6 @@
     </div>
 </div>
 
-<!-- Hour Attribution Modal -->
 <div class="modal-overlay z-high" id="hour-attribution-modal">
     <div class="modal-sheet">
         <h2 style="margin: 0 0 10px; font-size:24px; text-align:center;">Attribute Completion</h2>
@@ -622,7 +608,6 @@
     </div>
 </div>
 
-<!-- Filter Modal -->
 <div class="modal-overlay" id="filter-modal">
     <div class="modal-sheet">
         <h2 style="margin: 0 0 20px; font-size:24px; text-align:center;">Filter Logs</h2>
@@ -634,7 +619,6 @@
     </div>
 </div>
 
-<!-- Duplicate Wally Modal -->
 <div class="modal-overlay z-high" id="duplicate-wally-modal">
     <div class="modal-sheet">
         <h2 style="margin: 0 0 10px; font-size:24px; text-align:center;">Duplicate Wally Detected</h2>
@@ -649,7 +633,6 @@
     </div>
 </div>
 
-<!-- Input (Onboard) Modal -->
 <div class="modal-overlay" id="input-modal">
     <div class="modal-sheet">
         <h2 style="margin: 0 0 20px; font-size:24px; text-align:center;">Onboard Door <span id="modal-door-num"></span></h2>
@@ -680,7 +663,6 @@
     </div>
 </div>
 
-<!-- Add Unloader Modal -->
 <div class="modal-overlay" id="add-unloader-modal">
     <div class="modal-sheet">
         <h2 style="margin: 0 0 20px; font-size:24px; text-align:center;">Add New Unloader</h2>
@@ -690,7 +672,6 @@
     </div>
 </div>
 
-<!-- Active Detail Modal -->
 <div class="modal-overlay" id="active-detail-modal">
     <div class="modal-sheet">
         <h2 style="margin: 0 0 10px; font-size:24px; text-align:center;">Active Door <span id="detail-door-num"></span></h2>
@@ -713,7 +694,6 @@
     </div>
 </div>
 
-<!-- Unloader Required Modal -->
 <div class="modal-overlay z-high" id="unloader-required-modal">
     <div class="modal-sheet">
         <h2 style="margin: 0 0 10px; font-size:24px; text-align:center;">Assign Unloader</h2>
@@ -725,7 +705,6 @@
     </div>
 </div>
 
-<!-- Move Menu Modal (updated with Incomplete option) -->
 <div class="modal-overlay" id="move-menu-modal">
     <div class="modal-sheet">
         <h2 style="margin: 0 0 20px; font-size:24px; text-align:center;">Move / Mark Incomplete</h2>
@@ -740,7 +719,6 @@
     </div>
 </div>
 
-<!-- Edit Active Modal -->
 <div class="modal-overlay" id="edit-active-modal">
     <div class="modal-sheet">
         <h2 style="margin: 0 0 20px; font-size:24px; text-align:center;">Edit Active Bay</h2>
@@ -757,7 +735,6 @@
     </div>
 </div>
 
-<!-- Edit Log Modal -->
 <div class="modal-overlay" id="edit-log-modal">
     <div class="modal-sheet">
         <h2 style="margin: 0 0 20px; font-size:24px; text-align:center;">Edit Log Entry</h2>
@@ -801,12 +778,12 @@
     let pendingMoveDest = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '4.24';  // Updated
+    const APP_VERSION = '4.25';  
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Robert W", "Trevon C", "Russell H", "Fonseca J", "Eddie F", "Juan F", "Arce J"];
 
-    // *** UPDATED WEBHOOK URL ***
+    // *** WEBHOOK URL ***
     const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbwHWou4V0UH0sMrWSlilGd2UCKUGljpcRCx3qFPVIk0MN4ZNFsqiN1aGimIgEBP-oT7bw/exec';
 
     // --- HELPER FUNCTIONS ---
@@ -826,10 +803,13 @@
         };
     }
 
-    // --- CHANGELOG (updated) ---
+    // --- CHANGELOG ---
     const CHANGELOG = `
+v4.25:
+- Added offline sync queue for Google Sheets webhook to prevent data loss during network drops.
+
 v4.24:
-- Fixed bay clickability: all modals restored, event listeners now correctly attached.
+- Fixed bay clickability: all modals restored, event listeners correctly attached.
 - Scroll fix from v4.23 remains (100dvh, box-sizing, single scroll container).
 - Changelog fully visible above tab bar.
 
@@ -850,39 +830,6 @@ v4.19:
 
 v4.18:
 - Improved modal scrolling.
-
-v4.17:
-- Moved trailers now properly handle completionHour.
-
-v4.16:
-- Log editing updates Google Sheet and adjusts end time.
-
-v4.15:
-- Fixed unloader update issue in Google Sheets.
-
-v4.14:
-- Added safeguards to ensure bay doors always display.
-
-v4.13:
-- Fixed bay population issue.
-
-v4.12:
-- Fixed missing open bays regression.
-
-v4.11:
-- Moved trailers count toward stats when "Yes" selected.
-
-v4.10:
-- Fixed move button, added Incomplete option, removed badges from Home/Logs, duration stored as minutes.
-
-v4.9:
-- Fixed move functionality, added Incomplete option.
-
-v4.8:
-- Updated webhook URL, improved attribution description.
-
-v4.7:
-- Attribution slider snaps to 0/5/10, shift start defaults to 8:00 PM, removed Staffing tab and Start Sort button.
     `;
 
     // --- STATE ---
@@ -910,7 +857,7 @@ v4.7:
         return `${hour}th hour`;
     }
 
-    // --- WEBHOOK FUNCTION (sends durationMinutes) ---
+    // --- WEBHOOK & OFFLINE QUEUE FUNCTIONS ---
     function sendToWebhook(logEntry, stage = 'end') {
         const shiftStart = getShiftStartTime();
         const payload = {
@@ -934,13 +881,62 @@ v4.7:
             shiftStart: shiftStart,
             logId: logEntry.logId
         };
+        attemptWebhook(payload);
+    }
+
+    function attemptWebhook(payload) {
+        if (!navigator.onLine) {
+            console.log('App is offline. Queuing webhook payload.');
+            queuePayload(payload);
+            return;
+        }
+
         fetch(WEBHOOK_URL, {
             method: 'POST',
             mode: 'no-cors',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
             keepalive: true
-        }).catch(err => console.error('Webhook error:', err));
+        }).catch(err => {
+            console.error('Webhook network error, queuing for sync:', err);
+            queuePayload(payload);
+        });
+    }
+
+    function queuePayload(payload) {
+        let queue = JSON.parse(localStorage.getItem('ps9_webhook_queue') || '[]');
+        queue.push(payload);
+        localStorage.setItem('ps9_webhook_queue', JSON.stringify(queue));
+    }
+
+    let isSyncingWebhook = false;
+    function processWebhookQueue() {
+        if (isSyncingWebhook || !navigator.onLine) return;
+        
+        let queue = JSON.parse(localStorage.getItem('ps9_webhook_queue') || '[]');
+        if (queue.length === 0) return;
+
+        isSyncingWebhook = true;
+        const payload = queue[0];
+
+        fetch(WEBHOOK_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        }).then(() => {
+            // Remove the successfully sent item
+            let currentQueue = JSON.parse(localStorage.getItem('ps9_webhook_queue') || '[]');
+            currentQueue.shift();
+            localStorage.setItem('ps9_webhook_queue', JSON.stringify(currentQueue));
+            isSyncingWebhook = false;
+            
+            // Recursively process the next item if there is one
+            if (currentQueue.length > 0) processWebhookQueue();
+        }).catch(err => {
+            console.error('Webhook sync failed, will retry later.', err);
+            isSyncingWebhook = false;
+        });
     }
 
     // --- NOTES FUNCTIONS ---
@@ -1063,14 +1059,13 @@ v4.7:
         showSaveToast();
     }
 
-    // --- MOVE COUNT HANDLER (updated) ---
+    // --- MOVE COUNT HANDLER ---
     function confirmMoveDoor() {
         const dest = byId('move-dest-select').value;
         if (!dest) return alert("Please select a destination");
         pendingMoveDest = dest;
         closeModal('move-menu-modal');
         if (dest === 'Incomplete') {
-            // Incomplete is a direct action – no completion question
             moveDoor(dest, false);
         } else {
             byId('move-count-modal').style.display = 'flex';
@@ -1086,26 +1081,18 @@ v4.7:
     function init() {
         console.log(`Wally Dashboard v${APP_VERSION} initialized`);
 
-        // --- FORCE DOORS TO EXIST ---
+        // Force doors to exist safely
         const sDoors = localStorage.getItem('ps9_doors');
         if (sDoors) {
-            try {
-                doors = JSON.parse(sDoors);
-                console.log('Doors loaded from localStorage:', doors);
-            } catch (e) {
-                console.error('Error parsing doors from localStorage, reinitializing');
-                doors = {};
-            }
+            try { doors = JSON.parse(sDoors); } 
+            catch (e) { doors = {}; }
         }
-        if (!doors || typeof doors !== 'object') {
-            doors = {};
-        }
+        if (!doors || typeof doors !== 'object') doors = {};
         for (let i = DOORS_START; i <= DOORS_END; i++) {
             if (!doors[i]) {
                 doors[i] = { status: 'empty', start: 0, id: '', type: '', unloader: '', unavailable: false, lastCompletionTime: null, assignments: [] };
             }
         }
-        console.log('Doors after initialization:', doors);
 
         // Event listeners for bay circles (delegated)
         byId('active-trailers-grid').addEventListener('click', (e) => {
@@ -1118,17 +1105,17 @@ v4.7:
         });
 
         const searchInput = byId('log-search');
-        if(searchInput) {
-            searchInput.addEventListener('input', debounce(() => renderLogs(), 300));
-        }
+        if(searchInput) searchInput.addEventListener('input', debounce(() => renderLogs(), 300));
+        
         const notesSearch = byId('notes-search');
-        if(notesSearch) {
-            notesSearch.addEventListener('input', debounce(() => renderNotesList(), 300));
-        }
+        if(notesSearch) notesSearch.addEventListener('input', debounce(() => renderNotesList(), 300));
+        
         const sAccts = localStorage.getItem('ps9_accounts');
         if (sAccts) savedAccounts = JSON.parse(sAccts);
+        
         initAttributionSettings();
         loadNotes();
+        
         const sHistory = localStorage.getItem('ps9_history');
         const sTeam = localStorage.getItem('ps9_team');
         const shiftStart = localStorage.getItem('ps9_shift_start') || "20:00";
@@ -1145,19 +1132,29 @@ v4.7:
             });
         }
         if (sTeam) teamNames = JSON.parse(sTeam); else teamNames = [...DEFAULT_TEAM];
+        
         refreshTeamNamesSorted();
+        
         const startInput = byId('setting-shift-start');
         if(startInput) startInput.value = shiftStart;
+        
         renderSavedAccounts();
         updateAccountDatalist();
         populateUnloaderSelect();
         renderDashboard();
+        
         setTimeout(() => {
             updateAttributionUI();
             setupAttributionSlider();
         }, 100);
+        
         setInterval(updateTabBadges, 2000);
         updateTabBadges();
+
+        // Webhook Offline Sync Triggers
+        window.addEventListener('online', processWebhookQueue);
+        setInterval(processWebhookQueue, 30000); // Check every 30s
+        processWebhookQueue(); // Check immediately on init
     }
 
     // --- GRANULAR SAVING ---
@@ -1276,7 +1273,7 @@ v4.7:
         track.addEventListener('click', (e)=>updateSlider(e.clientX, true));
     }
 
-    // --- TAB BADGES (only Active tab gets a badge) ---
+    // --- TAB BADGES ---
     function updateTabBadges() {
         let activeCount = 0;
         for(let i=DOORS_START; i<=DOORS_END; i++) if(doors[i] && doors[i].status === 'active') activeCount++;
@@ -1436,35 +1433,20 @@ v4.7:
         let offset = now - targetEffective;
         if (offset < 0) offset = 0;
         const logEntry = {
-            door: 0,
-            id: id,
-            account: account,
-            type: manualType,
-            unloader: unl,
-            assistants: [],
-            start: now - 15*60000,
-            end: now,
-            dateKey: dateKeyFromTs(now),
-            duration: 15*60000,
-            durationMinutes: 15,
-            statOffset: offset,
+            door: 0, id: id, account: account, type: manualType, unloader: unl,
+            assistants: [], start: now - 15*60000, end: now, dateKey: dateKeyFromTs(now),
+            duration: 15*60000, durationMinutes: 15, statOffset: offset,
             logId: Date.now().toString(36) + Math.random().toString(36).substr(2),
-            duplicate: false,
-            completionHour: getCompletionHour(now - offset),
-            cpuOptions: cpuOpts,
-            status: 'completed',
-            manual: true
+            duplicate: false, completionHour: getCompletionHour(now - offset),
+            cpuOptions: cpuOpts, status: 'completed', manual: true
         };
         historyLog.unshift(logEntry);
         sendToWebhook(logEntry, 'end');
         saveHistory();
         if (manualType === 'CPU' && account && !savedAccounts.includes(account)) {
-            savedAccounts.push(account);
-            saveAccounts();
-            updateAccountDatalist();
+            savedAccounts.push(account); saveAccounts(); updateAccountDatalist();
         }
-        closeModal('manual-add-modal');
-        renderDashboard();
+        closeModal('manual-add-modal'); renderDashboard();
         if (byId('tab-logs').classList.contains('active')) renderLogs();
         showSaveToast();
     }
@@ -1571,7 +1553,6 @@ v4.7:
         pendingCompletion = null;
     }
 
-    // --- UPDATED moveDoor function with countAsCompletion parameter ---
     function moveDoor(destination, countAsCompletion = false) {
         const d = doors[detailDoor];
         const now = Date.now();
@@ -1586,7 +1567,7 @@ v4.7:
             durationMinutes: Math.round((now - d.start)/60000), statOffset: 0,
             logId: d.logId,
             duplicate: false,
-            completionHour: countAsCompletion ? getCompletionHour(now) : '', // blank if not counted
+            completionHour: countAsCompletion ? getCompletionHour(now) : '', 
             cpuOptions: d.cpuOptions || [],
             status: status,
             moveDest: destination
@@ -1606,7 +1587,6 @@ v4.7:
             if(!last.end) last.end = endTime;
         }
         const durationMap = {};
-        const realAssignments = (d.assignments || []).filter(a => a.name && a.name !== 'Unassigned');
         if (d.assignments && d.assignments.length > 0) {
             d.assignments.forEach(a => {
                 if (a.name === 'Unassigned') return;
@@ -1627,11 +1607,7 @@ v4.7:
         });
         if (!primaryUnloader || primaryUnloader === 'Unassigned') primaryUnloader = "Unknown";
         const assistants = Object.keys(durationMap).filter(n => n !== primaryUnloader);
-        if(config.randomHistory && demoActive) {
-             const {shiftStart} = getShiftTimeWindows();
-             endTime = Math.floor(Math.random()*(Date.now()-shiftStart.getTime()) + shiftStart.getTime());
-             start = endTime - (Math.floor(Math.random()*30+15)*60000); offset=0;
-        }
+        
         if (d.type === 'CPU' && d.account && !savedAccounts.includes(d.account.trim().toUpperCase())) {
             savedAccounts.push(d.account.trim().toUpperCase()); saveAccounts(); updateAccountDatalist();
         }
@@ -1646,24 +1622,20 @@ v4.7:
             cpuOptions: d.cpuOptions || [],
             status: 'completed'
         };
-        if (d.type === 'Wally' && navigator.share && !demoActive) {
-             navigator.share({ text: `Door ${doorNum} done` }).catch(e=>{});
-        }
+        
         closeModal('active-detail-modal');
         historyLog.unshift(logEntry);
         sendToWebhook(logEntry, 'end');
         saveHistory();
         doors[doorNum] = { status: 'empty', start: 0, id: '', type: '', unloader: '', unavailable: false, lastCompletionTime: endTime, assignments: [] };
         saveDoors(); renderDashboard(); renderActiveTab(); updateTabBadges(); showSaveToast();
-        if (demoActive && config.replenish) setTimeout(() => { if (doors[doorNum].status === 'empty') randomArrival(doorNum); }, 7000);
     }
 
-    // --- STATISTICS (updated to only count entries with completionHour) ---
+    // --- STATISTICS ---
     function updateStats() {
         const { thisHourStart, thisHourEnd, lastHourStart, lastHourEnd } = getShiftTimeWindows();
         let tw=0, tc=0, hw=0, lhw=0;
         historyLog.forEach(l => {
-            // Only count if completionHour is present (truthy)
             if (!l.completionHour) return; 
             const t = l.end - (l.statOffset || 0); 
             if (l.type === 'Wally') {
@@ -1672,7 +1644,6 @@ v4.7:
                 else if (t >= lastHourStart.getTime() && t < lastHourEnd.getTime()) lhw++;
             } else if (l.type === 'CPU') {
                 tc++;
-                // Hourly counts are only for Wallies, so no change
             }
         });
         byId('stat-total-wally').innerText = tw; byId('stat-total-cpu').innerText = tc;
@@ -1682,7 +1653,7 @@ v4.7:
     function calculateAndRenderStats() {
          const stats = {};
          historyLog.forEach(l => { 
-             if (!l.completionHour) return; // only count if completionHour present
+             if (!l.completionHour) return;
              const n = l.unloader; 
              if(!stats[n]) stats[n]={w:0,c:0,t:0}; 
              if(l.type==='Wally') stats[n].w++; 
@@ -1695,7 +1666,7 @@ v4.7:
     function calculateAndRenderHourlyStats() {
         const { shiftStart } = getShiftTimeWindows(); const h = {};
         historyLog.forEach(l => { 
-            if (!l.completionHour) return; // exclude if no completionHour
+            if (!l.completionHour) return;
             const idx = Math.floor((l.end-(l.statOffset||0)-shiftStart.getTime())/3600000)+1; 
             if(!h[idx]) h[idx]=0; 
             h[idx]++; 
@@ -1706,7 +1677,6 @@ v4.7:
 
     // --- RENDER DASHBOARD ---
     function renderDashboard() {
-        console.log('renderDashboard called, doors:', doors);
         updateStats();
         const openGrid = byId('open-bays-grid'), activeGrid = byId('active-trailers-grid');
         openGrid.innerHTML = ''; activeGrid.innerHTML = '';
@@ -1714,10 +1684,7 @@ v4.7:
 
         for(let i=DOORS_START; i<=DOORS_END; i++) {
             const d = doors[i];
-            if (!d) {
-                console.warn(`Door ${i} missing in doors object, creating default`);
-                doors[i] = { status: 'empty', start: 0, id: '', type: '', unloader: '', unavailable: false, lastCompletionTime: null, assignments: [] };
-            }
+            if (!d) doors[i] = { status: 'empty', start: 0, id: '', type: '', unloader: '', unavailable: false, lastCompletionTime: null, assignments: [] };
             const btn = document.createElement('div');
             btn.className = `bay-circle bay-${i} ${d.unavailable ? 'unavailable' : ''}`;
             btn.dataset.door = i; 
@@ -1866,30 +1833,14 @@ v4.7:
         else doors[orig] = data;
         saveDoors();
 
-        // --- Send update webhook ---
         const updatePayload = {
-            stage: 'update',
-            door: dest,
-            id: data.id,
-            account: data.account || '',
-            type: data.type,
-            unloader: data.unloader || '',
-            assistants: data.assignments ? data.assignments.map(a => a.name).filter(n => n !== data.unloader) : [],
-            start: data.start,
-            end: null, // still active
-            dateKey: dateKeyFromTs(data.start),
-            durationMinutes: null,
-            statOffset: 0,
-            logId: data.logId,
-            duplicate: data.isDuplicate || false,
-            completionHour: null,
-            cpuOptions: data.cpuOptions || [],
-            status: 'active',
-            manual: false,
-            shiftStart: getShiftStartTime()
+            stage: 'update', door: dest, id: data.id, account: data.account || '', type: data.type,
+            unloader: data.unloader || '', assistants: data.assignments ? data.assignments.map(a => a.name).filter(n => n !== data.unloader) : [],
+            start: data.start, end: null, dateKey: dateKeyFromTs(data.start), durationMinutes: null, statOffset: 0,
+            logId: data.logId, duplicate: data.isDuplicate || false, completionHour: null, cpuOptions: data.cpuOptions || [],
+            status: 'active', manual: false, shiftStart: getShiftStartTime()
         };
         sendToWebhook(updatePayload, 'update');
-        // --- End webhook call ---
 
         closeModal('edit-active-modal'); renderActiveTab(); renderDashboard(); updateTabBadges(); showSaveToast();
     }
@@ -2133,7 +2084,7 @@ v4.7:
         historyLog.splice(i, 1); saveDoors(); saveHistory(); renderDashboard(); renderLogs(); updateTabBadges();
     }
 
-    // --- MODIFIED: EDIT LOG FUNCTION WITH WEBHOOK AND END TIME ADJUSTMENT ---
+    // --- EDIT LOG ---
     function openEditLogModal(i) {
         const l = historyLog[i]; 
         byId('edit-log-index').value = i; 
@@ -2166,13 +2117,9 @@ v4.7:
         const newHour = parseInt(byId('edit-completion-hour').value);
         const { shiftStart } = getShiftTimeWindows();
 
-        // Calculate new end time: 5 minutes before the end of the selected hour
-        // End of hour N = shiftStart + (N * 3600000)
         const newEnd = shiftStart.getTime() + (newHour * 3600000) - 5 * 60000;
-        // Keep the same start time
         const start = historyLog[i].start;
 
-        // Update log entry
         historyLog[i].id = id;
         historyLog[i].unloader = unl;
         historyLog[i].type = type;
@@ -2182,16 +2129,13 @@ v4.7:
         historyLog[i].durationMinutes = Math.round(historyLog[i].duration / 60000);
         historyLog[i].completionHour = newHour;
         historyLog[i].dateKey = dateKeyFromTs(newEnd);
-        historyLog[i].statOffset = 0; // Reset offset since we set explicit end
+        historyLog[i].statOffset = 0; 
 
         saveHistory();
-
-        // Send update to webhook
         sendToWebhook(historyLog[i], 'end');
-
         closeModal('edit-log-modal');
         renderLogs();
-        renderDashboard(); // Update stats
+        renderDashboard(); 
         showSaveToast();
     }
 
@@ -2236,9 +2180,7 @@ v4.7:
         if(c) c.style.display = (t === 'CPU') ? 'block' : 'none';
     }
 
-    // --- MOVE MENU OPENER (with console log for debugging) ---
     function openMoveMenu() {
-        console.log('openMoveMenu called');
         closeModal('active-detail-modal');
         byId('move-menu-modal').style.display = 'flex';
     }
