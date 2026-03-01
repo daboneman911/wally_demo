@@ -407,7 +407,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 4.25b</div>
+            <div class="app-version">Version 4.26</div>
         </div>
         <div class="section-title">Sort Statistics</div>
         <div class="stats-grid">
@@ -778,7 +778,7 @@
     let pendingMoveDest = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '4.25';  
+    const APP_VERSION = '4.26';  
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Robert W", "Trevon C", "Russell H", "Fonseca J", "Eddie F", "Juan F", "Arce J"];
@@ -805,6 +805,9 @@
 
     // --- CHANGELOG ---
     const CHANGELOG = `
+v4.26:
+- Re-added and improved native share sheet for Wally completions (includes Door, ID, Unloader, and Duration).
+
 v4.25:
 - Added offline sync queue for Google Sheets webhook to prevent data loss during network drops.
 
@@ -827,9 +830,6 @@ v4.20:
 
 v4.19:
 - Fixed scrolling issue.
-
-v4.18:
-- Improved modal scrolling.
     `;
 
     // --- STATE ---
@@ -1626,6 +1626,20 @@ v4.18:
         closeModal('active-detail-modal');
         historyLog.unshift(logEntry);
         sendToWebhook(logEntry, 'end');
+
+        // --- NEW SHARE SHEET CODE ---
+        if (d.type === 'Wally' && navigator.share && !demoActive) {
+            const durationMins = Math.round((endTime - start) / 60000);
+            // Small timeout ensures the modal closes smoothly before the share sheet pops up
+            setTimeout(() => {
+                navigator.share({
+                    title: 'Wally Completed',
+                    text: `✅ Door ${doorNum} (Wally ${d.id}) completed by ${primaryUnloader} in ${durationMins}m.`
+                }).catch(err => console.log('Share dismissed or failed:', err));
+            }, 100);
+        }
+        // --- END SHARE SHEET CODE ---
+
         saveHistory();
         doors[doorNum] = { status: 'empty', start: 0, id: '', type: '', unloader: '', unavailable: false, lastCompletionTime: endTime, assignments: [] };
         saveDoors(); renderDashboard(); renderActiveTab(); updateTabBadges(); showSaveToast();
