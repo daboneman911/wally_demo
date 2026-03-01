@@ -407,7 +407,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 4.26</div>
+            <div class="app-version">Version 4.27</div>
         </div>
         <div class="section-title">Sort Statistics</div>
         <div class="stats-grid">
@@ -778,7 +778,7 @@
     let pendingMoveDest = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '4.26';  
+    const APP_VERSION = '4.27';  
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Robert W", "Trevon C", "Russell H", "Fonseca J", "Eddie F", "Juan F", "Arce J"];
@@ -805,6 +805,9 @@
 
     // --- CHANGELOG ---
     const CHANGELOG = `
+v4.27:
+- Fixed Webhook syncing for Demo Mode: Auto-onboarded trailers now properly generate Log IDs and push Start/End events to Google Sheets.
+
 v4.26:
 - Re-added and improved native share sheet for Wally completions (includes Door, ID, Unloader, and Duration).
 
@@ -813,23 +816,9 @@ v4.25:
 
 v4.24:
 - Fixed bay clickability: all modals restored, event listeners correctly attached.
-- Scroll fix from v4.23 remains (100dvh, box-sizing, single scroll container).
-- Changelog fully visible above tab bar.
 
 v4.23:
 - Modern iOS scrolling fixes: 100dvh, box-sizing, single scroll container.
-
-v4.22:
-- Corrected scrolling architecture: only tab content scrolls.
-
-v4.21:
-- Fixed bay rendering issue.
-
-v4.20:
-- Further increased bottom padding.
-
-v4.19:
-- Fixed scrolling issue.
     `;
 
     // --- STATE ---
@@ -1345,12 +1334,40 @@ v4.19:
         for(let i=DOORS_START; i<=DOORS_END; i++) if(doors[i].status==='empty' && (i-DOORS_START)<config.doorCount) randomArrival(i);
         saveDoors(); alert("Demo Started"); switchTab('dashboard'); updateTabBadges();
     }
+    
+    // --- UPDATED FOR WEBHOOK DEMO FIX ---
     function randomArrival(doorNum) {
         let type = config.mixedTypes ? (Math.random()>0.5?'Wally':'CPU') : config.demoType;
         const id = Math.floor(1000 + Math.random() * 9000).toString();
         const unloader = teamNames[Math.floor(Math.random() * teamNames.length)];
-        doors[doorNum] = { status: 'active', start: Date.now(), id: id.toUpperCase(), account: type==='CPU'?"DEMO"+Math.floor(Math.random()*100):"", type: type, unloader: unloader, unavailable: false, lastCompletionTime: null, cpuOptions: [], assignments: [{ name: unloader, start: Date.now(), end: null }] };
-        renderDashboard(); updateTabBadges();
+        const account = type === 'CPU' ? "DEMO" + Math.floor(Math.random()*100) : "";
+        const startTime = Date.now();
+        const logId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+        
+        doors[doorNum] = { 
+            status: 'active', 
+            start: startTime, 
+            id: id.toUpperCase(), 
+            account: account, 
+            type: type, 
+            unloader: unloader, 
+            unavailable: false, 
+            lastCompletionTime: null, 
+            cpuOptions: [], 
+            assignments: [{ name: unloader, start: startTime, end: null }],
+            logId: logId
+        };
+
+        const startEntry = {
+            door: doorNum, id: id.toUpperCase(), account: account, type: type, unloader: unloader,
+            assistants: [], start: startTime, end: null, dateKey: dateKeyFromTs(startTime),
+            durationMinutes: null, statOffset: 0, logId: logId, duplicate: false, completionHour: null,
+            cpuOptions: [], status: 'active', manual: false
+        };
+        sendToWebhook(startEntry, 'start');
+
+        renderDashboard(); 
+        updateTabBadges();
     }
 
     // --- SHIFT TIME ---
