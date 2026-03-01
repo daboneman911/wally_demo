@@ -407,7 +407,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 4.27</div>
+            <div class="app-version">Version 4.28</div>
         </div>
         <div class="section-title">Sort Statistics</div>
         <div class="stats-grid">
@@ -778,7 +778,7 @@
     let pendingMoveDest = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '4.27';  
+    const APP_VERSION = '4.28';  
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Robert W", "Trevon C", "Russell H", "Fonseca J", "Eddie F", "Juan F", "Arce J"];
@@ -805,6 +805,9 @@
 
     // --- CHANGELOG ---
     const CHANGELOG = `
+v4.28:
+- Demo Mode: Auto-replenish now correctly re-onboards completed doors after a 10-second delay.
+
 v4.27:
 - Fixed Webhook syncing for Demo Mode: Auto-onboarded trailers now properly generate Log IDs and push Start/End events to Google Sheets.
 
@@ -816,9 +819,6 @@ v4.25:
 
 v4.24:
 - Fixed bay clickability: all modals restored, event listeners correctly attached.
-
-v4.23:
-- Modern iOS scrolling fixes: 100dvh, box-sizing, single scroll container.
     `;
 
     // --- STATE ---
@@ -1335,7 +1335,7 @@ v4.23:
         saveDoors(); alert("Demo Started"); switchTab('dashboard'); updateTabBadges();
     }
     
-    // --- UPDATED FOR WEBHOOK DEMO FIX ---
+    // --- DEMO / AUTO ONBOARD ---
     function randomArrival(doorNum) {
         let type = config.mixedTypes ? (Math.random()>0.5?'Wally':'CPU') : config.demoType;
         const id = Math.floor(1000 + Math.random() * 9000).toString();
@@ -1659,7 +1659,20 @@ v4.23:
 
         saveHistory();
         doors[doorNum] = { status: 'empty', start: 0, id: '', type: '', unloader: '', unavailable: false, lastCompletionTime: endTime, assignments: [] };
-        saveDoors(); renderDashboard(); renderActiveTab(); updateTabBadges(); showSaveToast();
+        saveDoors(); 
+        renderDashboard(); 
+        renderActiveTab(); 
+        updateTabBadges(); 
+        showSaveToast();
+
+        // --- AUTO REPLENISH ---
+        if (demoActive && config.replenish) {
+            setTimeout(() => {
+                if (doors[doorNum] && doors[doorNum].status === 'empty') {
+                    randomArrival(doorNum);
+                }
+            }, 10000);
+        }
     }
 
     // --- STATISTICS ---
