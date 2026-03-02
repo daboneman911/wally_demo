@@ -10,7 +10,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <title>Wally Dashboard</title>
     <style>
-        /* Full styles – corrected scrolling with 100dvh and box-sizing */
+        /* Full styles */
         :root {
             --primary: #000000;
             --bg: #ffffff;
@@ -206,8 +206,6 @@
             display: flex; align-items: center; justify-content: center; color: #fff; font-size: 24px; margin-bottom: 12px;
         }
         .tool-title { font-size: 16px; font-weight: 700; color: #000; margin-bottom: 4px; }
-        .tool-card.add { border: 2px dashed #ccc; background: transparent; box-shadow: none; }
-        .tool-card.add .tool-icon-wrapper { background: #e5e5ea; color: #000; }
         .stats-collapse-btn { width: 100%; background: #f2f2f7; border: none; border-radius: 16px; padding: 18px; display: flex; justify-content: space-between; align-items: center; font-size: 16px; font-weight: 700; color: #000; cursor: pointer; margin-bottom: 20px; }
         .stats-content-area { background: white; border: 1px solid #e5e5ea; border-radius: 16px; padding: 20px; margin-bottom: 25px; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
         .stats-table { width: 100%; border-collapse: collapse; font-size: 15px; }
@@ -407,7 +405,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 4.28</div>
+            <div class="app-version">Version 5.0</div>
         </div>
         <div class="section-title">Sort Statistics</div>
         <div class="stats-grid">
@@ -456,8 +454,7 @@
         </div>
         <div class="tools-grid">
             <div class="tool-card" onclick="openNotesManager()"><div class="tool-icon-wrapper"><i class="ph ph-note"></i></div><div class="tool-title">Notes Manager</div></div>
-            <div class="tool-card" onclick="alert('Observation Corner coming soon')"><div class="tool-icon-wrapper"><i class="ph ph-eye"></i></div><div class="tool-title">Observation</div></div>
-            <div class="tool-card add" onclick="alert('More tools soon')"><div class="tool-icon-wrapper"><i class="ph ph-plus"></i></div><div class="tool-title">Add Tool</div></div>
+            <div class="tool-card" onclick="openPPHCalculator()"><div class="tool-icon-wrapper"><i class="ph ph-calculator"></i></div><div class="tool-title">PPH Calculator</div></div>
         </div>
     </div>
 
@@ -528,6 +525,29 @@
     <button class="tab-btn" onclick="switchTab('tools', this)" id="tab-btn-tools"><i class="ph ph-toolbox"></i><span>Tools</span></button>
     <button class="tab-btn" onclick="switchTab('settings', this)" id="tab-btn-settings"><i class="ph ph-gear"></i><span>Settings</span></button>
 </nav>
+
+<div class="modal-overlay" id="pph-modal">
+    <div class="modal-sheet">
+        <h2 style="margin: 0 0 20px; font-size:24px; text-align:center;">PPH Calculator</h2>
+        <div style="margin-bottom:15px;">
+            <label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Total Volume (Packages)</label>
+            <input type="number" id="pph-volume" class="form-input" placeholder="e.g. 2500" inputmode="numeric" oninput="calculatePPH()">
+        </div>
+        <div style="margin-bottom:15px;">
+            <label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Total Hours Worked</label>
+            <input type="number" id="pph-hours" class="form-input" placeholder="e.g. 4.5" step="0.1" inputmode="decimal" oninput="calculatePPH()">
+        </div>
+        <div style="background:#f9f9f9; padding:20px; border-radius:16px; text-align:center; margin-bottom:20px;">
+            <div style="font-size:14px; color:var(--text-sub); font-weight:600; margin-bottom:5px;">Calculated PPH</div>
+            <div style="font-size:36px; font-weight:900; color:#000; line-height:1;" id="pph-result">0</div>
+            <div style="display:flex; justify-content:center; align-items:center; gap:8px; margin-top:10px;">
+                <span style="font-size:12px; color:var(--text-sub); font-weight:600; text-transform:uppercase;">Differential (Standard: 600)</span>
+                <span id="pph-diff" style="font-size:14px; font-weight:800; padding:4px 10px; border-radius:12px; background:#e5e5ea; color:#000;">0</span>
+            </div>
+        </div>
+        <button class="btn-cancel" onclick="closeModal('pph-modal')">Close</button>
+    </div>
+</div>
 
 <div class="modal-overlay" id="note-modal">
     <div class="modal-sheet">
@@ -663,62 +683,6 @@
     </div>
 </div>
 
-<div class="modal-overlay" id="add-unloader-modal">
-    <div class="modal-sheet">
-        <h2 style="margin: 0 0 20px; font-size:24px; text-align:center;">Add New Unloader</h2>
-        <div style="margin-bottom:15px;"><label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Unloader Name</label><input type="text" id="input-new-unloader-name" class="form-input" placeholder="e.g. John Doe" autocapitalize="words"></div>
-        <button class="btn-primary" onclick="confirmAddUnloader()">Add Name</button>
-        <button class="btn-cancel" onclick="closeModal('add-unloader-modal')">Cancel</button>
-    </div>
-</div>
-
-<div class="modal-overlay" id="active-detail-modal">
-    <div class="modal-sheet">
-        <h2 style="margin: 0 0 10px; font-size:24px; text-align:center;">Active Door <span id="detail-door-num"></span></h2>
-        <div style="margin-bottom:20px;">
-            <div class="detail-row"><span class="detail-label">Type</span><span class="detail-value" id="detail-type"></span></div>
-            <div class="detail-row"><span class="detail-label">ID #</span><span class="detail-value" id="detail-id"></span></div>
-            <div class="detail-row" id="row-account" style="display:none;"><span class="detail-label">Account #</span><span class="detail-value" id="detail-account"></span></div>
-            <div class="detail-row" id="row-cpu-opts" style="display:none;"><span class="detail-label">Options</span><span class="detail-value" id="detail-cpu-opts"></span></div>
-            <div class="detail-row"><span class="detail-label">Unloader</span><span class="detail-value" id="detail-unloader"></span></div>
-            <div class="detail-row"><span class="detail-label">Start Time</span><span class="detail-value" id="detail-time"></span></div>
-            <div class="detail-row"><span class="detail-label">Duration</span><span class="detail-value" id="detail-duration">0m</span></div>
-        </div>
-        <button class="btn-primary btn-danger" onclick="confirmCompleteDoor()">Complete Unload</button>
-        <div class="modal-actions-row">
-            <button class="modal-icon-btn" onclick="openEditActiveModalFromDetail()" style="flex:1"><i class="ph ph-pencil-simple"></i></button>
-            <button class="modal-icon-btn" onclick="openMoveMenu()" style="flex:1; background:#fff; border:1px solid #e5e5ea;"><i class="ph ph-arrows-left-right"></i></button>
-            <button class="btn-primary btn-history" onclick="viewDoorLogs(detailDoor)" style="flex:3; margin:0;">View History</button>
-        </div>
-        <button class="btn-cancel" onclick="closeModal('active-detail-modal')">Close</button>
-    </div>
-</div>
-
-<div class="modal-overlay z-high" id="unloader-required-modal">
-    <div class="modal-sheet">
-        <h2 style="margin: 0 0 10px; font-size:24px; text-align:center;">Assign Unloader</h2>
-        <p style="text-align:center; color:#757575; margin-bottom:25px;">Who completed this door?</p>
-        <select id="req-unloader-select" class="form-input" onchange="checkReqCustom(this)"></select>
-        <input type="text" id="req-custom-unloader" class="form-input" style="display:none; margin-top:10px;" placeholder="Enter Name" autocapitalize="words">
-        <button class="btn-primary" onclick="saveRequiredUnloader()">Confirm & Finish</button>
-        <button class="btn-cancel" onclick="closeModal('unloader-required-modal')">Cancel</button>
-    </div>
-</div>
-
-<div class="modal-overlay" id="move-menu-modal">
-    <div class="modal-sheet">
-        <h2 style="margin: 0 0 20px; font-size:24px; text-align:center;">Move / Mark Incomplete</h2>
-        <p style="text-align:center; color:#757575; margin-bottom:20px;">Select destination or mark as incomplete.</p>
-        <select id="move-dest-select" class="form-input">
-            <option value="Small Sort">Small Sort</option>
-            <option value="Bulk Directs">Bulk Directs</option>
-            <option value="Incomplete">Incomplete (no unload)</option>
-        </select>
-        <button class="btn-primary" onclick="confirmMoveDoor()">Confirm</button>
-        <button class="btn-cancel" onclick="closeModal('move-menu-modal')">Cancel</button>
-    </div>
-</div>
-
 <div class="modal-overlay" id="edit-active-modal">
     <div class="modal-sheet">
         <h2 style="margin: 0 0 20px; font-size:24px; text-align:center;">Edit Active Bay</h2>
@@ -778,7 +742,7 @@
     let pendingMoveDest = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '4.28';  
+    const APP_VERSION = '5.0';  
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Robert W", "Trevon C", "Russell H", "Fonseca J", "Eddie F", "Juan F", "Arce J"];
@@ -805,20 +769,11 @@
 
     // --- CHANGELOG ---
     const CHANGELOG = `
-v4.28:
-- Demo Mode: Auto-replenish now correctly re-onboards completed doors after a 10-second delay.
-
-v4.27:
-- Fixed Webhook syncing for Demo Mode: Auto-onboarded trailers now properly generate Log IDs and push Start/End events to Google Sheets.
-
-v4.26:
-- Re-added and improved native share sheet for Wally completions (includes Door, ID, Unloader, and Duration).
-
-v4.25:
-- Added offline sync queue for Google Sheets webhook to prevent data loss during network drops.
-
-v4.24:
-- Fixed bay clickability: all modals restored, event listeners correctly attached.
+v5.0:
+- Milestone Release!
+- Added PPH Calculator to the Tools tab.
+- Removed empty UI placeholder tools.
+- Implemented automatic 24-hour pruning for local history logs to ensure long-term app speed.
     `;
 
     // --- STATE ---
@@ -926,6 +881,47 @@ v4.24:
             console.error('Webhook sync failed, will retry later.', err);
             isSyncingWebhook = false;
         });
+    }
+
+    // --- NEW: PPH CALCULATOR ---
+    function openPPHCalculator() {
+        byId('pph-volume').value = '';
+        byId('pph-hours').value = '';
+        byId('pph-result').innerText = '0';
+        byId('pph-diff').innerText = '0';
+        byId('pph-diff').style.background = '#e5e5ea';
+        byId('pph-diff').style.color = '#000';
+        byId('pph-modal').style.display = 'flex';
+    }
+
+    function calculatePPH() {
+        const vol = parseFloat(byId('pph-volume').value);
+        const hrs = parseFloat(byId('pph-hours').value);
+        const resEl = byId('pph-result');
+        const diffEl = byId('pph-diff');
+
+        if (isNaN(vol) || isNaN(hrs) || hrs <= 0) {
+            resEl.innerText = '0';
+            diffEl.innerText = '0';
+            diffEl.style.background = '#e5e5ea';
+            diffEl.style.color = '#000';
+            return;
+        }
+
+        const pph = Math.round(vol / hrs);
+        resEl.innerText = pph;
+
+        const diff = pph - 600;
+        let diffText = diff > 0 ? '+' + diff : diff.toString();
+        diffEl.innerText = diffText;
+
+        if (diff >= 0) {
+            diffEl.style.background = '#e8f5e9'; // light green
+            diffEl.style.color = '#2e7d32'; // dark green
+        } else {
+            diffEl.style.background = '#ffebee'; // light red
+            diffEl.style.color = '#c62828'; // dark red
+        }
     }
 
     // --- NOTES FUNCTIONS ---
@@ -1112,14 +1108,30 @@ v4.24:
         isFirstOnboard = localStorage.getItem('ps9_is_first_onboard') === 'true';
 
         if (sHistory) historyLog = JSON.parse(sHistory);
+        
+        // --- AUTO PRUNE LOCAL HISTORY (V5.0) ---
         if (Array.isArray(historyLog)) {
-            historyLog.forEach(l => {
+            const now = Date.now();
+            const ONE_DAY_MS = 24 * 60 * 60 * 1000; // 24 hours
+            let pruned = false;
+
+            historyLog = historyLog.filter(l => {
+                if (!l.end) return true; // Keep active logs just in case
+                if (now - l.end > ONE_DAY_MS) {
+                    pruned = true;
+                    return false; // Remove if older than 24 hours
+                }
+                // Ensure legacy fields exist
                 if (!l.dateKey) l.dateKey = dateKeyFromTs(l.end);
                 if (!l.completionHour) l.completionHour = getCompletionHour(l.end - (l.statOffset || 0));
                 if (!l.cpuOptions) l.cpuOptions = []; 
                 if (!l.status) l.status = 'completed'; 
+                return true;
             });
+
+            if (pruned) saveHistory();
         }
+
         if (sTeam) teamNames = JSON.parse(sTeam); else teamNames = [...DEFAULT_TEAM];
         
         refreshTeamNamesSorted();
@@ -1335,7 +1347,6 @@ v4.24:
         saveDoors(); alert("Demo Started"); switchTab('dashboard'); updateTabBadges();
     }
     
-    // --- DEMO / AUTO ONBOARD ---
     function randomArrival(doorNum) {
         let type = config.mixedTypes ? (Math.random()>0.5?'Wally':'CPU') : config.demoType;
         const id = Math.floor(1000 + Math.random() * 9000).toString();
@@ -1644,10 +1655,9 @@ v4.24:
         historyLog.unshift(logEntry);
         sendToWebhook(logEntry, 'end');
 
-        // --- NEW SHARE SHEET CODE ---
+        // SHARE SHEET CODE
         if (d.type === 'Wally' && navigator.share && !demoActive) {
             const durationMins = Math.round((endTime - start) / 60000);
-            // Small timeout ensures the modal closes smoothly before the share sheet pops up
             setTimeout(() => {
                 navigator.share({
                     title: 'Wally Completed',
@@ -1655,7 +1665,6 @@ v4.24:
                 }).catch(err => console.log('Share dismissed or failed:', err));
             }, 100);
         }
-        // --- END SHARE SHEET CODE ---
 
         saveHistory();
         doors[doorNum] = { status: 'empty', start: 0, id: '', type: '', unloader: '', unavailable: false, lastCompletionTime: endTime, assignments: [] };
@@ -1665,7 +1674,7 @@ v4.24:
         updateTabBadges(); 
         showSaveToast();
 
-        // --- AUTO REPLENISH ---
+        // AUTO REPLENISH
         if (demoActive && config.replenish) {
             setTimeout(() => {
                 if (doors[doorNum] && doors[doorNum].status === 'empty') {
