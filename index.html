@@ -287,7 +287,7 @@
         .type-selector { display: flex; background: #f2f2f7; padding: 5px; border-radius: 16px; margin-bottom: 25px; }
         .type-opt { flex: 1; text-align: center; padding: 12px; border-radius: 12px; font-weight: 700; font-size: 15px; color: var(--text-sub); cursor: pointer; }
         .type-opt.selected { background: white; color: #000; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        .btn-primary { width: 100%; padding: 18px; border-radius: 16px; border: none; font-size: 17px; font-weight: 800; background: #000; color: white; margin-top: 10px; cursor: pointer; }
+        .btn-primary { width: 100%; padding: 18px; border-radius: 16px; border: none; font-size: 17px; font-weight: 800; background: #000; color: white; margin-top: 10px; cursor: pointer; transition: all 0.2s; }
         .btn-danger { background: #ff3b30; }
         .btn-history { background: #f2f2f7; color: #000; margin-top: 10px; }
         .btn-cancel { background: transparent; color: var(--text-sub); width: 100%; padding: 15px; border: none; font-size: 16px; font-weight: 600; margin-top: 5px; cursor: pointer; }
@@ -405,7 +405,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 5.02</div>
+            <div class="app-version">Version 5.03</div>
         </div>
         <div class="section-title">Sort Statistics</div>
         <div class="stats-grid">
@@ -545,7 +545,7 @@
                 <span id="pph-diff" style="font-size:14px; font-weight:800; padding:4px 10px; border-radius:12px; background:#e5e5ea; color:#000;">0.00 hrs</span>
             </div>
         </div>
-        <button class="btn-primary" onclick="uploadPPH()" style="background:#000; margin-bottom:10px;">Push to KPI Dashboard</button>
+        <button id="pph-push-btn" class="btn-primary" onclick="uploadPPH()" style="background:#000; margin-bottom:10px;">Push to KPI Dashboard</button>
         <button class="btn-cancel" onclick="closeModal('pph-modal')">Close</button>
     </div>
 </div>
@@ -799,7 +799,7 @@
     let pendingMoveDest = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '5.02';  
+    const APP_VERSION = '5.03';  
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Robert W", "Trevon C", "Russell H", "Fonseca J", "Eddie F", "Juan F", "Arce J"];
@@ -826,6 +826,11 @@
 
     // --- CHANGELOG ---
     const CHANGELOG = `
+v5.03:
+- Reversed the math for Time Differential to show under-hours correctly as negative (e.g., -0.40 hrs).
+- Keep PPH Modal open when "Push" is clicked for multiple uses.
+- Expanded the KPI Dashboard to show a running history table of PPH uploads.
+
 v5.02:
 - Added manual "Push to KPI Dashboard" button for the PPH Calculator.
 
@@ -975,13 +980,13 @@ v5.0:
         resEl.innerText = pph;
 
         const targetHours = vol / 600;
-        const diff = targetHours - hrs;
+        const diff = hrs - targetHours; 
         
         let roundedDiff = diff.toFixed(2);
         let diffText = diff > 0 ? '+' + roundedDiff : roundedDiff;
         diffEl.innerText = diffText + ' hrs';
 
-        if (diff >= 0) {
+        if (diff <= 0) {
             diffEl.style.background = '#e8f5e9'; // light green
             diffEl.style.color = '#2e7d32'; // dark green
         } else {
@@ -1000,9 +1005,7 @@ v5.0:
 
         const pph = Math.round(vol / hrs);
         const targetHours = vol / 600;
-        const diff = (targetHours - hrs).toFixed(2);
-
-        if (!confirm(`Push ${pph} PPH to the live dashboard?`)) return;
+        const diff = (hrs - targetHours).toFixed(2);
 
         const payload = {
             dataType: 'PPH_UPLOAD',
@@ -1015,8 +1018,17 @@ v5.0:
         };
 
         attemptWebhook(payload);
-        showSaveToast();
-        closeModal('pph-modal');
+        
+        // Visual confirmation without closing the modal
+        const btn = byId('pph-push-btn');
+        const origText = btn.innerText;
+        btn.innerText = 'Pushed!';
+        btn.style.background = '#34c759'; // Success green
+        
+        setTimeout(() => {
+            btn.innerText = origText;
+            btn.style.background = '#000';
+        }, 2000);
     }
 
     // --- NOTES FUNCTIONS ---
