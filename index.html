@@ -405,7 +405,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 5.01</div>
+            <div class="app-version">Version 5.02</div>
         </div>
         <div class="section-title">Sort Statistics</div>
         <div class="stats-grid">
@@ -545,6 +545,7 @@
                 <span id="pph-diff" style="font-size:14px; font-weight:800; padding:4px 10px; border-radius:12px; background:#e5e5ea; color:#000;">0.00 hrs</span>
             </div>
         </div>
+        <button class="btn-primary" onclick="uploadPPH()" style="background:#000; margin-bottom:10px;">Push to KPI Dashboard</button>
         <button class="btn-cancel" onclick="closeModal('pph-modal')">Close</button>
     </div>
 </div>
@@ -798,7 +799,7 @@
     let pendingMoveDest = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '5.01';  
+    const APP_VERSION = '5.02';  
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Robert W", "Trevon C", "Russell H", "Fonseca J", "Eddie F", "Juan F", "Arce J"];
@@ -825,6 +826,9 @@
 
     // --- CHANGELOG ---
     const CHANGELOG = `
+v5.02:
+- Added manual "Push to KPI Dashboard" button for the PPH Calculator.
+
 v5.01:
 - Updated PPH calculator logic to calculate differential in hours (Target Hours vs. Actual Hours) instead of raw package difference.
 
@@ -970,7 +974,6 @@ v5.0:
         const pph = Math.round(vol / hrs);
         resEl.innerText = pph;
 
-        // Differential in hours: Target Hours based on 600 PPH minus Actual Hours
         const targetHours = vol / 600;
         const diff = targetHours - hrs;
         
@@ -985,6 +988,35 @@ v5.0:
             diffEl.style.background = '#ffebee'; // light red
             diffEl.style.color = '#c62828'; // dark red
         }
+    }
+
+    function uploadPPH() {
+        const vol = parseFloat(byId('pph-volume').value);
+        const hrs = parseFloat(byId('pph-hours').value);
+        
+        if (isNaN(vol) || isNaN(hrs) || hrs <= 0) {
+            return alert("Please enter valid volume and hours first.");
+        }
+
+        const pph = Math.round(vol / hrs);
+        const targetHours = vol / 600;
+        const diff = (targetHours - hrs).toFixed(2);
+
+        if (!confirm(`Push ${pph} PPH to the live dashboard?`)) return;
+
+        const payload = {
+            dataType: 'PPH_UPLOAD',
+            dateKey: dateKeyFromTs(Date.now()),
+            shiftStart: getShiftStartTime(),
+            volume: vol,
+            hours: hrs,
+            pph: pph,
+            diffHours: diff
+        };
+
+        attemptWebhook(payload);
+        showSaveToast();
+        closeModal('pph-modal');
     }
 
     // --- NOTES FUNCTIONS ---
