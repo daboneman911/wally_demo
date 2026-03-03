@@ -405,7 +405,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 5.03</div>
+            <div class="app-version">Version 5.04</div>
         </div>
         <div class="section-title">Sort Statistics</div>
         <div class="stats-grid">
@@ -483,7 +483,7 @@
                         <div class="slider-track"></div><div class="slider-fill" id="slider-fill"></div><div class="slider-thumb" id="slider-thumb"></div>
                         <div class="slider-ticks"><div class="slider-tick" style="left:0%"><div class="slider-tick-label">0</div></div><div class="slider-tick" style="left:50%"><div class="slider-tick-label">5</div></div><div class="slider-tick" style="left:100%"><div class="slider-tick-label">10</div></div></div>
                     </div>
-                    <div class="settings-note" style="margin-top:20px;"><strong>Attribution Grace Period</strong><br>When a trailer is completed within the 10‑minute window that starts at the selected minute after the hour, you can choose to count it toward the <strong>previous</strong> hour or the <strong>current</strong> hour. This helps keep hourly statistics accurate for completions that happen just after the hour.</div>
+                    <div class="settings-note" style="margin-top:20px;"><strong>Attribution Grace Period (Wallies Only)</strong><br>When a Wally is completed within the 10‑minute window that starts at the selected minute after the hour, you can choose to count it toward the <strong>previous</strong> hour or the <strong>current</strong> hour.</div>
                 </div>
                 <div class="settings-row"><span class="settings-label">Simulate Attribution</span><div class="toggle-switch" id="switch-sim-window" onclick="toggleSwitch('sim-window')"></div></div>
                 <div class="settings-row"><span class="settings-label">Disable Time Attribution</span><div class="toggle-switch" id="switch-dis-window" onclick="toggleSwitch('dis-window')"></div></div>
@@ -545,7 +545,7 @@
                 <span id="pph-diff" style="font-size:14px; font-weight:800; padding:4px 10px; border-radius:12px; background:#e5e5ea; color:#000;">0.00 hrs</span>
             </div>
         </div>
-        <button id="pph-push-btn" class="btn-primary" onclick="uploadPPH()" style="background:#000; margin-bottom:10px;">Push to KPI Dashboard</button>
+        <button id="pph-push-btn" class="btn-primary" onclick="uploadPPH()" style="background:#000; margin-bottom:10px;">Push to Sheets</button>
         <button class="btn-cancel" onclick="closeModal('pph-modal')">Close</button>
     </div>
 </div>
@@ -799,7 +799,7 @@
     let pendingMoveDest = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '5.03';  
+    const APP_VERSION = '5.04';  
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Robert W", "Trevon C", "Russell H", "Fonseca J", "Eddie F", "Juan F", "Arce J"];
@@ -826,6 +826,12 @@
 
     // --- CHANGELOG ---
     const CHANGELOG = `
+v5.04:
+- Made attribution settings apply ONLY to Wallys (bypasses CPUs).
+- Added "OVERALL TOTAL" row to the Shift Flow section on the KPI dashboard.
+- Changed PPH upload button text to "Push to Sheets".
+- Simplified the native share sheet message to "Door X done".
+
 v5.03:
 - Reversed the math for Time Differential to show under-hours correctly as negative (e.g., -0.40 hrs).
 - Keep PPH Modal open when "Push" is clicked for multiple uses.
@@ -1648,8 +1654,14 @@ v5.0:
         const { shiftStart } = getShiftTimeWindows();
         const startOffset = attributionConfig.minutes;
         const endOffset = startOffset + 10;
-        const shouldCheck = !config.disableWindow && (now - shiftStart > 3600000) && attributionConfig.enabled && 
-                            mins >= startOffset && mins < endOffset || config.simulateWindow;
+        
+        let shouldCheck = false;
+        // ONLY check attribution window for Wallies
+        if (d.type === 'Wally') {
+            shouldCheck = !config.disableWindow && (now - shiftStart > 3600000) && attributionConfig.enabled && 
+                          mins >= startOffset && mins < endOffset || config.simulateWindow;
+        }
+
         if (shouldCheck) {
             byId('attribution-window-text').textContent = `${startOffset.toString().padStart(2,'0')}-${endOffset.toString().padStart(2,'0')}`;
             pendingCompletion = { doorNum, time: now.getTime() };
@@ -1764,11 +1776,9 @@ v5.0:
 
         // SHARE SHEET CODE
         if (d.type === 'Wally' && navigator.share && !demoActive) {
-            const durationMins = Math.round((endTime - start) / 60000);
             setTimeout(() => {
                 navigator.share({
-                    title: 'Wally Completed',
-                    text: `✅ Door ${doorNum} (Wally ${d.id}) completed by ${primaryUnloader} in ${durationMins}m.`
+                    text: `Door ${doorNum} done`
                 }).catch(err => console.log('Share dismissed or failed:', err));
             }, 100);
         }
