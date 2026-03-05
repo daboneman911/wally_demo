@@ -405,7 +405,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 5.06</div>
+            <div class="app-version">Version 5.07</div>
         </div>
         <div class="section-title">Sort Statistics</div>
         <div class="stats-grid">
@@ -805,7 +805,7 @@
     let pendingMoveDest = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '5.06';  
+    const APP_VERSION = '5.07';  
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Robert W", "Trevon C", "Russell H", "Fonseca J", "Eddie F", "Juan F", "Arce J"];
@@ -832,20 +832,13 @@
 
     // --- CHANGELOG ---
     const CHANGELOG = `
-v5.06:
-- Added "Team Management" section to Settings. You can now edit or delete saved unloader names.
-- Added retroactive updating: editing a name updates their active trailers and past logs instantly.
-- Fixed the "Midnight Edit" bug where editing a start-time across midnight caused duration calculation errors.
-
-v5.05:
+v5.07:
 - Bug Fix (Critical): Fixed massive duration errors when editing start times that cross midnight.
 - Bug Fix (Backend): Reworked Apps Script to prevent bottlenecks during heavy usage and solve "Invalid Date" crashes.
 
-v5.04:
-- Made attribution settings apply ONLY to Wallys (bypasses CPUs).
-- Added "OVERALL TOTAL" row to the Shift Flow section on the KPI dashboard.
-- Changed PPH upload button text to "Push to Sheets".
-- Simplified the native share sheet message to "Door X done".
+v5.06:
+- Added "Team Management" section to Settings. You can now edit or delete saved unloader names.
+- Added retroactive updating: editing a name updates their active trailers and past logs instantly.
     `;
 
     // --- STATE ---
@@ -1217,7 +1210,7 @@ v5.04:
 
         if (sHistory) historyLog = JSON.parse(sHistory);
         
-        // --- AUTO PRUNE LOCAL HISTORY (V5.0) ---
+        // --- AUTO PRUNE LOCAL HISTORY ---
         if (Array.isArray(historyLog)) {
             const now = Date.now();
             const ONE_DAY_MS = 24 * 60 * 60 * 1000; // 24 hours
@@ -1229,6 +1222,7 @@ v5.04:
                     pruned = true;
                     return false; // Remove if older than 24 hours
                 }
+                // Ensure legacy fields exist
                 if (!l.dateKey) l.dateKey = dateKeyFromTs(l.end);
                 if (!l.completionHour) l.completionHour = getCompletionHour(l.end - (l.statOffset || 0));
                 if (!l.cpuOptions) l.cpuOptions = []; 
@@ -1429,7 +1423,7 @@ v5.04:
         savedAccounts.forEach(acct => { const opt = document.createElement('option'); opt.value = acct; dl.appendChild(opt); });
     }
 
-    // --- NEW: TEAM MANAGEMENT ---
+    // --- TEAM MANAGEMENT ---
     function renderTeamManagement() {
         const list = byId('team-management-list');
         list.innerHTML = '';
@@ -1501,7 +1495,6 @@ v5.04:
                             }
                         });
                     }
-                    // Ping update to sheet for active door
                     if (doorUpdated) {
                         const updatePayload = {
                             stage: 'update', door: i, id: doors[i].id, account: doors[i].account || '', type: doors[i].type,
@@ -1529,7 +1522,6 @@ v5.04:
                 
                 if (logUpdated) {
                     updatedCount++;
-                    // Sending the finalized log overwrites the old name via logId in Sheets
                     sendToWebhook(l, 'end'); 
                 }
             });
@@ -1699,19 +1691,6 @@ v5.04:
         closeModal('manual-add-modal'); renderDashboard();
         if (byId('tab-logs').classList.contains('active')) renderLogs();
         showSaveToast();
-    }
-
-    // --- ADD UNLOADER ---
-    function openAddUnloaderModal() { byId('input-new-unloader-name').value=''; byId('add-unloader-modal').style.display='flex'; }
-    function confirmAddUnloader() {
-        const val = byId('input-new-unloader-name').value.trim();
-        if(val){
-            const cap = val.toLowerCase().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-            if(!teamNames.includes(cap)){
-                teamNames.push(cap); refreshTeamNamesSorted(); saveTeam(); populateUnloaderSelect(); renderTeamManagement();
-            }
-            closeModal('add-unloader-modal');
-        }
     }
 
     // --- TAB SWITCHING ---
@@ -2068,6 +2047,7 @@ v5.04:
         byId('edit-active-custom-unloader').style.display = s.value === 'Custom' ? 'block' : 'none'; 
     }
     
+    // --- FIX: MIDNIGHT EDIT LOGIC ---
     function saveActiveEdit() {
         const orig = parseInt(byId('edit-active-original-door').value), dest = parseInt(byId('edit-active-door-select').value);
         let unl = byId('edit-active-unloader').value;
@@ -2091,7 +2071,7 @@ v5.04:
             let d = new Date(origDate);
             d.setHours(h, m, 0, 0);
             
-            // Midnight Edit Bug Fix
+            // MIDNIGHT BUG FIX
             let diff = d.getTime() - origDate.getTime();
             if (diff > 12 * 3600000) d.setDate(d.getDate() - 1); // Shifted backwards across midnight
             else if (diff < -12 * 3600000) d.setDate(d.getDate() + 1); // Shifted forwards across midnight
