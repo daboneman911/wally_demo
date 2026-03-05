@@ -405,7 +405,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 5.04</div>
+            <div class="app-version">Version 5.06</div>
         </div>
         <div class="section-title">Sort Statistics</div>
         <div class="stats-grid">
@@ -488,6 +488,12 @@
                 <div class="settings-row"><span class="settings-label">Simulate Attribution</span><div class="toggle-switch" id="switch-sim-window" onclick="toggleSwitch('sim-window')"></div></div>
                 <div class="settings-row"><span class="settings-label">Disable Time Attribution</span><div class="toggle-switch" id="switch-dis-window" onclick="toggleSwitch('dis-window')"></div></div>
             </div>
+            
+            <div class="settings-header">Team Management</div>
+            <div class="settings-group" id="team-management-list">
+                <div style="padding:15px 0; color:#8e8e93; text-align:center;">No saved team members</div>
+            </div>
+
             <div class="settings-header">Saved Accounts</div>
             <div class="settings-group">
                 <div class="settings-row">
@@ -799,7 +805,7 @@
     let pendingMoveDest = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '5.04';  
+    const APP_VERSION = '5.06';  
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Robert W", "Trevon C", "Russell H", "Fonseca J", "Eddie F", "Juan F", "Arce J"];
@@ -826,28 +832,20 @@
 
     // --- CHANGELOG ---
     const CHANGELOG = `
+v5.06:
+- Added "Team Management" section to Settings. You can now edit or delete saved unloader names.
+- Added retroactive updating: editing a name updates their active trailers and past logs instantly.
+- Fixed the "Midnight Edit" bug where editing a start-time across midnight caused duration calculation errors.
+
+v5.05:
+- Bug Fix (Critical): Fixed massive duration errors when editing start times that cross midnight.
+- Bug Fix (Backend): Reworked Apps Script to prevent bottlenecks during heavy usage and solve "Invalid Date" crashes.
+
 v5.04:
 - Made attribution settings apply ONLY to Wallys (bypasses CPUs).
 - Added "OVERALL TOTAL" row to the Shift Flow section on the KPI dashboard.
 - Changed PPH upload button text to "Push to Sheets".
 - Simplified the native share sheet message to "Door X done".
-
-v5.03:
-- Reversed the math for Time Differential to show under-hours correctly as negative (e.g., -0.40 hrs).
-- Keep PPH Modal open when "Push" is clicked for multiple uses.
-- Expanded the KPI Dashboard to show a running history table of PPH uploads.
-
-v5.02:
-- Added manual "Push to KPI Dashboard" button for the PPH Calculator.
-
-v5.01:
-- Updated PPH calculator logic to calculate differential in hours (Target Hours vs. Actual Hours) instead of raw package difference.
-
-v5.0:
-- Milestone Release!
-- Added PPH Calculator to the Tools tab.
-- Removed empty UI placeholder tools.
-- Implemented automatic 24-hour pruning for local history logs to ensure long-term app speed.
     `;
 
     // --- STATE ---
@@ -943,13 +941,11 @@ v5.0:
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         }).then(() => {
-            // Remove the successfully sent item
             let currentQueue = JSON.parse(localStorage.getItem('ps9_webhook_queue') || '[]');
             currentQueue.shift();
             localStorage.setItem('ps9_webhook_queue', JSON.stringify(currentQueue));
             isSyncingWebhook = false;
             
-            // Recursively process the next item if there is one
             if (currentQueue.length > 0) processWebhookQueue();
         }).catch(err => {
             console.error('Webhook sync failed, will retry later.', err);
@@ -1025,11 +1021,10 @@ v5.0:
 
         attemptWebhook(payload);
         
-        // Visual confirmation without closing the modal
         const btn = byId('pph-push-btn');
         const origText = btn.innerText;
         btn.innerText = 'Pushed!';
-        btn.style.background = '#34c759'; // Success green
+        btn.style.background = '#34c759';
         
         setTimeout(() => {
             btn.innerText = origText;
@@ -1234,7 +1229,6 @@ v5.0:
                     pruned = true;
                     return false; // Remove if older than 24 hours
                 }
-                // Ensure legacy fields exist
                 if (!l.dateKey) l.dateKey = dateKeyFromTs(l.end);
                 if (!l.completionHour) l.completionHour = getCompletionHour(l.end - (l.statOffset || 0));
                 if (!l.cpuOptions) l.cpuOptions = []; 
@@ -1255,6 +1249,7 @@ v5.0:
         renderSavedAccounts();
         updateAccountDatalist();
         populateUnloaderSelect();
+        renderTeamManagement(); // Init Team Management
         renderDashboard();
         
         setTimeout(() => {
@@ -1434,6 +1429,120 @@ v5.0:
         savedAccounts.forEach(acct => { const opt = document.createElement('option'); opt.value = acct; dl.appendChild(opt); });
     }
 
+    // --- NEW: TEAM MANAGEMENT ---
+    function renderTeamManagement() {
+        const list = byId('team-management-list');
+        list.innerHTML = '';
+        if(teamNamesSorted.length === 0) {
+            list.innerHTML = '<div style="padding:15px 0; color:#8e8e93; text-align:center;">No saved team members</div>';
+            return;
+        }
+        teamNamesSorted.forEach((name) => {
+            const div = document.createElement('div');
+            div.className = 'settings-row';
+            div.innerHTML = `
+                <span class="settings-label">${name}</span>
+                <div style="display:flex; gap:20px; align-items:center;">
+                    <i class="ph ph-pencil-simple" style="font-size:22px; cursor:pointer; color:#000;" onclick="editTeamMember('${name}')"></i>
+                    <i class="ph ph-minus-circle delete-acct-btn" onclick="deleteTeamMember('${name}')"></i>
+                </div>
+            `;
+            list.appendChild(div);
+        });
+    }
+
+    function deleteTeamMember(name) {
+        if(confirm(`Remove ${name} from your saved team list?`)) {
+            teamNames = teamNames.filter(n => n !== name);
+            refreshTeamNamesSorted();
+            saveTeam();
+            renderTeamManagement();
+            populateUnloaderSelect();
+            showSaveToast();
+        }
+    }
+
+    function editTeamMember(oldName) {
+        const newName = prompt(`Edit name for ${oldName}:`, oldName);
+        if (!newName || newName.trim() === '' || newName === oldName) return;
+        
+        const formattedName = newName.trim().toLowerCase().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        
+        // Update in team array
+        const index = teamNames.indexOf(oldName);
+        if (index > -1) {
+            teamNames[index] = formattedName;
+        } else {
+            teamNames.push(formattedName);
+        }
+        
+        refreshTeamNamesSorted();
+        saveTeam();
+        renderTeamManagement();
+        populateUnloaderSelect();
+
+        // Retroactive Update Logic
+        if (confirm(`Update all existing active trailers and past logs from "${oldName}" to "${formattedName}"?`)) {
+            let updatedCount = 0;
+            
+            // 1. Update Active Doors
+            for (let i = DOORS_START; i <= DOORS_END; i++) {
+                if (doors[i].status === 'active') {
+                    let doorUpdated = false;
+                    if (doors[i].unloader === oldName) {
+                        doors[i].unloader = formattedName;
+                        doorUpdated = true;
+                    }
+                    if (doors[i].assignments) {
+                        doors[i].assignments.forEach(a => {
+                            if (a.name === oldName) {
+                                a.name = formattedName;
+                                doorUpdated = true;
+                            }
+                        });
+                    }
+                    // Ping update to sheet for active door
+                    if (doorUpdated) {
+                        const updatePayload = {
+                            stage: 'update', door: i, id: doors[i].id, account: doors[i].account || '', type: doors[i].type,
+                            unloader: doors[i].unloader || '', assistants: doors[i].assignments ? doors[i].assignments.map(a => a.name).filter(n => n !== doors[i].unloader) : [],
+                            start: doors[i].start, end: null, dateKey: dateKeyFromTs(doors[i].start), durationMinutes: null, statOffset: 0,
+                            logId: doors[i].logId, duplicate: doors[i].isDuplicate || false, completionHour: null, cpuOptions: doors[i].cpuOptions || [],
+                            status: 'active', manual: false, shiftStart: getShiftStartTime()
+                        };
+                        sendToWebhook(updatePayload, 'update');
+                    }
+                }
+            }
+
+            // 2. Update Past Logs
+            historyLog.forEach(l => {
+                let logUpdated = false;
+                if (l.unloader === oldName) {
+                    l.unloader = formattedName;
+                    logUpdated = true;
+                }
+                if (l.assistants && l.assistants.includes(oldName)) {
+                    l.assistants = l.assistants.map(a => a === oldName ? formattedName : a);
+                    logUpdated = true;
+                }
+                
+                if (logUpdated) {
+                    updatedCount++;
+                    // Sending the finalized log overwrites the old name via logId in Sheets
+                    sendToWebhook(l, 'end'); 
+                }
+            });
+            
+            saveDoors();
+            saveHistory();
+            renderDashboard();
+            renderActiveTab();
+            if (byId('tab-logs').classList.contains('active')) renderLogs();
+            alert(`Successfully updated ${updatedCount} completed logs to "${formattedName}".`);
+        }
+    }
+
     // --- TOGGLES ---
     function toggleSwitch(id) {
         const el = byId('switch-'+id); 
@@ -1599,7 +1708,7 @@ v5.0:
         if(val){
             const cap = val.toLowerCase().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
             if(!teamNames.includes(cap)){
-                teamNames.push(cap); refreshTeamNamesSorted(); saveTeam(); populateUnloaderSelect();
+                teamNames.push(cap); refreshTeamNamesSorted(); saveTeam(); populateUnloaderSelect(); renderTeamManagement();
             }
             closeModal('add-unloader-modal');
         }
@@ -1656,7 +1765,6 @@ v5.0:
         const endOffset = startOffset + 10;
         
         let shouldCheck = false;
-        // ONLY check attribution window for Wallies
         if (d.type === 'Wally') {
             shouldCheck = !config.disableWindow && (now - shiftStart > 3600000) && attributionConfig.enabled && 
                           mins >= startOffset && mins < endOffset || config.simulateWindow;
@@ -1959,6 +2067,7 @@ v5.0:
     function checkActiveCustomUnloader(s) { 
         byId('edit-active-custom-unloader').style.display = s.value === 'Custom' ? 'block' : 'none'; 
     }
+    
     function saveActiveEdit() {
         const orig = parseInt(byId('edit-active-original-door').value), dest = parseInt(byId('edit-active-door-select').value);
         let unl = byId('edit-active-unloader').value;
@@ -1972,14 +2081,24 @@ v5.0:
             if(byId('edit-active-chk-recycle').checked) cpuOpts.push('RECYCLE');
             if(byId('edit-active-chk-gv').checked) cpuOpts.push('GV');
         }
+        
         const startTimeInput = byId('edit-active-start-time').value;
         let newStart = doors[orig].start;
+        
         if (startTimeInput) {
-            const now = new Date(doors[orig].start);
+            const origDate = new Date(doors[orig].start);
             const [h, m] = startTimeInput.split(':').map(Number);
-            now.setHours(h, m, 0, 0);
-            newStart = now.getTime();
+            let d = new Date(origDate);
+            d.setHours(h, m, 0, 0);
+            
+            // Midnight Edit Bug Fix
+            let diff = d.getTime() - origDate.getTime();
+            if (diff > 12 * 3600000) d.setDate(d.getDate() - 1); // Shifted backwards across midnight
+            else if (diff < -12 * 3600000) d.setDate(d.getDate() + 1); // Shifted forwards across midnight
+            
+            newStart = d.getTime();
         }
+        
         const d = doors[orig];
         const now = Date.now();
         let newAssignments = [...(d.assignments || [])];
