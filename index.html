@@ -10,7 +10,6 @@
     <meta name="mobile-web-app-capable" content="yes">
     <title>Wally Dashboard</title>
     <style>
-        /* Full styles */
         :root {
             --primary: #000000;
             --bg: #ffffff;
@@ -24,7 +23,6 @@
             --bay-purple: #bf5af2;
             --bay-orange: #ff9500;
             --bay-red: #ff3b30;
-            --bay-blue: #007aff; 
         }
         body {
             font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -135,14 +133,12 @@
         .bay-circle.unavailable { background-color: #8e8e93 !important; opacity: 0.5; color: #666 !important; border: none !important; }
         .bay-circle.unavailable .bay-timer { color: #666; }
         
-        /* Active status borders */
         .bay-circle.status-ok { border: 4px solid #34c759; }
         .bay-circle.status-warn { border: 4px solid #ff9500; }
         .bay-circle.status-crit { border: 4px solid #ff3b30; }
-        .bay-circle.status-staged { border: 4px solid var(--bay-blue); }
-        .bay-circle.status-staged .bay-timer { background: rgba(255, 255, 255, 0.95); color: var(--bay-blue); border: 1px solid var(--bay-blue); }
 
-        /* REVERTED BAY COLORS */
+        /* STRICT BAY COLORS AS REQUESTED */
+        .bay-8 { background-color: var(--bay-orange) !important; color: white !important; }
         .bay-9 { background-color: var(--bay-green) !important; color: white !important; }
         .bay-10 { background-color: var(--bay-purple) !important; color: white !important; }
         .bay-11 { background-color: var(--bay-orange) !important; color: white !important; }
@@ -176,7 +172,6 @@
         .active-card-header { display: flex; align-items: center; gap: 10px; }
         .active-card-title { font-size: 20px; font-weight: 800; color: #000; display: flex; align-items: center; gap: 8px; }
         .door-pill { background: #000; color: white; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 30px; }
-        .door-pill.staged { background: var(--bay-blue); }
         .active-card-details { font-size: 15px; color: var(--text-sub); font-weight: 500; }
         .active-card-time { font-size: 14px; color: #000; font-weight: 700; }
         .active-card-actions { display: flex; flex-direction: column; gap: 12px; align-items: flex-end; }
@@ -185,32 +180,17 @@
             display: flex; align-items: center; justify-content: center; cursor: pointer; color: #000; font-size: 20px;
         }
         .note-icon-btn {
-            background: #f2f2f7;
-            border: none;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            cursor: pointer;
-            color: #8e8e93;
-            transition: all 0.1s;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            background: #f2f2f7; border: none; width: 36px; height: 36px; border-radius: 50%;
+            display: inline-flex; align-items: center; justify-content: center; font-size: 20px;
+            cursor: pointer; color: #8e8e93; transition: all 0.1s; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
         .note-icon-btn:active { transform: scale(0.92); background: #e5e5ea; }
-        .note-icon-btn.has-note {
-            background: #000;
-            color: white;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-        }
+        .note-icon-btn.has-note { background: #000; color: white; box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
         .tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 10px 0; }
         .tool-card {
             background: #fff; border-radius: 24px; padding: 20px;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            text-align: center; aspect-ratio: 1 / 1;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05); cursor: pointer; transition: transform 0.1s;
+            text-align: center; aspect-ratio: 1 / 1; box-shadow: 0 4px 15px rgba(0,0,0,0.05); cursor: pointer; transition: transform 0.1s;
         }
         .tool-card:active { transform: scale(0.96); background: #f9f9f9; }
         .tool-icon-wrapper {
@@ -254,20 +234,8 @@
         .options-grid { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 5px; }
         .option-toggle { flex: 1; position: relative; cursor: pointer; min-width: 80px; }
         .option-toggle input { position: absolute; opacity: 0; width: 0; height: 0; }
-        .option-toggle span {
-            display: flex; align-items: center; justify-content: center;
-            width: 100%; padding: 12px;
-            background: #f2f2f7; color: #8e8e93;
-            border-radius: 12px; font-weight: 700; font-size: 14px;
-            transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
-            border: 1px solid transparent;
-            box-sizing: border-box;
-        }
-        .option-toggle input:checked ~ span {
-            background: #000; color: #fff;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-            transform: translateY(-1px);
-        }
+        .option-toggle span { display: flex; align-items: center; justify-content: center; width: 100%; padding: 12px; background: #f2f2f7; color: #8e8e93; border-radius: 12px; font-weight: 700; font-size: 14px; transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1); border: 1px solid transparent; box-sizing: border-box; }
+        .option-toggle input:checked ~ span { background: #000; color: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.15); transform: translateY(-1px); }
         .option-toggle:active span { transform: scale(0.96); }
         .tab-bar { position: fixed; bottom: 30px; left: 20px; right: 20px; background: white; border-radius: 40px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); display: flex; justify-content: space-around; align-items: center; height: 70px; z-index: 1000; padding-bottom: 0; }
         .tab-btn { background: none; border: none; display: flex; flex-direction: column; align-items: center; color: #ccc; font-size: 11px; font-weight: 600; width: 60px; cursor: pointer; gap: 4px; position: relative; }
@@ -280,19 +248,7 @@
         .save-toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; z-index: 3000; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
         .save-toast.visible { opacity: 1; }
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 2000; display: none; justify-content: center; align-items: flex-end; backdrop-filter: blur(4px); }
-        .modal-sheet {
-            background: white;
-            width: 100%;
-            max-width: 600px;
-            border-top-left-radius: 28px;
-            border-top-right-radius: 28px;
-            padding: 30px;
-            padding-bottom: max(40px, var(--safe-bottom));
-            animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            max-height: 90vh;
-            overflow-y: auto;
-            box-sizing: border-box;
-        }
+        .modal-sheet { background: white; width: 100%; max-width: 600px; border-top-left-radius: 28px; border-top-right-radius: 28px; padding: 30px; padding-bottom: max(40px, var(--safe-bottom)); animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); max-height: 90vh; overflow-y: auto; box-sizing: border-box; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         .z-high { z-index: 3000 !important; }
         .form-input { width: 100%; padding: 18px; background: #f2f2f7; border: none; border-radius: 16px; font-size: 18px; margin-bottom: 15px; box-sizing: border-box; outline: none; appearance: none; color: #000; font-weight: 500; }
@@ -343,59 +299,15 @@
         .slider-tick { width: 1px; height: 8px; background: #ccc; position: relative; }
         .slider-tick-label { position: absolute; top: 12px; font-size: 11px; color: #8e8e93; transform: translateX(-50%); white-space: nowrap; font-weight: 600; }
         #restore-file-input { display: none; }
-        .notes-list {
-            max-height: 400px;
-            overflow-y: auto;
-            margin-bottom: 20px;
-            border: 1px solid #e5e5ea;
-            border-radius: 16px;
-            background: #f9f9f9;
-        }
-        .note-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 20px;
-            border-bottom: 1px solid #e5e5ea;
-            cursor: pointer;
-        }
+        .notes-list { max-height: 400px; overflow-y: auto; margin-bottom: 20px; border: 1px solid #e5e5ea; border-radius: 16px; background: #f9f9f9; }
+        .note-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-bottom: 1px solid #e5e5ea; cursor: pointer; }
         .note-item:last-child { border-bottom: none; }
         .note-item:active { background: #f2f2f7; }
         .note-id { font-weight: 700; font-size: 18px; color: #000; }
-        .note-preview {
-            font-size: 14px;
-            color: #8e8e93;
-            max-width: 70%;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .note-badge {
-            background: #000;
-            color: white;
-            border-radius: 20px;
-            padding: 4px 12px;
-            font-size: 12px;
-            font-weight: 700;
-            margin-left: 10px;
-        }
-        .note-badge-container {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 5px;
-        }
-        .type-badge-small {
-            background: #000;
-            color: white;
-            border-radius: 16px;
-            padding: 4px 12px;
-            font-size: 12px;
-            font-weight: 700;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-        }
+        .note-preview { font-size: 14px; color: #8e8e93; max-width: 70%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .note-badge { background: #000; color: white; border-radius: 20px; padding: 4px 12px; font-size: 12px; font-weight: 700; margin-left: 10px; }
+        .note-badge-container { display: flex; align-items: center; gap: 8px; margin-top: 5px; }
+        .type-badge-small { background: #000; color: white; border-radius: 16px; padding: 4px 12px; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
     </style>
 </head>
 <body>
@@ -417,7 +329,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 6.1.5</div>
+            <div class="app-version">Version 5.07</div>
         </div>
         <div class="section-title">Sort Statistics</div>
         <div class="stats-grid">
@@ -478,7 +390,7 @@
             <div class="settings-header">Shift Management</div>
             <div class="settings-group">
                 <div class="settings-row" onclick="newShift()" style="cursor:pointer;"><span class="settings-label">Start New Shift</span><i class="ph ph-arrow-clockwise" style="color:#000; font-size:20px;"></i></div>
-                <div class="settings-row" onclick="resetData()" style="cursor:pointer;"><span class="settings-label">Reset All Data</span><i class="ph ph-trash" style="color:#ff3b30; font-size:20px;"></i></div>
+                <div class="settings-row" onclick="resetData()" style="cursor:pointer;"><span class="settings-label" style="color:#ff3b30; font-weight:800;">Reset All Data</span><i class="ph ph-trash" style="color:#ff3b30; font-size:20px;"></i></div>
             </div>
             <div class="settings-header">Data Management</div>
             <div class="settings-group">
@@ -548,15 +460,11 @@
     <div class="modal-sheet">
         <h2 style="margin: 0 0 20px; font-size:24px; text-align:center;">PPH Calculator</h2>
         <div style="margin-bottom:15px;">
-            <label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Target Volume (Shift Goal)</label>
-            <input type="number" id="pph-target" class="form-input" placeholder="e.g. 25000" inputmode="numeric">
-        </div>
-        <div style="margin-bottom:15px;">
-            <label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Current Volume (Processed)</label>
+            <label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Total Volume (Packages)</label>
             <input type="number" id="pph-volume" class="form-input" placeholder="e.g. 12617" inputmode="numeric">
         </div>
         <div style="margin-bottom:15px;">
-            <label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Hours Elapsed</label>
+            <label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Total Hours Worked</label>
             <input type="number" id="pph-hours" class="form-input" placeholder="e.g. 20.63" step="0.01" inputmode="decimal">
         </div>
         
@@ -566,11 +474,6 @@
             <div style="display:flex; justify-content:center; align-items:center; gap:8px; margin-top:10px;">
                 <span style="font-size:12px; color:var(--text-sub); font-weight:600; text-transform:uppercase;">Time Differential (vs 600 PPH)</span>
                 <span id="pph-diff" style="font-size:14px; font-weight:800; padding:4px 10px; border-radius:12px; background:#e5e5ea; color:#000;">0.00 hrs</span>
-            </div>
-            
-            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e5e5ea;">
-                <div style="font-size:12px; color:var(--text-sub); font-weight:600; text-transform:uppercase; margin-bottom:5px;">Projected Finish (ETC)</div>
-                <div id="pph-etc" style="font-size:20px; font-weight:800; color:#d9534f;">--</div>
             </div>
         </div>
         <button id="pph-push-btn" class="btn-primary" onclick="uploadPPH()" style="background:#000; margin-bottom:10px;">Push to Sheets</button>
@@ -726,29 +629,16 @@
         <h2 style="margin: 0 0 10px; font-size:24px; text-align:center;">Active Door <span id="detail-door-num"></span></h2>
         
         <div style="margin-bottom:20px;">
-            <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value" id="detail-status-text"></span></div>
             <div class="detail-row"><span class="detail-label">Type</span><span class="detail-value" id="detail-type"></span></div>
             <div class="detail-row"><span class="detail-label">ID #</span><span class="detail-value" id="detail-id"></span></div>
             <div class="detail-row" id="row-account" style="display:none;"><span class="detail-label">Account #</span><span class="detail-value" id="detail-account"></span></div>
             <div class="detail-row" id="row-cpu-opts" style="display:none;"><span class="detail-label">Options</span><span class="detail-value" id="detail-cpu-opts"></span></div>
             <div class="detail-row"><span class="detail-label">Unloader</span><span class="detail-value" id="detail-unloader"></span></div>
-            
-            <div style="margin-top:15px; border-top:1px solid #e5e5ea; padding-top:10px;">
-                <div class="detail-row"><span class="detail-label">Arrival Time</span><span class="detail-value" id="detail-time"></span></div>
-                <div class="detail-row"><span class="detail-label">Stage Time</span><span class="detail-value" id="detail-stage-time">0m</span></div>
-                <div class="detail-row" id="row-labor-start" style="display:none;"><span class="detail-label">Labor Started</span><span class="detail-value" id="detail-labor-start"></span></div>
-                <div class="detail-row" id="row-duration" style="display:none;"><span class="detail-label">Labor Duration</span><span class="detail-value" id="detail-duration">0m</span></div>
-            </div>
+            <div class="detail-row"><span class="detail-label">Start Time</span><span class="detail-value" id="detail-time"></span></div>
+            <div class="detail-row"><span class="detail-label">Duration</span><span class="detail-value" id="detail-duration">0m</span></div>
         </div>
 
-        <div id="punch-in-section" style="display:none; margin-bottom:20px; background:#f2f2f7; padding:15px; border-radius:16px;">
-            <label style="font-size:13px; color:var(--text-sub); font-weight:700; margin-bottom:8px; display:block;">Assign Unloader to Start Labor</label>
-            <select id="punch-in-unloader" class="form-input" style="background:#fff; margin-bottom:10px;"></select>
-            <input type="text" id="punch-in-custom" class="form-input" style="display:none; background:#fff; margin-bottom:10px;" placeholder="Enter Name" autocapitalize="words">
-            <button class="btn-primary" style="background:#34c759; margin-top:0;" onclick="punchInUnloader()">Start Unload</button>
-        </div>
-
-        <button id="btn-complete-unload" class="btn-primary btn-danger" onclick="confirmCompleteDoor()">Complete Unload</button>
+        <button class="btn-primary btn-danger" onclick="confirmCompleteDoor()">Complete Unload</button>
         
         <div class="modal-actions-row">
             <button class="modal-icon-btn" onclick="openEditActiveModalFromDetail()" style="flex:1"><i class="ph ph-pencil-simple"></i></button>
@@ -770,6 +660,20 @@
     </div>
 </div>
 
+<div class="modal-overlay" id="move-menu-modal">
+    <div class="modal-sheet">
+        <h2 style="margin: 0 0 20px; font-size:24px; text-align:center;">Move / Mark Incomplete</h2>
+        <p style="text-align:center; color:#757575; margin-bottom:20px;">Select destination or mark as incomplete.</p>
+        <select id="move-dest-select" class="form-input">
+            <option value="Small Sort">Small Sort</option>
+            <option value="Bulk Directs">Bulk Directs</option>
+            <option value="Incomplete">Incomplete (no unload)</option>
+        </select>
+        <button class="btn-primary" onclick="confirmMoveDoor()">Confirm</button>
+        <button class="btn-cancel" onclick="closeModal('move-menu-modal')">Cancel</button>
+    </div>
+</div>
+
 <div class="modal-overlay" id="edit-active-modal">
     <div class="modal-sheet">
         <h2 style="margin: 0 0 20px; font-size:24px; text-align:center;">Edit Door Details</h2>
@@ -783,12 +687,8 @@
         
         <div style="display:flex; gap:10px; margin-bottom:15px;">
             <div style="flex:1;">
-                <label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Arrival Time</label>
+                <label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Start Time</label>
                 <input type="time" id="edit-active-arrival-time" class="form-input">
-            </div>
-            <div style="flex:1;" id="edit-labor-time-container">
-                <label style="font-size:12px; color:var(--text-sub); font-weight:600; margin-left:4px; margin-bottom:4px; display:block;">Labor Start Time</label>
-                <input type="time" id="edit-active-labor-time" class="form-input">
             </div>
         </div>
 
@@ -833,8 +733,8 @@
     let pendingMoveDest = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '6.1.5';  
-    const DOORS_START = 8; // User confirmed Door 8 is active
+    const APP_VERSION = '5.07';  
+    const DOORS_START = 8; 
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Robert W", "Trevon C", "Russell H", "Fonseca J", "Eddie F", "Juan F", "Arce J"];
 
@@ -882,7 +782,7 @@
     function init() {
         console.log("Wally Dashboard v" + APP_VERSION + " initialized");
 
-        // 1. DATA SANITIZATION (Fixes the blank screen crash)
+        // 1. DATA SANITIZATION
         let parsedDoors = {};
         try { 
             const s = localStorage.getItem('ps9_doors'); 
@@ -898,14 +798,8 @@
             let d = parsedDoors[i];
             if (d && typeof d === 'object') {
                 doors[i] = d;
-                if ((doors[i].status === 'active' || doors[i].status === 'staged') && !doors[i].laborStart) {
-                    doors[i].laborStart = doors[i].start;
-                }
-                if (doors[i].idleTimeMinutes === undefined) {
-                    doors[i].idleTimeMinutes = "";
-                }
             } else {
-                doors[i] = { status: 'empty', start: 0, laborStart: null, id: '', type: '', unloader: '', unavailable: false, lastCompletionTime: null, assignments: [] };
+                doors[i] = { status: 'empty', start: 0, id: '', type: '', unloader: '', unavailable: false, lastCompletionTime: null, assignments: [] };
             }
         }
         saveDoors();
@@ -921,7 +815,6 @@
             if(btn) openArrivalModal(parseInt(btn.dataset.door)); 
         });
 
-        // Event listeners for text inputs
         byId('input-wally-id').addEventListener('input', function(e) { 
             this.value = this.value.replace(/[^0-9]/g, ''); 
             updateOnboardingNoteIndicator(this.value); 
@@ -937,15 +830,12 @@
 
         byId('select-unloader').addEventListener('change', function() { checkCustomUnloader(this); });
         byId('edit-active-unloader').addEventListener('change', function() { checkActiveCustomUnloader(this); });
-        byId('punch-in-unloader').addEventListener('change', function() { checkPunchInCustom(this); });
         byId('req-unloader-select').addEventListener('change', function() { checkReqCustom(this); });
         byId('manual-unloader').addEventListener('change', function() { checkManualCustomUnloader(this); });
         
         // 3. LOAD DATA
         const sAccts = localStorage.getItem('ps9_accounts'); 
-        if (sAccts) {
-            savedAccounts = JSON.parse(sAccts);
-        }
+        if (sAccts) savedAccounts = JSON.parse(sAccts);
         
         initAttributionSettings(); 
         loadNotes();
@@ -1011,10 +901,8 @@
         }, 100);
         
         setInterval(function() { 
-            renderDashboard(); 
-            renderActiveTab(); 
             updateTabBadges(); 
-        }, 60000); 
+        }, 2000); 
         
         updateTabBadges();
         
@@ -1100,11 +988,9 @@
             unloader: logEntry.unloader,
             assistants: logEntry.assistants,
             start: logEntry.start, 
-            laborStart: logEntry.laborStart, 
             end: logEntry.end,
             dateKey: logEntry.dateKey,
             durationMinutes: logEntry.durationMinutes, 
-            stageTimeMinutes: logEntry.stageTimeMinutes, 
             cpuOptions: logEntry.cpuOptions,
             duplicate: logEntry.duplicate,
             manual: logEntry.manual,
@@ -1112,8 +998,7 @@
             status: logEntry.status,
             moveDest: logEntry.moveDest,
             shiftStart: getShiftStartTime(),
-            logId: logEntry.logId,
-            idleTimeMinutes: logEntry.idleTimeMinutes !== undefined ? logEntry.idleTimeMinutes : "" 
+            logId: logEntry.logId
         };
         attemptWebhook(payload);
     }
@@ -1184,7 +1069,7 @@
         for(let i = DOORS_START; i <= DOORS_END; i++) {
             let d = doors[i];
             if (!d || typeof d !== 'object') {
-                d = { status: 'empty', start: 0, laborStart: null, id: '', type: '', unloader: '', unavailable: false, lastCompletionTime: null, assignments: [] };
+                d = { status: 'empty', start: 0, id: '', type: '', unloader: '', unavailable: false, lastCompletionTime: null, assignments: [] };
                 doors[i] = d;
             }
             
@@ -1193,26 +1078,20 @@
             btn.className = `bay-circle bay-${i} ${unavailClass}`;
             btn.dataset.door = i; 
 
-            if (d.status === 'active' || d.status === 'staged') {
+            if (d.status === 'active') {
                 hasActive = true;
                 const typeStr = d.type === 'Wally' ? 'W' : 'C';
                 const badgeClass = d.type === 'Wally' ? 'badge-w' : 'badge-c';
                 btn.innerHTML = `${i}<div class="type-badge ${badgeClass}">${typeStr}</div>`;
                 
-                if (d.status === 'staged') {
-                    btn.classList.add('status-staged');
-                    const startTs = Number(d.start) || Date.now();
-                    const stageMins = Math.floor((Date.now() - startTs) / 60000);
-                    btn.innerHTML += `<div class="bay-timer">${stageMins}m</div>`;
-                } else {
-                    const laborStartRef = Number(d.laborStart) || Number(d.start) || Date.now();
-                    if (laborStartRef > 0) {
-                        const laborMins = Math.floor((Date.now() - laborStartRef) / 60000);
-                        if (laborMins > 60) btn.classList.add('status-crit');
-                        else if (laborMins > 45) btn.classList.add('status-warn');
-                        else btn.classList.add('status-ok');
-                    }
+                const startRef = Number(d.start) || Date.now();
+                if (startRef > 0) {
+                    const laborMins = Math.floor((Date.now() - startRef) / 60000);
+                    if (laborMins > 60) btn.classList.add('status-crit');
+                    else if (laborMins > 45) btn.classList.add('status-warn');
+                    else btn.classList.add('status-ok');
                 }
+                
                 activeGrid.appendChild(btn);
             } else {
                 hasOpen = true;
@@ -1236,7 +1115,7 @@
     function updateTabBadges() {
         let activeCount = 0;
         for(let i=DOORS_START; i<=DOORS_END; i++) {
-            if(doors[i] && (doors[i].status === 'active' || doors[i].status === 'staged')) {
+            if(doors[i] && (doors[i].status === 'active')) {
                 activeCount++;
             }
         }
@@ -1442,34 +1321,20 @@
             startTime = d.getTime();
         }
         
-        const isStaged = (!unl || unl === "Unassigned");
-        const status = isStaged ? 'staged' : 'active';
-        const laborStart = isStaged ? null : startTime;
-
-        let idleTimeMinutes = "";
-        if (doors[currentDoor] && doors[currentDoor].lastCompletionTime) {
-            let diffMs = startTime - doors[currentDoor].lastCompletionTime;
-            if (diffMs > 0) {
-                idleTimeMinutes = Math.floor(diffMs / 60000);
-            }
-        }
-
         const logId = Date.now().toString(36) + Math.random().toString(36).substr(2);
 
         doors[currentDoor] = { 
-            status: status, 
+            status: 'active', 
             start: startTime, 
-            laborStart: laborStart, 
             id: fId, 
             account: fAcc, 
             type: currentType, 
             unloader: unl || "Unassigned", 
             isDuplicate: false, 
             unavailable: false, 
-            lastCompletionTime: doors[currentDoor] ? doors[currentDoor].lastCompletionTime : null, 
-            idleTimeMinutes: idleTimeMinutes,
+            lastCompletionTime: null, 
             cpuOptions: cpuOpts, 
-            assignments: isStaged ? [] : [{ name: unl, start: laborStart, end: null }], 
+            assignments: [{ name: unl || "Unassigned", start: startTime, end: null }], 
             logId: logId
         };
         
@@ -1481,7 +1346,6 @@
             unloader: unl || "Unassigned", 
             assistants: [], 
             start: startTime, 
-            laborStart: laborStart, 
             end: null, 
             dateKey: dateKeyFromTs(startTime), 
             durationMinutes: null, 
@@ -1490,9 +1354,8 @@
             duplicate: false, 
             completionHour: null, 
             cpuOptions: cpuOpts, 
-            status: status, 
-            manual: false, 
-            idleTimeMinutes: idleTimeMinutes 
+            status: 'active', 
+            manual: false
         };
         
         sendToWebhook(startEntry, 'start');
@@ -1527,7 +1390,6 @@
             doors[doorNum] = { 
                 status: 'active', 
                 start: startTime, 
-                laborStart: startTime,
                 id: wallyId, 
                 account: "", 
                 type: 'Wally', 
@@ -1535,7 +1397,6 @@
                 isDuplicate: true, 
                 unavailable: false, 
                 lastCompletionTime: null, 
-                idleTimeMinutes: "",
                 cpuOptions: [], 
                 assignments: [{ name: unloader || "Unassigned", start: startTime, end: null }],
                 logId: Date.now().toString(36) + Math.random().toString(36).substr(2)
@@ -1564,7 +1425,7 @@
         closeModal('input-modal'); 
     }
 
-    // --- ACTIVE DETAILS & PUNCH IN ---
+    // --- ACTIVE DETAILS ---
     function openActiveDetails(doorNum) {
         detailDoor = doorNum; 
         const d = doors[doorNum];
@@ -1572,12 +1433,6 @@
         byId('detail-door-num').innerText = doorNum;
         byId('detail-type').innerText = d.type;
         byId('detail-id').innerText = d.id;
-        
-        const isStaged = d.status === 'staged';
-        
-        byId('detail-status-text').innerText = isStaged ? "Staged (Waiting for Labor)" : "Active (Unloading)";
-        byId('detail-status-text').style.color = isStaged ? "var(--bay-blue)" : "#34c759";
-        
         byId('detail-unloader').innerText = d.unloader || "Unassigned";
         
         const startTs = Number(d.start) || Date.now();
@@ -1600,283 +1455,12 @@
         }
         
         const now = Date.now();
-        if (isStaged) {
-            byId('detail-stage-time').innerText = Math.floor((now - startTs)/60000) + "m";
-            byId('row-labor-start').style.display = 'none';
-            byId('row-duration').style.display = 'none';
-            
-            const select = byId('punch-in-unloader');
-            select.innerHTML = '<option value="" selected>Select Unloader...</option>';
-            teamNamesSorted.forEach(function(n) {
-                select.innerHTML += `<option value="${n}">${n}</option>`;
-            });
-            select.innerHTML += '<option value="Custom">Custom / Other</option>';
-            
-            byId('punch-in-custom').style.display = 'none';
-            byId('punch-in-section').style.display = 'block';
-            byId('btn-complete-unload').style.display = 'none';
-        } else {
-            const laborStartRef = Number(d.laborStart) || startTs;
-            byId('detail-stage-time').innerText = Math.floor((laborStartRef - startTs)/60000) + "m";
-            
-            byId('row-labor-start').style.display = 'flex';
-            byId('detail-labor-start').innerText = new Date(laborStartRef).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            
-            byId('row-duration').style.display = 'flex';
-            byId('detail-duration').innerText = Math.floor((now - laborStartRef)/60000) + "m";
-            
-            byId('punch-in-section').style.display = 'none';
-            byId('btn-complete-unload').style.display = 'block';
-        }
+        byId('detail-duration').innerText = Math.floor((now - startTs)/60000) + "m";
 
         byId('active-detail-modal').style.display = 'flex';
     }
 
-    function checkPunchInCustom(s) { 
-        byId('punch-in-custom').style.display = s.value === 'Custom' ? 'block' : 'none'; 
-    }
-
-    function punchInUnloader() {
-        let unl = byId('punch-in-unloader').value;
-        if(unl === 'Custom') {
-            unl = byId('punch-in-custom').value.trim();
-        }
-        
-        if(!unl) return alert("Please select an unloader to start.");
-        
-        if(unl !== "Unassigned" && unl === byId('punch-in-custom').value.trim()) {
-            unl = unl.toLowerCase().split(' ').map(function(w){ return w.charAt(0).toUpperCase() + w.slice(1); }).join(' ');
-        }
-        
-        const laborStart = Date.now();
-        doors[detailDoor].status = 'active';
-        doors[detailDoor].laborStart = laborStart;
-        doors[detailDoor].unloader = unl;
-        doors[detailDoor].assignments = [{ name: unl, start: laborStart, end: null }];
-        
-        saveDoors();
-        
-        const d = doors[detailDoor];
-        const updatePayload = { 
-            door: detailDoor, 
-            id: d.id, 
-            account: d.account||"", 
-            type: d.type, 
-            unloader: d.unloader, 
-            assistants: [], 
-            start: d.start, 
-            laborStart: d.laborStart, 
-            end: null, 
-            dateKey: dateKeyFromTs(d.start), 
-            durationMinutes: null, 
-            statOffset: 0, 
-            logId: d.logId, 
-            duplicate: false, 
-            completionHour: null, 
-            cpuOptions: d.cpuOptions || [], 
-            status: 'active', 
-            manual: false, 
-            idleTimeMinutes: d.idleTimeMinutes 
-        };
-        sendToWebhook(updatePayload, 'update');
-        
-        closeModal('active-detail-modal'); 
-        renderDashboard(); 
-        renderActiveTab(); 
-        showSaveToast();
-    }
-
-    // --- COMPLETION LOGIC ---
-    function confirmCompleteDoor() { 
-        if(detailDoor) completeDoor(detailDoor); 
-    }
-
-    function completeDoor(doorNum, force) {
-        const d = doors[doorNum];
-        if (!force && (!d.unloader || d.unloader === 'Unassigned')) {
-             closeModal('active-detail-modal');
-             byId('req-unloader-select').value = "";
-             byId('req-custom-unloader').style.display = 'none';
-             byId('unloader-required-modal').style.display = 'flex';
-             return;
-        }
-        
-        const now = new Date();
-        const mins = now.getMinutes();
-        const windows = getShiftTimeWindows();
-        const startOffset = attributionConfig.minutes;
-        const endOffset = startOffset + 10;
-        
-        let shouldCheck = false;
-        if (d.type === 'Wally') {
-            const shiftStartedLongAgo = (now - windows.shiftStart > 3600000);
-            shouldCheck = (!config.disableWindow && shiftStartedLongAgo && attributionConfig.enabled && 
-                          mins >= startOffset && mins < endOffset) || config.simulateWindow;
-        }
-
-        if (shouldCheck) {
-            const startStr = startOffset.toString().padStart(2,'0');
-            const endStr = endOffset.toString().padStart(2,'0');
-            byId('attribution-window-text').textContent = `${startStr}-${endStr}`;
-            pendingCompletion = { doorNum: doorNum, time: now.getTime() };
-            byId('hour-attribution-modal').style.display = 'flex';
-        } else {
-            finalizeCompletion(doorNum, now.getTime(), 0);
-        }
-    }
-
-    function checkReqCustom(s) { 
-        byId('req-custom-unloader').style.display = s.value === 'Custom' ? 'block' : 'none'; 
-    }
-
-    function saveRequiredUnloader() {
-        let unl = byId('req-unloader-select').value;
-        if(unl === 'Custom') {
-            unl = byId('req-custom-unloader').value.trim();
-        }
-        
-        if(!unl) return alert("Please select an unloader");
-        
-        if(unl !== "Unassigned" && unl === byId('req-custom-unloader').value.trim()) {
-            unl = unl.toLowerCase().split(' ').map(function(w){ return w.charAt(0).toUpperCase() + w.slice(1); }).join(' ');
-        }
-        
-        const d = doors[detailDoor];
-        d.unloader = unl;
-        if(d.assignments.length > 0) {
-            if (d.assignments[d.assignments.length-1].name === 'Unassigned') {
-                 d.assignments[d.assignments.length-1].name = unl;
-            } else {
-                 d.assignments.push({ name: unl, start: Date.now(), end: null });
-            }
-        } else {
-             d.assignments = [{ name: unl, start: d.start, end: null }];
-        }
-        
-        saveDoors();
-        closeModal('unloader-required-modal');
-        completeDoor(detailDoor, true);
-    }
-
-    function resolveAttribution(choice) {
-        closeModal('hour-attribution-modal');
-        if (!pendingCompletion) return;
-        
-        let offset = 0;
-        if (choice === 'Previous') {
-            offset = (new Date(pendingCompletion.time).getMinutes() + 1) * 60000;
-        }
-        
-        finalizeCompletion(pendingCompletion.doorNum, pendingCompletion.time, offset);
-        pendingCompletion = null;
-    }
-
-    function finalizeCompletion(doorNum, endTime, offset) {
-        const d = doors[doorNum];
-        let start = Number(d.start);
-        let laborStart = Number(d.laborStart) || start; 
-        
-        if(d.assignments && d.assignments.length > 0) {
-            const last = d.assignments[d.assignments.length - 1];
-            if(!last.end) last.end = endTime;
-        }
-        
-        const durationMap = {};
-        if (d.assignments && d.assignments.length > 0) {
-            d.assignments.forEach(function(a) {
-                if (a.name === 'Unassigned') return;
-                const dur = (a.end || endTime) - a.start;
-                if (!durationMap[a.name]) durationMap[a.name] = 0;
-                durationMap[a.name] += dur;
-            });
-        } else {
-            if(d.unloader !== 'Unassigned') durationMap[d.unloader] = endTime - laborStart;
-        }
-        
-        let primaryUnloader = d.unloader; 
-        let maxDur = -1;
-        Object.keys(durationMap).forEach(function(name) { 
-            if (durationMap[name] > maxDur) { 
-                maxDur = durationMap[name]; 
-                primaryUnloader = name; 
-            } 
-        });
-        
-        if (!primaryUnloader || primaryUnloader === 'Unassigned') primaryUnloader = "Unknown";
-        
-        const assistants = Object.keys(durationMap).filter(function(n) { return n !== primaryUnloader; });
-        
-        if (d.type === 'CPU' && d.account && !savedAccounts.includes(d.account.trim().toUpperCase())) { 
-            savedAccounts.push(d.account.trim().toUpperCase()); 
-            saveAccounts(); 
-            updateAccountDatalist(); 
-        }
-        
-        const stageTimeMinutes = Math.round((laborStart - start) / 60000);
-        const durationMinutes = Math.round((endTime - laborStart) / 60000); 
-
-        const logEntry = {
-            door: doorNum, 
-            id: d.id, 
-            account: d.account||"", 
-            type: d.type, 
-            unloader: primaryUnloader, 
-            assistants: assistants,
-            start: start, 
-            laborStart: laborStart, 
-            end: endTime, 
-            dateKey: dateKeyFromTs(endTime), 
-            duration: endTime - laborStart, 
-            durationMinutes: durationMinutes, 
-            stageTimeMinutes: stageTimeMinutes, 
-            statOffset: offset,
-            logId: d.logId, 
-            duplicate: d.isDuplicate||false, 
-            completionHour: getCompletionHour(endTime - offset), 
-            cpuOptions: d.cpuOptions || [],
-            idleTimeMinutes: d.idleTimeMinutes !== undefined ? d.idleTimeMinutes : "", 
-            status: 'completed'
-        };
-        
-        closeModal('active-detail-modal');
-        historyLog.unshift(logEntry);
-        sendToWebhook(logEntry, 'end');
-
-        if (d.type === 'Wally' && navigator.share && !demoActive) { 
-            setTimeout(function() { 
-                navigator.share({ text: `Door ${doorNum} done` }).catch(function(err) { console.log('Share error:', err); }); 
-            }, 100); 
-        }
-
-        doors[doorNum] = { 
-            status: 'empty', 
-            start: 0, 
-            laborStart: null, 
-            id: '', 
-            type: '', 
-            unloader: '', 
-            unavailable: false, 
-            lastCompletionTime: endTime, 
-            assignments: [] 
-        };
-        
-        saveHistory(); 
-        saveDoors(); 
-        renderDashboard(); 
-        renderActiveTab(); 
-        updateTabBadges(); 
-        showSaveToast();
-
-        if (demoActive && config.replenish) {
-            setTimeout(function() { 
-                if (doors[doorNum] && doors[doorNum].status === 'empty') {
-                    randomArrival(doorNum); 
-                }
-            }, 10000);
-        }
-    }
-
-    // --- DUAL CLOCK EDITOR ---
+    // --- EDIT ACTIVE ---
     function openEditActiveModalFromDetail() { 
         closeModal('active-detail-modal'); 
         openEditActiveModal(detailDoor); 
@@ -1913,15 +1497,6 @@
         const arrDate = new Date(Number(d.start) || Date.now());
         byId('edit-active-arrival-time').value = `${arrDate.getHours().toString().padStart(2,'0')}:${arrDate.getMinutes().toString().padStart(2,'0')}`;
         
-        if (d.status === 'active' && d.laborStart) {
-            byId('edit-labor-time-container').style.display = 'block';
-            const labDate = new Date(Number(d.laborStart));
-            byId('edit-active-labor-time').value = `${labDate.getHours().toString().padStart(2,'0')}:${labDate.getMinutes().toString().padStart(2,'0')}`;
-        } else {
-            byId('edit-labor-time-container').style.display = 'none';
-            byId('edit-active-labor-time').value = '';
-        }
-
         const sel = byId('edit-active-door-select'); 
         sel.innerHTML = '';
         for(let i=DOORS_START; i<=DOORS_END; i++) {
@@ -1976,7 +1551,6 @@
         
         const d = doors[orig];
         let newArrival = Number(d.start) || Date.now();
-        let newLabor = d.laborStart ? Number(d.laborStart) : null;
         
         const arrTimeInput = byId('edit-active-arrival-time').value;
         if (arrTimeInput) {
@@ -1987,57 +1561,35 @@
             let dObj = new Date(origDate); 
             dObj.setHours(h, m, 0, 0);
             
+            // Midnight Edit Bug Fix
             let diff = dObj.getTime() - origDate.getTime();
             if (diff > 12 * 3600000) dObj.setDate(dObj.getDate() - 1); 
             else if (diff < -12 * 3600000) dObj.setDate(dObj.getDate() + 1); 
             
             newArrival = dObj.getTime();
         }
-        
-        const labTimeInput = byId('edit-active-labor-time').value;
-        if (d.status === 'active' && labTimeInput) {
-            const origLabDate = new Date(newLabor || newArrival);
-            const parts = labTimeInput.split(':');
-            const h = Number(parts[0]);
-            const m = Number(parts[1]);
-            let lObj = new Date(origLabDate); 
-            lObj.setHours(h, m, 0, 0);
-            
-            let diff = lObj.getTime() - origLabDate.getTime();
-            if (diff > 12 * 3600000) lObj.setDate(lObj.getDate() - 1); 
-            else if (diff < -12 * 3600000) lObj.setDate(lObj.getDate() + 1); 
-            
-            newLabor = lObj.getTime();
-        }
-
-        const isStaged = (!unl || unl === "Unassigned");
-        const status = isStaged ? 'staged' : 'active';
-        if (isStaged) newLabor = null;
 
         let newAssignments = [...(d.assignments || [])];
-        if (newLabor && newAssignments.length > 0) {
-            newAssignments[0].start = newLabor;
+        if (newArrival && newAssignments.length > 0) {
+            newAssignments[0].start = newArrival;
         }
         
-        if (d.unloader !== unl && !isStaged) {
+        if (d.unloader !== unl) {
             if (newAssignments.length > 0) {
                 newAssignments[newAssignments.length - 1].end = Date.now();
             }
             newAssignments.push({ name: unl, start: Date.now(), end: null });
         }
-        if (isStaged) newAssignments = [];
 
         const data = { 
-            status: status, 
+            status: 'active', 
             start: newArrival, 
-            laborStart: newLabor, 
             id: byId('edit-active-id').value.trim().toUpperCase(), 
             account: byId('edit-active-account').value.trim().toUpperCase(), 
             type: type, 
             unloader: unl, 
             unavailable: false, 
             lastCompletionTime: d.lastCompletionTime, 
-            idleTimeMinutes: d.idleTimeMinutes, 
             cpuOptions: cpuOpts,
             assignments: newAssignments, 
             logId: d.logId
@@ -2045,7 +1597,7 @@
         
         if(dest !== orig) { 
             doors[dest] = data; 
-            doors[orig] = { status:'empty', start:0, laborStart:null, id:'', type:'', unloader:'', unavailable: false, lastCompletionTime: doors[orig].lastCompletionTime, assignments:[] }; 
+            doors[orig] = { status:'empty', start:0, id:'', type:'', unloader:'', unavailable: false, lastCompletionTime: doors[orig].lastCompletionTime, assignments:[] }; 
         } else {
             doors[orig] = data;
         }
@@ -2059,7 +1611,6 @@
             unloader: data.unloader || '', 
             assistants: data.assignments ? data.assignments.map(function(a){return a.name;}).filter(function(n){return n !== data.unloader;}) : [], 
             start: data.start, 
-            laborStart: data.laborStart, 
             end: null, 
             dateKey: dateKeyFromTs(data.start), 
             durationMinutes: null, 
@@ -2068,9 +1619,8 @@
             duplicate: data.isDuplicate || false, 
             completionHour: null, 
             cpuOptions: data.cpuOptions || [], 
-            status: status, 
-            manual: false, 
-            idleTimeMinutes: data.idleTimeMinutes 
+            status: 'active', 
+            manual: false
         };
         sendToWebhook(payload, 'update');
         
@@ -2093,7 +1643,7 @@
                 const d = doors[i];
                 if(!d) continue;
                 
-                if(d.status === 'active' || d.status === 'staged') {
+                if(d.status === 'active') {
                     hasActive = true;
                     const startTs = Number(d.start) || Date.now();
                     const start = new Date(startTs).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
@@ -2105,11 +1655,9 @@
                         noteIcon = `<button class="note-icon-btn ${hasNote}" onclick="openNoteModal('${d.id}')"><i class="ph ${iconClass}"></i></button>`;
                     }
                     
-                    const isStaged = d.status === 'staged';
-                    const pillClass = isStaged ? 'door-pill staged' : 'door-pill';
-                    const detailsText = isStaged ? '<span style="color:#007aff; font-weight:700;">Status: Staged</span>' : `${d.unloader}${d.account ? ' | '+d.account : ''}`;
+                    const detailsText = `${d.unloader}${d.account ? ' | '+d.account : ''}`;
 
-                    list.innerHTML += `<div class="active-card"><div class="active-card-info"><div class="active-card-header"><span class="${pillClass}">Door ${i}</span><span class="active-card-title">${d.type} ${d.id}${noteIcon}</span></div><div class="active-card-details">${detailsText}</div><div class="active-card-time">Arrived: ${start}</div></div><div class="active-card-actions"><button class="icon-btn" onclick="openEditActiveModal(${i})"><i class="ph ph-pencil-simple"></i></button><button class="btn-primary" style="width:auto; padding:10px 16px; margin:0;" onclick="openActiveDetails(${i})">${isStaged ? 'Start' : 'Finish'}</button></div></div>`;
+                    list.innerHTML += `<div class="active-card"><div class="active-card-info"><div class="active-card-header"><span class="door-pill">Door ${i}</span><span class="active-card-title">${d.type} ${d.id}${noteIcon}</span></div><div class="active-card-details">${detailsText}</div><div class="active-card-time">Started: ${start}</div></div><div class="active-card-actions"><button class="icon-btn" onclick="openEditActiveModal(${i})"><i class="ph ph-pencil-simple"></i></button><button class="btn-primary" style="width:auto; padding:10px 16px; margin:0;" onclick="completeDoor(${i})">Finish</button></div></div>`;
                 }
             }
             if(!hasActive) {
@@ -2161,7 +1709,7 @@
                 statusPill += ` <span class="log-tag tag-gray"><i class="ph ph-pencil-simple-line"></i> Manual</span>`;
             }
             
-            const startDisplay = l.laborStart || l.start;
+            const startDisplay = l.start;
             const timeRange = `${new Date(startDisplay).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} - ${new Date(l.end).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
             
             let noteIcon = '';
@@ -2171,9 +1719,6 @@
                 noteIcon = `<button class="note-icon-btn ${hasNote}" onclick="openNoteModal('${l.id}')"><i class="ph ${iconClass}"></i></button>`;
             }
             
-            const idleText = l.idleTimeMinutes !== undefined && l.idleTimeMinutes !== "" ? `<div class="log-footer-item" style="color:#ff9500;"><i class="ph ph-pause-circle"></i> Idle: ${l.idleTimeMinutes}m</div>` : '';
-            const stageText = l.stageTimeMinutes ? `<div class="log-footer-item" style="color:#007aff;"><i class="ph ph-hourglass"></i> Stage: ${l.stageTimeMinutes}m</div>` : '';
-
             let revertBtn = '';
             if (Date.now() - l.end < 120000 && !demoActive && l.status === 'completed') {
                 const index = historyLog.indexOf(l);
@@ -2187,11 +1732,10 @@
                     <div class="log-footer-row">
                         <div class="log-footer-item"><i class="ph ph-user"></i> ${l.unloader}</div>
                         <div class="log-footer-item"><i class="ph ph-clock"></i> ${timeRange}</div>
-                        ${idleText} ${stageText}
                     </div>
                 </div>
                 <div class="log-right-col">
-                    <div style="text-align:right;"><div class="log-duration">${dur}<span style="font-size:14px; font-weight:700;">m</span></div><div class="log-duration-label">Labor</div></div>
+                    <div style="text-align:right;"><div class="log-duration">${dur}<span style="font-size:14px; font-weight:700;">m</span></div><div class="log-duration-label">Duration</div></div>
                     <div class="log-actions-row">${revertBtn}<button class="log-mini-btn" onclick="openEditLogModal(${historyLog.indexOf(l)})"><i class="ph ph-pencil-simple"></i></button></div>
                 </div>`;
             frag.appendChild(card);
@@ -2367,16 +1911,14 @@
         doors[l.door] = { 
             status: 'active', 
             start: l.start, 
-            laborStart: l.laborStart, 
             id: l.id, 
             account: l.account, 
             type: l.type, 
             unloader: l.unloader, 
             unavailable: false, 
             lastCompletionTime: null, 
-            idleTimeMinutes: l.idleTimeMinutes, 
             cpuOptions: l.cpuOptions || [], 
-            assignments: [{name: l.unloader, start: l.laborStart || l.start, end: null}], 
+            assignments: [{name: l.unloader, start: l.start, end: null}], 
             logId: l.logId 
         }; 
         historyLog.splice(i, 1); 
@@ -2385,6 +1927,190 @@
         renderDashboard(); 
         renderLogs(); 
         updateTabBadges(); 
+    }
+
+    // --- COMPLETION LOGIC ---
+    function confirmCompleteDoor() { 
+        if(detailDoor) completeDoor(detailDoor); 
+    }
+
+    function completeDoor(doorNum, force) {
+        const d = doors[doorNum];
+        if (!force && (!d.unloader || d.unloader === 'Unassigned')) {
+             closeModal('active-detail-modal');
+             byId('req-unloader-select').value = "";
+             byId('req-custom-unloader').style.display = 'none';
+             byId('unloader-required-modal').style.display = 'flex';
+             return;
+        }
+        
+        const now = new Date();
+        const mins = now.getMinutes();
+        const windows = getShiftTimeWindows();
+        const startOffset = attributionConfig.minutes;
+        const endOffset = startOffset + 10;
+        
+        let shouldCheck = false;
+        if (d.type === 'Wally') {
+            const shiftStartedLongAgo = (now - windows.shiftStart > 3600000);
+            shouldCheck = (!config.disableWindow && shiftStartedLongAgo && attributionConfig.enabled && 
+                          mins >= startOffset && mins < endOffset) || config.simulateWindow;
+        }
+
+        if (shouldCheck) {
+            const startStr = startOffset.toString().padStart(2,'0');
+            const endStr = endOffset.toString().padStart(2,'0');
+            byId('attribution-window-text').textContent = `${startStr}-${endStr}`;
+            pendingCompletion = { doorNum: doorNum, time: now.getTime() };
+            byId('hour-attribution-modal').style.display = 'flex';
+        } else {
+            finalizeCompletion(doorNum, now.getTime(), 0);
+        }
+    }
+
+    function checkReqCustom(s) { 
+        byId('req-custom-unloader').style.display = s.value === 'Custom' ? 'block' : 'none'; 
+    }
+
+    function saveRequiredUnloader() {
+        let unl = byId('req-unloader-select').value;
+        if(unl === 'Custom') {
+            unl = byId('req-custom-unloader').value.trim();
+        }
+        
+        if(!unl) return alert("Please select an unloader");
+        
+        if(unl !== "Unassigned" && unl === byId('req-custom-unloader').value.trim()) {
+            unl = unl.toLowerCase().split(' ').map(function(w){ return w.charAt(0).toUpperCase() + w.slice(1); }).join(' ');
+        }
+        
+        const d = doors[detailDoor];
+        d.unloader = unl;
+        if(d.assignments.length > 0) {
+            if (d.assignments[d.assignments.length-1].name === 'Unassigned') {
+                 d.assignments[d.assignments.length-1].name = unl;
+            } else {
+                 d.assignments.push({ name: unl, start: Date.now(), end: null });
+            }
+        } else {
+             d.assignments = [{ name: unl, start: d.start, end: null }];
+        }
+        
+        saveDoors();
+        closeModal('unloader-required-modal');
+        completeDoor(detailDoor, true);
+    }
+
+    function resolveAttribution(choice) {
+        closeModal('hour-attribution-modal');
+        if (!pendingCompletion) return;
+        
+        let offset = 0;
+        if (choice === 'Previous') {
+            offset = (new Date(pendingCompletion.time).getMinutes() + 1) * 60000;
+        }
+        
+        finalizeCompletion(pendingCompletion.doorNum, pendingCompletion.time, offset);
+        pendingCompletion = null;
+    }
+
+    function finalizeCompletion(doorNum, endTime, offset) {
+        const d = doors[doorNum];
+        let start = Number(d.start);
+        
+        if(d.assignments && d.assignments.length > 0) {
+            const last = d.assignments[d.assignments.length - 1];
+            if(!last.end) last.end = endTime;
+        }
+        
+        const durationMap = {};
+        if (d.assignments && d.assignments.length > 0) {
+            d.assignments.forEach(function(a) {
+                if (a.name === 'Unassigned') return;
+                const dur = (a.end || endTime) - a.start;
+                if (!durationMap[a.name]) durationMap[a.name] = 0;
+                durationMap[a.name] += dur;
+            });
+        } else {
+            if(d.unloader !== 'Unassigned') durationMap[d.unloader] = endTime - start;
+        }
+        
+        let primaryUnloader = d.unloader; 
+        let maxDur = -1;
+        Object.keys(durationMap).forEach(function(name) { 
+            if (durationMap[name] > maxDur) { 
+                maxDur = durationMap[name]; 
+                primaryUnloader = name; 
+            } 
+        });
+        
+        if (!primaryUnloader || primaryUnloader === 'Unassigned') primaryUnloader = "Unknown";
+        
+        const assistants = Object.keys(durationMap).filter(function(n) { return n !== primaryUnloader; });
+        
+        if (d.type === 'CPU' && d.account && !savedAccounts.includes(d.account.trim().toUpperCase())) { 
+            savedAccounts.push(d.account.trim().toUpperCase()); 
+            saveAccounts(); 
+            updateAccountDatalist(); 
+        }
+        
+        const durationMinutes = Math.round((endTime - start) / 60000); 
+
+        const logEntry = {
+            door: doorNum, 
+            id: d.id, 
+            account: d.account||"", 
+            type: d.type, 
+            unloader: primaryUnloader, 
+            assistants: assistants,
+            start: start, 
+            end: endTime, 
+            dateKey: dateKeyFromTs(endTime), 
+            duration: endTime - start, 
+            durationMinutes: durationMinutes, 
+            statOffset: offset,
+            logId: d.logId, 
+            duplicate: d.isDuplicate||false, 
+            completionHour: getCompletionHour(endTime - offset), 
+            cpuOptions: d.cpuOptions || [],
+            status: 'completed'
+        };
+        
+        closeModal('active-detail-modal');
+        historyLog.unshift(logEntry);
+        sendToWebhook(logEntry, 'end');
+
+        if (d.type === 'Wally' && navigator.share && !demoActive) { 
+            setTimeout(function() { 
+                navigator.share({ text: `Door ${doorNum} done` }).catch(function(err) { console.log('Share error:', err); }); 
+            }, 100); 
+        }
+
+        doors[doorNum] = { 
+            status: 'empty', 
+            start: 0, 
+            id: '', 
+            type: '', 
+            unloader: '', 
+            unavailable: false, 
+            lastCompletionTime: endTime, 
+            assignments: [] 
+        };
+        
+        saveHistory(); 
+        saveDoors(); 
+        renderDashboard(); 
+        renderActiveTab(); 
+        updateTabBadges(); 
+        showSaveToast();
+
+        if (demoActive && config.replenish) {
+            setTimeout(function() { 
+                if (doors[doorNum] && doors[doorNum].status === 'empty') {
+                    randomArrival(doorNum); 
+                }
+            }, 10000);
+        }
     }
 
     // --- EDIT LOG ---
@@ -2423,7 +2149,7 @@
         const windows = getShiftTimeWindows();
 
         const newEnd = windows.shiftStart.getTime() + (newHour * 3600000) - 5 * 60000;
-        const start = historyLog[i].laborStart || historyLog[i].start;
+        const start = historyLog[i].start;
 
         historyLog[i].id = id;
         historyLog[i].unloader = unl;
