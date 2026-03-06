@@ -20,10 +20,6 @@
             --safe-top: max(env(safe-area-inset-top), 47px);
             --safe-bottom: env(safe-area-inset-bottom);
             --tab-height: 80px;
-            --bay-green: #4cd964;
-            --bay-purple: #bf5af2;
-            --bay-orange: #ff9500;
-            --bay-red: #ff3b30;
             --bay-blue: #007aff; 
         }
         body {
@@ -125,29 +121,32 @@
         .bay-circle {
             width: 60px; height: 60px; border-radius: 50%;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            font-size: 20px; font-weight: 800; color: #000;
-            background-color: #f2f2f7; 
+            font-size: 24px; font-weight: 800;
             cursor: pointer; transition: transform 0.1s;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
             position: relative; box-sizing: border-box;
         }
         .bay-circle:active { transform: scale(0.92); }
-        .bay-circle.unavailable { background-color: #8e8e93 !important; opacity: 0.5; color: #666; border: none !important; }
+        .bay-circle.unavailable { background-color: #8e8e93 !important; opacity: 0.5; color: #666 !important; border: none !important; }
         .bay-circle.unavailable .bay-timer { color: #666; }
+        
+        /* Active status borders */
         .bay-circle.status-ok { border: 4px solid #34c759; }
         .bay-circle.status-warn { border: 4px solid #ff9500; }
         .bay-circle.status-crit { border: 4px solid #ff3b30; }
         .bay-circle.status-staged { border: 4px solid var(--bay-blue); }
         .bay-circle.status-staged .bay-timer { background: rgba(255, 255, 255, 0.95); color: var(--bay-blue); border: 1px solid var(--bay-blue); }
 
-        .bay-9 { background-color: var(--bay-green); }
-        .bay-10 { background-color: var(--bay-purple); }
-        .bay-11 { background-color: var(--bay-orange); }
-        .bay-12 { background-color: var(--bay-purple); }
-        .bay-13 { background-color: var(--bay-orange); }
-        .bay-14 { background-color: var(--bay-orange); }
-        .bay-15 { background-color: var(--bay-orange); }
-        .bay-16 { background-color: var(--bay-orange); }
+        /* NYC SUBWAY COLORS */
+        .bay-8 { background-color: #0039A6 !important; color: #fff !important; }  /* A/C/E Blue */
+        .bay-9 { background-color: #00933C !important; color: #fff !important; }  /* 4/5/6 Green */
+        .bay-10 { background-color: #B933AD !important; color: #fff !important; } /* 7 Purple */
+        .bay-11 { background-color: #FF6319 !important; color: #fff !important; } /* B/D/F/M Orange */
+        .bay-12 { background-color: #6CBE45 !important; color: #fff !important; } /* G Green */
+        .bay-13 { background-color: #996633 !important; color: #fff !important; } /* J/Z Brown */
+        .bay-14 { background-color: #EE352E !important; color: #fff !important; } /* 1/2/3 Red */
+        .bay-15 { background-color: #FCCC0A !important; color: #000 !important; } /* N/Q/R/W Yellow */
+        .bay-16 { background-color: #A7A9AC !important; color: #000 !important; } /* L Gray */
         
         .type-badge {
             position: absolute; bottom: -2px; right: -2px;
@@ -158,9 +157,10 @@
         }
         .badge-w, .badge-c { background-color: #000; }
         .bay-timer {
-            position: absolute; bottom: -5px; font-size: 9px; font-weight: 700;
-            color: #000; background: rgba(255, 255, 255, 0.9);
-            padding: 1px 4px; border-radius: 4px; min-width: 20px; text-align: center;
+            position: absolute; bottom: -8px; font-size: 10px; font-weight: 800;
+            color: #000; background: rgba(255, 255, 255, 0.95);
+            padding: 2px 6px; border-radius: 6px; min-width: 24px; text-align: center;
+            border: 1px solid rgba(0,0,0,0.1);
         }
         .active-tab-list { display: flex; flex-direction: column; gap: 15px; }
         .active-card {
@@ -413,7 +413,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 6.1.3</div>
+            <div class="app-version">Version 6.1.4</div>
         </div>
         <div class="section-title">Sort Statistics</div>
         <div class="stats-grid">
@@ -755,31 +755,6 @@
     </div>
 </div>
 
-<div class="modal-overlay z-high" id="unloader-required-modal">
-    <div class="modal-sheet">
-        <h2 style="margin: 0 0 10px; font-size:24px; text-align:center;">Assign Unloader</h2>
-        <p style="text-align:center; color:#757575; margin-bottom:25px;">Who completed this door?</p>
-        <select id="req-unloader-select" class="form-input" onchange="checkReqCustom(this)"></select>
-        <input type="text" id="req-custom-unloader" class="form-input" style="display:none; margin-top:10px;" placeholder="Enter Name" autocapitalize="words">
-        <button class="btn-primary" onclick="saveRequiredUnloader()">Confirm & Finish</button>
-        <button class="btn-cancel" onclick="closeModal('unloader-required-modal')">Cancel</button>
-    </div>
-</div>
-
-<div class="modal-overlay" id="move-menu-modal">
-    <div class="modal-sheet">
-        <h2 style="margin: 0 0 20px; font-size:24px; text-align:center;">Move / Mark Incomplete</h2>
-        <p style="text-align:center; color:#757575; margin-bottom:20px;">Select destination or mark as incomplete.</p>
-        <select id="move-dest-select" class="form-input">
-            <option value="Small Sort">Small Sort</option>
-            <option value="Bulk Directs">Bulk Directs</option>
-            <option value="Incomplete">Incomplete (no unload)</option>
-        </select>
-        <button class="btn-primary" onclick="confirmMoveDoor()">Confirm</button>
-        <button class="btn-cancel" onclick="closeModal('move-menu-modal')">Cancel</button>
-    </div>
-</div>
-
 <div class="modal-overlay" id="edit-active-modal">
     <div class="modal-sheet">
         <h2 style="margin: 0 0 20px; font-size:24px; text-align:center;">Edit Door Details</h2>
@@ -843,8 +818,8 @@
     let pendingMoveDest = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '6.1.3';  
-    const DOORS_START = 9;
+    const APP_VERSION = '6.1.4';  
+    const DOORS_START = 8; // Restored Door 8
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Robert W", "Trevon C", "Russell H", "Fonseca J", "Eddie F", "Juan F", "Arce J"];
 
@@ -1079,60 +1054,69 @@
 
     // --- INIT ---
     function init() {
-        console.log(`Wally Dashboard v${APP_VERSION} initialized`);
-        
-        // Load old doors and aggressively sanitize them to prevent crashes
-        const sDoors = localStorage.getItem('ps9_doors');
-        if (sDoors) { 
-            try { doors = JSON.parse(sDoors); } 
-            catch (e) { doors = {}; } 
-        }
-        if (!doors || typeof doors !== 'object') doors = {};
-        
-        // Initialize OR sanitize existing doors
-        for (let i = DOORS_START; i <= DOORS_END; i++) {
-            if (!doors[i] || typeof doors[i] !== 'object') {
-                doors[i] = { status: 'empty', start: 0, laborStart: null, id: '', type: '', unloader: '', unavailable: false, lastCompletionTime: null, assignments: [] };
-            } else {
-                // Ensure new V6.1 properties exist on old active doors to prevent NaN crashes
-                if (doors[i].status === 'active' && !doors[i].laborStart) doors[i].laborStart = doors[i].start;
-                if (doors[i].idleTimeMinutes === undefined) doors[i].idleTimeMinutes = "";
+        try {
+            console.log(`Wally Dashboard v${APP_VERSION} initialized`);
+            
+            // AGGRESSIVE DATA SANITIZATION
+            let parsedDoors = {};
+            try { 
+                const s = localStorage.getItem('ps9_doors'); 
+                if(s) parsedDoors = JSON.parse(s); 
+            } catch(e) { console.error('Error parsing old doors', e); }
+            
+            doors = {};
+            for(let i=DOORS_START; i<=DOORS_END; i++) {
+                let d = parsedDoors[i];
+                if (d && typeof d === 'object') {
+                    doors[i] = d;
+                    // Inject missing v6.1 variables into v5.0 doors
+                    if ((doors[i].status === 'active' || doors[i].status === 'staged') && !doors[i].laborStart) doors[i].laborStart = doors[i].start;
+                    if (doors[i].idleTimeMinutes === undefined) doors[i].idleTimeMinutes = "";
+                } else {
+                    doors[i] = { status: 'empty', start: 0, laborStart: null, id: '', type: '', unloader: '', unavailable: false, lastCompletionTime: null, assignments: [] };
+                }
             }
+            saveDoors();
+
+            byId('active-trailers-grid').addEventListener('click', (e) => { const btn = e.target.closest('.bay-circle'); if(btn) openActiveDetails(parseInt(btn.dataset.door)); });
+            byId('open-bays-grid').addEventListener('click', (e) => { const btn = e.target.closest('.bay-circle'); if(btn) openArrivalModal(parseInt(btn.dataset.door)); });
+            byId('log-search').addEventListener('input', debounce(() => renderLogs(), 300));
+            byId('notes-search').addEventListener('input', debounce(() => renderNotesList(), 300));
+            
+            const sAccts = localStorage.getItem('ps9_accounts'); if (sAccts) savedAccounts = JSON.parse(sAccts);
+            initAttributionSettings(); loadNotes();
+            const sHistory = localStorage.getItem('ps9_history'), sTeam = localStorage.getItem('ps9_team');
+            isFirstOnboard = localStorage.getItem('ps9_is_first_onboard') === 'true';
+
+            if (sHistory) historyLog = JSON.parse(sHistory);
+            if (Array.isArray(historyLog)) {
+                const now = Date.now(), ONE_DAY_MS = 24 * 60 * 60 * 1000; let pruned = false;
+                historyLog = historyLog.filter(l => {
+                    if (!l.end) return true; 
+                    if (now - l.end > ONE_DAY_MS) { pruned = true; return false; }
+                    if (!l.dateKey) l.dateKey = dateKeyFromTs(l.end);
+                    if (!l.completionHour) l.completionHour = getCompletionHour(l.end - (l.statOffset || 0));
+                    if (!l.cpuOptions) l.cpuOptions = []; if (!l.status) l.status = 'completed'; 
+                    return true;
+                });
+                if (pruned) saveHistory();
+            }
+
+            if (sTeam) teamNames = JSON.parse(sTeam); else teamNames = [...DEFAULT_TEAM];
+            refreshTeamNamesSorted();
+            byId('setting-shift-start').value = localStorage.getItem('ps9_shift_start') || "20:00";
+            
+            renderSavedAccounts(); updateAccountDatalist(); populateUnloaderSelect(); renderTeamManagement(); renderDashboard();
+            
+            setTimeout(() => { updateAttributionUI(); setupAttributionSlider(); }, 100);
+            setInterval(() => { renderDashboard(); renderActiveTab(); updateTabBadges(); }, 60000); 
+            updateTabBadges();
+            window.addEventListener('online', processWebhookQueue); setInterval(processWebhookQueue, 30000); processWebhookQueue(); 
+            
+        } catch(fatalError) {
+            console.error("FATAL INIT ERROR:", fatalError);
+            alert("App failed to initialize perfectly. If layout is broken, please reset data in settings.");
         }
-        saveDoors();
-
-        byId('active-trailers-grid').addEventListener('click', (e) => { const btn = e.target.closest('.bay-circle'); if(btn) openActiveDetails(parseInt(btn.dataset.door)); });
-        byId('open-bays-grid').addEventListener('click', (e) => { const btn = e.target.closest('.bay-circle'); if(btn) openArrivalModal(parseInt(btn.dataset.door)); });
-        byId('log-search').addEventListener('input', debounce(() => renderLogs(), 300));
-        byId('notes-search').addEventListener('input', debounce(() => renderNotesList(), 300));
-        
-        const sAccts = localStorage.getItem('ps9_accounts'); if (sAccts) savedAccounts = JSON.parse(sAccts);
-        initAttributionSettings(); loadNotes();
-        const sHistory = localStorage.getItem('ps9_history'), sTeam = localStorage.getItem('ps9_team');
-        isFirstOnboard = localStorage.getItem('ps9_is_first_onboard') === 'true';
-
-        if (sHistory) historyLog = JSON.parse(sHistory);
-        if (Array.isArray(historyLog)) {
-            const now = Date.now(), ONE_DAY_MS = 24 * 60 * 60 * 1000; let pruned = false;
-            historyLog = historyLog.filter(l => {
-                if (!l.end) return true; 
-                if (now - l.end > ONE_DAY_MS) { pruned = true; return false; }
-                if (!l.dateKey) l.dateKey = dateKeyFromTs(l.end);
-                if (!l.completionHour) l.completionHour = getCompletionHour(l.end - (l.statOffset || 0));
-                if (!l.cpuOptions) l.cpuOptions = []; if (!l.status) l.status = 'completed'; 
-                return true;
-            });
-            if (pruned) saveHistory();
-        }
-
-        if (sTeam) teamNames = JSON.parse(sTeam); else teamNames = [...DEFAULT_TEAM];
-        refreshTeamNamesSorted();
-        byId('setting-shift-start').value = localStorage.getItem('ps9_shift_start') || "20:00";
-        renderSavedAccounts(); updateAccountDatalist(); populateUnloaderSelect(); renderTeamManagement(); renderDashboard();
-        setTimeout(() => { updateAttributionUI(); setupAttributionSlider(); }, 100);
-        setInterval(() => { renderDashboard(); renderActiveTab(); updateTabBadges(); }, 60000); 
-        updateTabBadges();
-        window.addEventListener('online', processWebhookQueue); setInterval(processWebhookQueue, 30000); processWebhookQueue(); 
     }
 
     function saveDoors() { localStorage.setItem('ps9_doors', JSON.stringify(doors)); }
@@ -1272,7 +1256,7 @@
         if (specificDoor) currentDoor = specificDoor;
         else {
              currentDoor = null;
-             for(let i=DOORS_START; i<=DOORS_END; i++) if(doors[i].status==='empty'&&!doors[i].unavailable) { currentDoor=i; break; }
+             for(let i=DOORS_START; i<=DOORS_END; i++) if(doors[i] && doors[i].status==='empty'&&!doors[i].unavailable) { currentDoor=i; break; }
         }
         if(!currentDoor) return alert("No bays available!");
         byId('modal-door-num').innerText = currentDoor;
@@ -1284,10 +1268,10 @@
         else { const now = new Date(); tIn.value = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`; }
         
         const form = byId('onboard-form-container'), msg = byId('unavailable-msg'), btn = byId('btn-toggle-availability');
-        if (doors[currentDoor].unavailable) { form.style.display='none'; msg.style.display='block'; btn.innerText="Mark Available"; btn.style.background="#34c759"; btn.style.color="white"; btn.style.border="none"; }
+        if (doors[currentDoor] && doors[currentDoor].unavailable) { form.style.display='none'; msg.style.display='block'; btn.innerText="Mark Available"; btn.style.background="#34c759"; btn.style.color="white"; btn.style.border="none"; }
         else { form.style.display='block'; msg.style.display='none'; btn.innerText="Mark Unavailable"; btn.style.background="white"; btn.style.color="#ff3b30"; btn.style.border="2px solid #e5e5ea"; }
         setType('Wally'); byId('input-modal').style.display = 'flex';
-        if (!doors[currentDoor].unavailable) setTimeout(() => { const f=byId('input-wally-id'); if(f) f.focus(); }, 100);
+        if (doors[currentDoor] && !doors[currentDoor].unavailable) setTimeout(() => { const f=byId('input-wally-id'); if(f) f.focus(); }, 100);
         byId('onboarding-note-badge').style.display = 'none';
     }
     function handleAvailabilityToggle() { doors[currentDoor].unavailable = !doors[currentDoor].unavailable; saveDoors(); renderDashboard(); showSaveToast(); closeModal('input-modal'); }
@@ -1299,71 +1283,99 @@
         byId('cpu-inputs').style.display = t==='CPU'?'block':'none';
     }
 
-    // --- DASHBOARD RENDER ---
+    // --- DASHBOARD RENDER (BULLETPROOF) ---
     function renderDashboard() {
-        updateStats();
+        try {
+            updateStats();
+        } catch(e) { console.error("Stats update error:", e); }
+        
         const openGrid = byId('open-bays-grid'), activeGrid = byId('active-trailers-grid');
-        openGrid.innerHTML = ''; activeGrid.innerHTML = '';
-        let hasOpen = false, hasActive = false;
+        if(!openGrid || !activeGrid) return;
+        
+        try {
+            openGrid.innerHTML = ''; activeGrid.innerHTML = '';
+            let hasOpen = false, hasActive = false;
 
-        for(let i=DOORS_START; i<=DOORS_END; i++) {
-            let d = doors[i];
-            
-            // Render logic
-            const btn = document.createElement('div');
-            btn.className = `bay-circle bay-${i} ${d.unavailable ? 'unavailable' : ''}`;
-            btn.dataset.door = i; 
-
-            if (d.status === 'active' || d.status === 'staged') {
-                hasActive = true;
-                btn.innerHTML = `${i}<div class="type-badge ${d.type==='Wally'?'badge-w':'badge-c'}">${d.type==='Wally'?'W':'C'}</div>`;
+            for(let i=DOORS_START; i<=DOORS_END; i++) {
+                let d = doors[i];
+                if (!d || typeof d !== 'object') {
+                    d = { status: 'empty', start: 0, laborStart: null, id: '', type: '', unloader: '', unavailable: false, lastCompletionTime: null, assignments: [] };
+                    doors[i] = d;
+                }
                 
-                if (d.status === 'staged') {
-                    btn.classList.add('status-staged');
-                    const stageMins = Math.floor((Date.now() - d.start) / 60000);
-                    btn.innerHTML += `<div class="bay-timer">${stageMins}m</div>`;
-                } else {
-                    const laborStartRef = d.laborStart || d.start;
-                    if (laborStartRef > 0) {
-                        const laborMins = Math.floor((Date.now() - laborStartRef) / 60000);
-                        if (laborMins > 60) btn.classList.add('status-crit');
-                        else if (laborMins > 45) btn.classList.add('status-warn');
-                        else btn.classList.add('status-ok');
+                const btn = document.createElement('div');
+                const unavailClass = d.unavailable ? 'unavailable' : '';
+                btn.className = `bay-circle bay-${i} ${unavailClass}`;
+                btn.dataset.door = i; 
+
+                if (d.status === 'active' || d.status === 'staged') {
+                    hasActive = true;
+                    const typeStr = d.type === 'Wally' ? 'W' : 'C';
+                    const badgeClass = d.type === 'Wally' ? 'badge-w' : 'badge-c';
+                    btn.innerHTML = `${i}<div class="type-badge ${badgeClass}">${typeStr}</div>`;
+                    
+                    if (d.status === 'staged') {
+                        btn.classList.add('status-staged');
+                        const startTs = Number(d.start) || Date.now();
+                        const stageMins = Math.floor((Date.now() - startTs) / 60000);
+                        btn.innerHTML += `<div class="bay-timer">${stageMins}m</div>`;
+                    } else {
+                        const laborStartRef = Number(d.laborStart) || Number(d.start) || Date.now();
+                        if (laborStartRef > 0) {
+                            const laborMins = Math.floor((Date.now() - laborStartRef) / 60000);
+                            if (laborMins > 60) btn.classList.add('status-crit');
+                            else if (laborMins > 45) btn.classList.add('status-warn');
+                            else btn.classList.add('status-ok');
+                        }
                     }
+                    activeGrid.appendChild(btn);
+                } else {
+                    hasOpen = true;
+                    btn.innerText = i;
+                    if (d.lastCompletionTime && d.status === 'empty' && !d.unavailable) {
+                        const compTs = Number(d.lastCompletionTime);
+                        if (!isNaN(compTs) && compTs > 0) {
+                            const idle = Math.floor((Date.now() - compTs) / 60000);
+                            btn.innerHTML += `<div class="bay-timer">${idle}m</div>`;
+                        }
+                    }
+                    openGrid.appendChild(btn);
                 }
-                activeGrid.appendChild(btn);
-            } else {
-                hasOpen = true;
-                btn.innerText = i;
-                if (d.lastCompletionTime && d.status === 'empty' && !d.unavailable) {
-                    const idle = Math.floor((Date.now() - d.lastCompletionTime) / 60000);
-                    btn.innerHTML += `<div class="bay-timer">${idle}m</div>`;
-                }
-                openGrid.appendChild(btn);
             }
+            if(!hasOpen) openGrid.innerHTML = '<div class="empty-state-text">All bays full.</div>';
+            if(!hasActive) activeGrid.innerHTML = '<div class="empty-state-text">No active trailers.</div>';
+        } catch(err) {
+            console.error("Dashboard render failed:", err);
+            openGrid.innerHTML = '<div class="empty-state-text" style="color:red;">Error rendering bays.</div>';
         }
-        if(!hasOpen) openGrid.innerHTML = '<div class="empty-state-text">All bays full.</div>';
-        if(!hasActive) activeGrid.innerHTML = '<div class="empty-state-text">No active trailers.</div>';
     }
 
     // --- ACTIVE TAB RENDER ---
     function renderActiveTab() {
-        const list = byId('active-tab-list'); list.innerHTML = '';
-        let hasActive = false;
-        for(let i=DOORS_START; i<=DOORS_END; i++) {
-            if(doors[i].status === 'active' || doors[i].status === 'staged') {
-                hasActive = true;
-                const d = doors[i], start = new Date(d.start).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                const noteIcon = d.type === 'Wally' ? `<button class="note-icon-btn ${wallyNotes[d.id] ? 'has-note' : ''}" onclick="openNoteModal('${d.id}')"><i class="ph ph-note${wallyNotes[d.id] ? '-pencil' : ''}"></i></button>` : '';
+        try {
+            const list = byId('active-tab-list'); 
+            if(!list) return;
+            list.innerHTML = '';
+            let hasActive = false;
+            for(let i=DOORS_START; i<=DOORS_END; i++) {
+                const d = doors[i];
+                if(!d) continue;
                 
-                const isStaged = d.status === 'staged';
-                const pillClass = isStaged ? 'door-pill staged' : 'door-pill';
-                const detailsText = isStaged ? '<span style="color:#007aff; font-weight:700;">Status: Staged</span>' : `${d.unloader}${d.account ? ' | '+d.account : ''}`;
+                if(d.status === 'active' || d.status === 'staged') {
+                    hasActive = true;
+                    const startTs = Number(d.start) || Date.now();
+                    const start = new Date(startTs).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    const noteIcon = d.type === 'Wally' ? `<button class="note-icon-btn ${wallyNotes[d.id] ? 'has-note' : ''}" onclick="openNoteModal('${d.id}')"><i class="ph ph-note${wallyNotes[d.id] ? '-pencil' : ''}"></i></button>` : '';
+                    
+                    const isStaged = d.status === 'staged';
+                    const pillClass = isStaged ? 'door-pill staged' : 'door-pill';
+                    const detailsText = isStaged ? '<span style="color:#007aff; font-weight:700;">Status: Staged</span>' : `${d.unloader}${d.account ? ' | '+d.account : ''}`;
 
-                list.innerHTML += `<div class="active-card"><div class="active-card-info"><div class="active-card-header"><span class="${pillClass}">Door ${i}</span><span class="active-card-title">${d.type} ${d.id}${noteIcon}</span></div><div class="active-card-details">${detailsText}</div><div class="active-card-time">Arrived: ${start}</div></div><div class="active-card-actions"><button class="icon-btn" onclick="openEditActiveModal(${i})"><i class="ph ph-pencil-simple"></i></button><button class="btn-primary" style="width:auto; padding:10px 16px; margin:0;" onclick="openActiveDetails(${i})">${isStaged ? 'Start' : 'Finish'}</button></div></div>`;
+                    list.innerHTML += `<div class="active-card"><div class="active-card-info"><div class="active-card-header"><span class="${pillClass}">Door ${i}</span><span class="active-card-title">${d.type} ${d.id}${noteIcon}</span></div><div class="active-card-details">${detailsText}</div><div class="active-card-time">Arrived: ${start}</div></div><div class="active-card-actions"><button class="icon-btn" onclick="openEditActiveModal(${i})"><i class="ph ph-pencil-simple"></i></button><button class="btn-primary" style="width:auto; padding:10px 16px; margin:0;" onclick="openActiveDetails(${i})">${isStaged ? 'Start' : 'Finish'}</button></div></div>`;
+                }
             }
-        }
-        if(!hasActive) list.innerHTML = '<div style="text-align:center; color:#999; margin-top:40px;">No active trailers</div>';
+            if(!hasActive) list.innerHTML = '<div style="text-align:center; color:#999; margin-top:40px;">No active trailers</div>';
+        } catch(e) { console.error("Active tab error", e); }
     }
 
     // --- ACTIVE DETAILS / PUNCH IN MODAL ---
@@ -1379,14 +1391,16 @@
         byId('detail-status-text').style.color = isStaged ? "var(--bay-blue)" : "#34c759";
         
         byId('detail-unloader').innerText = d.unloader || "Unassigned";
-        byId('detail-time').innerText = new Date(d.start).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        
+        const startTs = Number(d.start) || Date.now();
+        byId('detail-time').innerText = new Date(startTs).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
         
         const ar = byId('row-account'); if (d.account) { ar.style.display = 'flex'; byId('detail-account').innerText = d.account; } else ar.style.display = 'none';
         const rowOpts = byId('row-cpu-opts'); if (d.type === 'CPU' && d.cpuOptions && d.cpuOptions.length > 0) { rowOpts.style.display = 'flex'; byId('detail-cpu-opts').innerText = d.cpuOptions.join(', '); } else { rowOpts.style.display = 'none'; }
         
         const now = Date.now();
         if (isStaged) {
-            byId('detail-stage-time').innerText = Math.floor((now - d.start)/60000) + "m";
+            byId('detail-stage-time').innerText = Math.floor((now - startTs)/60000) + "m";
             byId('row-labor-start').style.display = 'none';
             byId('row-duration').style.display = 'none';
             
@@ -1398,8 +1412,8 @@
             byId('punch-in-section').style.display = 'block';
             byId('btn-complete-unload').style.display = 'none';
         } else {
-            const laborStartRef = d.laborStart || d.start;
-            byId('detail-stage-time').innerText = Math.floor((laborStartRef - d.start)/60000) + "m";
+            const laborStartRef = Number(d.laborStart) || startTs;
+            byId('detail-stage-time').innerText = Math.floor((laborStartRef - startTs)/60000) + "m";
             byId('row-labor-start').style.display = 'flex';
             byId('detail-labor-start').innerText = new Date(laborStartRef).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             byId('row-duration').style.display = 'flex';
@@ -1457,12 +1471,12 @@
         byId('edit-active-chk-recycle').checked = opts.includes('RECYCLE');
         byId('edit-active-chk-gv').checked = opts.includes('GV');
         
-        const arrDate = new Date(d.start);
+        const arrDate = new Date(Number(d.start) || Date.now());
         byId('edit-active-arrival-time').value = `${arrDate.getHours().toString().padStart(2,'0')}:${arrDate.getMinutes().toString().padStart(2,'0')}`;
         
         if (d.status === 'active' && d.laborStart) {
             byId('edit-labor-time-container').style.display = 'block';
-            const labDate = new Date(d.laborStart);
+            const labDate = new Date(Number(d.laborStart));
             byId('edit-active-labor-time').value = `${labDate.getHours().toString().padStart(2,'0')}:${labDate.getMinutes().toString().padStart(2,'0')}`;
         } else {
             byId('edit-labor-time-container').style.display = 'none';
@@ -1489,12 +1503,12 @@
         let cpuOpts = []; if(type === 'CPU') { if(byId('edit-active-chk-hott').checked) cpuOpts.push('HOTT'); if(byId('edit-active-chk-recycle').checked) cpuOpts.push('RECYCLE'); if(byId('edit-active-chk-gv').checked) cpuOpts.push('GV'); }
         
         const d = doors[orig];
-        let newArrival = d.start;
-        let newLabor = d.laborStart;
+        let newArrival = Number(d.start) || Date.now();
+        let newLabor = d.laborStart ? Number(d.laborStart) : null;
         
         const arrTimeInput = byId('edit-active-arrival-time').value;
         if (arrTimeInput) {
-            const origDate = new Date(d.start);
+            const origDate = new Date(newArrival);
             const [h, m] = arrTimeInput.split(':').map(Number);
             let dObj = new Date(origDate); dObj.setHours(h, m, 0, 0);
             let diff = dObj.getTime() - origDate.getTime();
@@ -1505,7 +1519,7 @@
         
         const labTimeInput = byId('edit-active-labor-time').value;
         if (d.status === 'active' && labTimeInput) {
-            const origLabDate = new Date(d.laborStart || d.start);
+            const origLabDate = new Date(newLabor || newArrival);
             const [h, m] = labTimeInput.split(':').map(Number);
             let lObj = new Date(origLabDate); lObj.setHours(h, m, 0, 0);
             let diff = lObj.getTime() - origLabDate.getTime();
@@ -1544,8 +1558,8 @@
     // --- COMPLETE DOOR LOGIC ---
     function finalizeCompletion(doorNum, endTime, offset) {
         const d = doors[doorNum];
-        let start = d.start;
-        let laborStart = d.laborStart || d.start; 
+        let start = Number(d.start);
+        let laborStart = Number(d.laborStart) || start; 
         
         if(d.assignments && d.assignments.length > 0) {
             const last = d.assignments[d.assignments.length - 1];
@@ -1600,7 +1614,7 @@
         const batch = filteredLogsCache.slice(list.children.length, currentVisibleLogs);
         batch.forEach(l => {
             const card = document.createElement('div'); card.className = 'log-card';
-            const dur = l.durationMinutes || Math.round((l.end - l.start)/60000); 
+            const dur = l.durationMinutes !== undefined ? l.durationMinutes : Math.round((l.end - l.start)/60000); 
             let statusPill = '';
             if (l.status === 'moved') statusPill = `<span class="log-tag tag-gray"><i class="ph ph-arrows-left-right"></i> ${l.moveDest}</span>`;
             else if (l.status === 'incomplete') statusPill = `<span class="log-tag tag-red"><i class="ph ph-x-circle"></i> Incomplete</span>`;
