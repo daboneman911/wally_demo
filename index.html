@@ -413,7 +413,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 6.1.2</div>
+            <div class="app-version">Version 6.1.3</div>
         </div>
         <div class="section-title">Sort Statistics</div>
         <div class="stats-grid">
@@ -755,6 +755,31 @@
     </div>
 </div>
 
+<div class="modal-overlay z-high" id="unloader-required-modal">
+    <div class="modal-sheet">
+        <h2 style="margin: 0 0 10px; font-size:24px; text-align:center;">Assign Unloader</h2>
+        <p style="text-align:center; color:#757575; margin-bottom:25px;">Who completed this door?</p>
+        <select id="req-unloader-select" class="form-input" onchange="checkReqCustom(this)"></select>
+        <input type="text" id="req-custom-unloader" class="form-input" style="display:none; margin-top:10px;" placeholder="Enter Name" autocapitalize="words">
+        <button class="btn-primary" onclick="saveRequiredUnloader()">Confirm & Finish</button>
+        <button class="btn-cancel" onclick="closeModal('unloader-required-modal')">Cancel</button>
+    </div>
+</div>
+
+<div class="modal-overlay" id="move-menu-modal">
+    <div class="modal-sheet">
+        <h2 style="margin: 0 0 20px; font-size:24px; text-align:center;">Move / Mark Incomplete</h2>
+        <p style="text-align:center; color:#757575; margin-bottom:20px;">Select destination or mark as incomplete.</p>
+        <select id="move-dest-select" class="form-input">
+            <option value="Small Sort">Small Sort</option>
+            <option value="Bulk Directs">Bulk Directs</option>
+            <option value="Incomplete">Incomplete (no unload)</option>
+        </select>
+        <button class="btn-primary" onclick="confirmMoveDoor()">Confirm</button>
+        <button class="btn-cancel" onclick="closeModal('move-menu-modal')">Cancel</button>
+    </div>
+</div>
+
 <div class="modal-overlay" id="edit-active-modal">
     <div class="modal-sheet">
         <h2 style="margin: 0 0 20px; font-size:24px; text-align:center;">Edit Door Details</h2>
@@ -818,7 +843,7 @@
     let pendingMoveDest = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '6.1.2';  
+    const APP_VERSION = '6.1.3';  
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Robert W", "Trevon C", "Russell H", "Fonseca J", "Eddie F", "Juan F", "Arce J"];
@@ -1014,13 +1039,67 @@
         badgeContainer.style.display = 'flex'; badgeContainer.innerHTML = badges.map(b => `<span class="type-badge-small">${b}</span>`).join('');
     }
 
+    // --- NEW SHIFT ---
+    function newShift() {
+        if (!confirm("Start a new shift? This will clear all active trailers and logs, but keep your notes, accounts, and team names.")) return;
+        for (let i = DOORS_START; i <= DOORS_END; i++) {
+            doors[i] = { status: 'empty', start: 0, laborStart: null, id: '', type: '', unloader: '', unavailable: false, lastCompletionTime: null, assignments: [] };
+        }
+        historyLog = [];
+        attributionConfig = { minutes: 0, enabled: true };
+        updateAttributionUI();
+        lastSortStartTime = null;
+        isFirstOnboard = false;
+        saveDoors();
+        saveHistory();
+        saveData();
+        renderDashboard();
+        renderActiveTab();
+        updateTabBadges();
+        showSaveToast();
+    }
+
+    // --- MOVE COUNT HANDLER ---
+    function confirmMoveDoor() {
+        const dest = byId('move-dest-select').value;
+        if (!dest) return alert("Please select a destination");
+        pendingMoveDest = dest;
+        closeModal('move-menu-modal');
+        if (dest === 'Incomplete') {
+            moveDoor(dest, false);
+        } else {
+            byId('move-count-modal').style.display = 'flex';
+        }
+    }
+    function handleMoveCount(countAsCompletion) {
+        closeModal('move-count-modal');
+        moveDoor(pendingMoveDest, countAsCompletion);
+        pendingMoveDest = null;
+    }
+
     // --- INIT ---
     function init() {
         console.log(`Wally Dashboard v${APP_VERSION} initialized`);
+        
+        // Load old doors and aggressively sanitize them to prevent crashes
         const sDoors = localStorage.getItem('ps9_doors');
-        if (sDoors) { try { doors = JSON.parse(sDoors); } catch (e) { doors = {}; } }
+        if (sDoors) { 
+            try { doors = JSON.parse(sDoors); } 
+            catch (e) { doors = {}; } 
+        }
         if (!doors || typeof doors !== 'object') doors = {};
-        for (let i = DOORS_START; i <= DOORS_END; i++) if (!doors[i]) doors[i] = { status: 'empty', start: 0, laborStart: null, id: '', type: '', unloader: '', unavailable: false, lastCompletionTime: null, assignments: [] };
+        
+        // Initialize OR sanitize existing doors
+        for (let i = DOORS_START; i <= DOORS_END; i++) {
+            if (!doors[i] || typeof doors[i] !== 'object') {
+                doors[i] = { status: 'empty', start: 0, laborStart: null, id: '', type: '', unloader: '', unavailable: false, lastCompletionTime: null, assignments: [] };
+            } else {
+                // Ensure new V6.1 properties exist on old active doors to prevent NaN crashes
+                if (doors[i].status === 'active' && !doors[i].laborStart) doors[i].laborStart = doors[i].start;
+                if (doors[i].idleTimeMinutes === undefined) doors[i].idleTimeMinutes = "";
+            }
+        }
+        saveDoors();
 
         byId('active-trailers-grid').addEventListener('click', (e) => { const btn = e.target.closest('.bay-circle'); if(btn) openActiveDetails(parseInt(btn.dataset.door)); });
         byId('open-bays-grid').addEventListener('click', (e) => { const btn = e.target.closest('.bay-circle'); if(btn) openArrivalModal(parseInt(btn.dataset.door)); });
@@ -1141,7 +1220,7 @@
         renderDashboard(); updateTabBadges();
     }
 
-    // --- ARRIVAL / ONBOARDING (V6.1 STAGING) ---
+    // --- ARRIVAL / ONBOARDING ---
     function checkCustomUnloader(s) { byId('input-custom-unloader').style.display = s.value === 'Custom' ? 'block' : 'none'; }
     function confirmArrival() {
         const fId = (currentType === 'Wally' ? byId('input-wally-id').value : byId('input-trailer-id').value).toUpperCase();
@@ -1220,131 +1299,7 @@
         byId('cpu-inputs').style.display = t==='CPU'?'block':'none';
     }
 
-    // --- VIEW STATS/LOGS ---
-    function viewStatLogs(type) {
-        closeModal('input-modal'); closeModal('active-detail-modal');
-        activeLogFilter = { door: 'All', type: 'All', timeRange: 'All', unloader: 'All', search: '', date: 'All' };
-        if(type==='Wally'||type==='CPU') activeLogFilter.type = type;
-        else if(type==='Hour-0') { activeLogFilter.timeRange = 'ThisHour'; activeLogFilter.type = 'Wally'; }
-        else if(type==='Hour-1') { activeLogFilter.timeRange = 'LastHour'; activeLogFilter.type = 'Wally'; }
-        switchTab('logs');
-    }
-    function viewDoorLogs(n) { closeModal('input-modal'); closeModal('active-detail-modal'); setLogFilter(n); switchTab('logs'); }
-    function openFilterModal() {
-        const g = byId('filter-grid'); g.innerHTML = `<div class="filter-btn ${currentLogFilter==='All'?'active':''}" onclick="setLogFilter('All')">All</div>`;
-        for(let i=DOORS_START; i<=DOORS_END; i++) g.innerHTML += `<div class="filter-btn ${currentLogFilter==i?'active':''}" onclick="setLogFilter(${i})">Door ${i}</div>`;
-        byId('filter-unloader-select').value = activeLogFilter.unloader;
-        byId('filter-date-input').value = activeLogFilter.date !== 'All' ? activeLogFilter.date : '';
-        byId('filter-modal').style.display='flex';
-    }
-    function applyFilter() {
-        activeLogFilter.unloader = byId('filter-unloader-select').value;
-        const d = byId('filter-date-input').value; activeLogFilter.date = d || 'All';
-        closeModal('filter-modal'); renderLogs();
-    }
-    function clearLogFilter() { currentLogFilter='All'; activeLogFilter={door:'All',unloader:'All',type:'All',timeRange:'All',search:'',date:'All'}; byId('log-search').value=''; renderLogs(); }
-    function setLogFilter(v) { currentLogFilter = v; activeLogFilter.door = v; renderLogs(); }
-    function toggleStats(sec) {
-        const c = byId(sec==='unloader'?'stats-content':'hourly-content'), i = byId(sec==='unloader'?'stats-caret':'hourly-caret');
-        const show = c.style.display!=='block'; c.style.display=show?'block':'none'; i.className=show?'ph ph-caret-up':'ph ph-caret-down';
-        if(show) sec==='unloader' ? calculateAndRenderStats() : calculateAndRenderHourlyStats();
-    }
-
-    // --- RENDER LOGS ---
-    let currentVisibleLogs = 50;
-    let filteredLogsCache = []; 
-    function renderLogs() {
-        const list = byId('logs-list'); if(!list) return;
-        const filterDisplay = byId('active-filter-display'), filterText = byId('filter-text-display');
-        const sVal = byId('log-search').value.trim().toUpperCase(); activeLogFilter.search = sVal;
-        const { thisHourStart, thisHourEnd, lastHourStart, lastHourEnd } = getShiftTimeWindows();
-        filteredLogsCache = historyLog.filter(l => {
-            if (activeLogFilter.date !== 'All' && l.dateKey !== activeLogFilter.date) return false;
-            if (activeLogFilter.door !== 'All' && l.door != activeLogFilter.door) return false;
-            if (activeLogFilter.unloader !== 'All' && l.unloader !== activeLogFilter.unloader) return false;
-            if (activeLogFilter.type !== 'All' && l.type !== activeLogFilter.type) return false;
-            if (activeLogFilter.search) {
-                const note = wallyNotes[l.id] || '';
-                if (!l.id.includes(sVal) && !l.account.includes(sVal) && String(l.door)!=sVal && !note.toUpperCase().includes(sVal)) return false;
-            }
-            if (activeLogFilter.timeRange !== 'All') {
-                const t = l.end - (l.statOffset || 0);
-                if (activeLogFilter.timeRange === 'ThisHour' && (t < thisHourStart.getTime() || t >= thisHourEnd.getTime())) return false;
-                if (activeLogFilter.timeRange === 'LastHour' && (t < lastHourStart.getTime() || t >= lastHourEnd.getTime())) return false;
-            }
-            return true;
-        });
-        const isFiltering = Object.values(activeLogFilter).some(v => v !== 'All' && v !== '');
-        if (filterDisplay) {
-            filterDisplay.style.display = isFiltering ? 'flex' : 'none';
-            if (isFiltering) {
-                const p = [];
-                if(activeLogFilter.date!=='All') p.push(activeLogFilter.date);
-                if(activeLogFilter.door!=='All') p.push("Door "+activeLogFilter.door);
-                if(activeLogFilter.unloader!=='All') p.push(activeLogFilter.unloader);
-                if(activeLogFilter.type!=='All') p.push(activeLogFilter.type);
-                if(activeLogFilter.search) p.push(`"${activeLogFilter.search}"`);
-                filterText.innerText = p.join(' + ');
-            }
-        }
-        list.innerHTML = '';
-        currentVisibleLogs = 50; 
-        renderLogBatch();
-        if(statsVisible) calculateAndRenderStats();
-        if(hourlyVisible) calculateAndRenderHourlyStats();
-    }
-    function renderLogBatch() {
-        const list = byId('logs-list'), loadMore = byId('logs-load-more');
-        if (filteredLogsCache.length === 0) { list.innerHTML = '<div style="text-align:center; color:#999; margin-top:20px;">No logs found.</div>'; loadMore.style.display = 'none'; return; }
-        const frag = document.createDocumentFragment();
-        const batch = filteredLogsCache.slice(list.children.length, currentVisibleLogs);
-        batch.forEach(l => {
-            const card = document.createElement('div'); card.className = 'log-card';
-            const dur = l.durationMinutes || Math.round((l.end - l.start)/60000);
-            let statusPill = '';
-            if (l.status === 'moved') statusPill = `<span class="log-tag tag-gray"><i class="ph ph-arrows-left-right"></i> ${l.moveDest}</span>`;
-            else if (l.status === 'incomplete') statusPill = `<span class="log-tag tag-red"><i class="ph ph-x-circle"></i> Incomplete</span>`;
-            else {
-                statusPill = `<span class="log-tag tag-black">${l.type}</span>`;
-                if(l.duplicate) statusPill += ` <span class="log-tag tag-red">DUP</span>`;
-                if (l.type === 'CPU' && l.cpuOptions && l.cpuOptions.length > 0) l.cpuOptions.forEach(opt => { statusPill += ` <span class="log-tag tag-gray">${opt}</span>`; });
-            }
-            statusPill += `<span class="log-tag" style="background:#fff; border:1px solid #e5e5ea;">${l.completionHour ? getHourText(l.completionHour) : '—'}</span>`;
-            if (l.manual) statusPill += ` <span class="log-tag tag-gray"><i class="ph ph-pencil-simple-line"></i> Manual</span>`;
-            
-            const timeRange = `${new Date(l.laborStart || l.start).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} - ${new Date(l.end).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
-            const noteIcon = l.type === 'Wally' ? `<button class="note-icon-btn ${wallyNotes[l.id] ? 'has-note' : ''}" onclick="openNoteModal('${l.id}')"><i class="ph ph-note${wallyNotes[l.id] ? '-pencil' : ''}"></i></button>` : '';
-            
-            const idleText = l.idleTimeMinutes !== undefined && l.idleTimeMinutes !== "" ? `<div class="log-footer-item" style="color:#ff9500;"><i class="ph ph-pause-circle"></i> Idle: ${l.idleTimeMinutes}m</div>` : '';
-            const stageText = l.stageTimeMinutes ? `<div class="log-footer-item" style="color:#007aff;"><i class="ph ph-hourglass"></i> Stage: ${l.stageTimeMinutes}m</div>` : '';
-
-            card.innerHTML = `
-                <div class="log-info">
-                    <div class="log-header-row"><span class="log-door-pill" onclick="viewDoorLogs(${l.door})">Door ${l.door}</span><div class="log-title">${l.id}${noteIcon}<span class="log-account">${l.account ? l.account : ''}</span></div></div>
-                    <div class="log-tags-row">${statusPill}</div>
-                    <div class="log-footer-row">
-                        <div class="log-footer-item"><i class="ph ph-user"></i> ${l.unloader}</div>
-                        <div class="log-footer-item"><i class="ph ph-clock"></i> ${timeRange}</div>
-                        ${idleText} ${stageText}
-                    </div>
-                </div>
-                <div class="log-right-col">
-                    <div style="text-align:right;"><div class="log-duration">${dur}<span style="font-size:14px; font-weight:700;">m</span></div><div class="log-duration-label">Labor</div></div>
-                    <div class="log-actions-row">${(Date.now()-l.end < 120000 && !demoActive && l.status==='completed') ? `<button class="log-mini-btn" onclick="revertLog(${historyLog.indexOf(l)})"><i class="ph ph-arrow-u-up-left"></i></button>` : ''}<button class="log-mini-btn" onclick="openEditLogModal(${historyLog.indexOf(l)})"><i class="ph ph-pencil-simple"></i></button></div>
-                </div>`;
-            frag.appendChild(card);
-        });
-        list.appendChild(frag);
-        loadMore.style.display = (currentVisibleLogs < filteredLogsCache.length) ? 'block' : 'none';
-    }
-    function loadMoreLogs() { currentVisibleLogs += 50; renderLogBatch(); }
-    function revertLog(i) {
-        const l = historyLog[i]; if(!l || (Date.now()-l.end>120000 && !demoActive) || doors[l.door].status!=='empty') return alert("Cannot revert");
-        doors[l.door] = { status:'active', start:l.start, laborStart:l.laborStart, id:l.id, account:l.account, type:l.type, unloader:l.unloader, unavailable:false, lastCompletionTime:null, idleTimeMinutes: l.idleTimeMinutes, cpuOptions: l.cpuOptions || [], assignments: [{name: l.unloader, start: l.laborStart||l.start, end: null}], logId: l.logId };
-        historyLog.splice(i, 1); saveDoors(); saveHistory(); renderDashboard(); renderLogs(); updateTabBadges();
-    }
-
-    // --- DASHBOARD CRASH FIX ---
+    // --- DASHBOARD RENDER ---
     function renderDashboard() {
         updateStats();
         const openGrid = byId('open-bays-grid'), activeGrid = byId('active-trailers-grid');
@@ -1352,13 +1307,9 @@
         let hasOpen = false, hasActive = false;
 
         for(let i=DOORS_START; i<=DOORS_END; i++) {
-            // FIX: Guaranteed object reference mapping to prevent crash on undefined bays
             let d = doors[i];
-            if (!d || typeof d !== 'object') {
-                d = { status: 'empty', start: 0, laborStart: null, id: '', type: '', unloader: '', unavailable: false, lastCompletionTime: null, assignments: [] };
-                doors[i] = d;
-            }
             
+            // Render logic
             const btn = document.createElement('div');
             btn.className = `bay-circle bay-${i} ${d.unavailable ? 'unavailable' : ''}`;
             btn.dataset.door = i; 
@@ -1393,6 +1344,26 @@
         }
         if(!hasOpen) openGrid.innerHTML = '<div class="empty-state-text">All bays full.</div>';
         if(!hasActive) activeGrid.innerHTML = '<div class="empty-state-text">No active trailers.</div>';
+    }
+
+    // --- ACTIVE TAB RENDER ---
+    function renderActiveTab() {
+        const list = byId('active-tab-list'); list.innerHTML = '';
+        let hasActive = false;
+        for(let i=DOORS_START; i<=DOORS_END; i++) {
+            if(doors[i].status === 'active' || doors[i].status === 'staged') {
+                hasActive = true;
+                const d = doors[i], start = new Date(d.start).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                const noteIcon = d.type === 'Wally' ? `<button class="note-icon-btn ${wallyNotes[d.id] ? 'has-note' : ''}" onclick="openNoteModal('${d.id}')"><i class="ph ph-note${wallyNotes[d.id] ? '-pencil' : ''}"></i></button>` : '';
+                
+                const isStaged = d.status === 'staged';
+                const pillClass = isStaged ? 'door-pill staged' : 'door-pill';
+                const detailsText = isStaged ? '<span style="color:#007aff; font-weight:700;">Status: Staged</span>' : `${d.unloader}${d.account ? ' | '+d.account : ''}`;
+
+                list.innerHTML += `<div class="active-card"><div class="active-card-info"><div class="active-card-header"><span class="${pillClass}">Door ${i}</span><span class="active-card-title">${d.type} ${d.id}${noteIcon}</span></div><div class="active-card-details">${detailsText}</div><div class="active-card-time">Arrived: ${start}</div></div><div class="active-card-actions"><button class="icon-btn" onclick="openEditActiveModal(${i})"><i class="ph ph-pencil-simple"></i></button><button class="btn-primary" style="width:auto; padding:10px 16px; margin:0;" onclick="openActiveDetails(${i})">${isStaged ? 'Start' : 'Finish'}</button></div></div>`;
+            }
+        }
+        if(!hasActive) list.innerHTML = '<div style="text-align:center; color:#999; margin-top:40px;">No active trailers</div>';
     }
 
     // --- ACTIVE DETAILS / PUNCH IN MODAL ---
@@ -1441,106 +1412,244 @@
         byId('active-detail-modal').style.display = 'flex';
     }
 
-    // --- EDIT LOG ---
-    function openEditLogModal(i) {
-        const l = historyLog[i]; 
-        byId('edit-log-index').value = i; 
-        byId('edit-input-id').value = l.id;
-        const sel = byId('edit-select-unloader'); 
-        sel.innerHTML='<option value="">Unassigned</option>';
-        teamNamesSorted.forEach(n => { const o=document.createElement('option'); o.value=n; o.innerText=n; sel.appendChild(o); });
-        sel.value = l.unloader;
-        setEditType(l.type);
-        const opts = l.cpuOptions || [];
-        byId('edit-log-chk-hott').checked = opts.includes('HOTT');
-        byId('edit-log-chk-recycle').checked = opts.includes('RECYCLE');
-        byId('edit-log-chk-gv').checked = opts.includes('GV');
-        byId('edit-completion-hour').value = l.completionHour;
-        byId('edit-log-modal').style.display='flex';
+    function checkPunchInCustom(s) { byId('punch-in-custom').style.display = s.value === 'Custom' ? 'block' : 'none'; }
+
+    function punchInUnloader() {
+        let unl = byId('punch-in-unloader').value;
+        if(unl === 'Custom') unl = byId('punch-in-custom').value.trim();
+        if(!unl) return alert("Please select an unloader to start.");
+        if(unl !== "Unassigned" && unl === byId('punch-in-custom').value.trim()) {
+            unl = unl.toLowerCase().split(' ').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ');
+        }
+        
+        const laborStart = Date.now();
+        doors[detailDoor].status = 'active';
+        doors[detailDoor].laborStart = laborStart;
+        doors[detailDoor].unloader = unl;
+        doors[detailDoor].assignments = [{ name: unl, start: laborStart, end: null }];
+        
+        saveDoors();
+        const d = doors[detailDoor];
+        sendToWebhook({ door: detailDoor, id: d.id, account: d.account||"", type: d.type, unloader: d.unloader, assistants: [], start: d.start, laborStart: d.laborStart, end: null, dateKey: dateKeyFromTs(d.start), durationMinutes: null, statOffset: 0, logId: d.logId, duplicate: false, completionHour: null, cpuOptions: d.cpuOptions || [], status: 'active', manual: false, idleTimeMinutes: d.idleTimeMinutes }, 'update');
+        
+        closeModal('active-detail-modal'); renderDashboard(); renderActiveTab(); showSaveToast();
     }
 
-    function confirmLogEdit() {
-        const i = parseInt(byId('edit-log-index').value);
-        const id = byId('edit-input-id').value.toUpperCase();
-        const unl = byId('edit-select-unloader').value;
-        const type = byId('edit-log-modal').dataset.type;
-        let cpuOpts = [];
-        if(type === 'CPU') {
-            if(byId('edit-log-chk-hott').checked) cpuOpts.push('HOTT');
-            if(byId('edit-log-chk-recycle').checked) cpuOpts.push('RECYCLE');
-            if(byId('edit-log-chk-gv').checked) cpuOpts.push('GV');
+    // --- DUAL CLOCK EDITOR ---
+    function openEditActiveModalFromDetail() { closeModal('active-detail-modal'); openEditActiveModal(detailDoor); }
+    function openEditActiveModal(doorNum) {
+        const d = doors[doorNum];
+        byId('edit-active-original-door').value = doorNum;
+        byId('edit-active-id').value = d.id;
+        byId('edit-active-account').value = d.account || "";
+        
+        const us = byId('edit-active-unloader'); 
+        us.innerHTML = '<option value="" selected>Unassigned</option>';
+        teamNamesSorted.forEach(n => us.innerHTML += `<option value="${n}">${n}</option>`);
+        us.innerHTML += '<option value="Custom">Custom / Other</option>';
+        us.value = d.unloader || "";
+        if(us.selectedIndex === -1) { us.value = 'Custom'; checkActiveCustomUnloader(us); byId('edit-active-custom-unloader').value = d.unloader; }
+        else checkActiveCustomUnloader(us);
+        
+        setEditActiveType(d.type);
+        const opts = d.cpuOptions || [];
+        byId('edit-active-chk-hott').checked = opts.includes('HOTT');
+        byId('edit-active-chk-recycle').checked = opts.includes('RECYCLE');
+        byId('edit-active-chk-gv').checked = opts.includes('GV');
+        
+        const arrDate = new Date(d.start);
+        byId('edit-active-arrival-time').value = `${arrDate.getHours().toString().padStart(2,'0')}:${arrDate.getMinutes().toString().padStart(2,'0')}`;
+        
+        if (d.status === 'active' && d.laborStart) {
+            byId('edit-labor-time-container').style.display = 'block';
+            const labDate = new Date(d.laborStart);
+            byId('edit-active-labor-time').value = `${labDate.getHours().toString().padStart(2,'0')}:${labDate.getMinutes().toString().padStart(2,'0')}`;
+        } else {
+            byId('edit-labor-time-container').style.display = 'none';
+            byId('edit-active-labor-time').value = '';
         }
 
-        const newHour = parseInt(byId('edit-completion-hour').value);
-        const { shiftStart } = getShiftTimeWindows();
-
-        const newEnd = shiftStart.getTime() + (newHour * 3600000) - 5 * 60000;
-        const start = historyLog[i].laborStart || historyLog[i].start;
-
-        historyLog[i].id = id;
-        historyLog[i].unloader = unl;
-        historyLog[i].type = type;
-        historyLog[i].cpuOptions = cpuOpts;
-        historyLog[i].end = newEnd;
-        historyLog[i].duration = newEnd - start;
-        historyLog[i].durationMinutes = Math.round(historyLog[i].duration / 60000);
-        historyLog[i].completionHour = newHour;
-        historyLog[i].dateKey = dateKeyFromTs(newEnd);
-        historyLog[i].statOffset = 0; 
-
-        saveHistory();
-        sendToWebhook(historyLog[i], 'end');
-        closeModal('edit-log-modal');
-        renderLogs();
-        renderDashboard(); 
-        showSaveToast();
+        const sel = byId('edit-active-door-select'); sel.innerHTML = '';
+        for(let i=DOORS_START; i<=DOORS_END; i++) {
+            if(i===doorNum || doors[i].status==='empty') {
+                const opt = document.createElement('option'); opt.value = i; opt.innerText = `Bay ${i}`; if(i===doorNum) opt.selected=true; sel.appendChild(opt);
+            }
+        }
+        byId('edit-active-modal').style.display = 'flex';
     }
 
-    // --- EXPORT ---
-    function openExportModal() { byId('export-modal').style.display = 'flex'; }
-    function exportLogsCSV() {
-        closeModal('export-modal');
-        let csv = "Type,ID,Account,Door,Unloader,Duration(mins),StartTime,EndTime,StartHour,EndHour,Duplicate,Hour,Options,Status,Manual,MoveDest\n";
-        historyLog.forEach(l => {
-            const opts = (l.cpuOptions || []).join(';');
-            csv += `${l.type},${l.id},${l.account||''},${l.door},${l.unloader},${Math.round(l.duration/60000)},${new Date(l.start).toLocaleString()},${new Date(l.end).toLocaleString()},${new Date(l.start).getHours()},${new Date(l.end).getHours()},${l.duplicate?'Yes':'No'},${l.completionHour || ''},${opts},${l.status||'completed'},${l.manual?'Yes':'No'},${l.moveDest||''}\n`
-        });
-        const a = document.createElement('a'); a.href=window.URL.createObjectURL(new Blob([csv], {type:'text/csv'})); a.download='wally-logs.csv'; a.click();
-    }
-    function exportLogsPDF() {
-        closeModal('export-modal');
-        if (!window.jspdf) return alert("PDF library loading. Please wait or check connection.");
-        const doc = new window.jspdf.jsPDF(), now = new Date();
-        doc.setFontSize(18); doc.text(`PS9 Wally Tracker Report - ${now.toLocaleDateString()}`, 14, 20);
-        doc.setFontSize(12); doc.text(`Generated: ${now.toLocaleTimeString()}`, 14, 30);
-        const stats={}; historyLog.forEach(l=>{ 
-            if (!l.completionHour) return;
-            const n=l.unloader; if(!stats[n])stats[n]={w:0,c:0,t:0}; if(l.type==='Wally')stats[n].w++; else if(l.type==='CPU')stats[n].c++; stats[n].t++; 
-        });
-        doc.autoTable({ startY: 45, head:[['Name','Wally','CPU','Total']], body:Object.entries(stats).sort((a,b)=>b[1].t-a[1].t).map(([n,d])=>[n,d.w,d.c,d.t]) });
-        const logsBody = historyLog.map(l => {
-             let typeStr = l.type + (l.duplicate?' (DUP)':'');
-             if(l.status === 'moved') typeStr = `MOVED: ${l.moveDest}`;
-             else if(l.status === 'incomplete') typeStr = 'INCOMPLETE';
-             else if(l.type === 'CPU' && l.cpuOptions && l.cpuOptions.length>0) typeStr += `\n${l.cpuOptions.join(',')}`;
-             return [new Date(l.end).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}), l.door, typeStr, l.id, l.unloader, Math.round(l.duration/60000)+"m", l.completionHour ? getHourText(l.completionHour) : '—'];
-        });
-        doc.autoTable({ startY: doc.lastAutoTable.finalY+15, head:[['Time','Door','Type','ID','Unloader','Duration','Hour']], body:logsBody });
-        doc.save(`wally-report-${now.toISOString().split('T')[0]}.pdf`);
+    function saveActiveEdit() {
+        const orig = parseInt(byId('edit-active-original-door').value), dest = parseInt(byId('edit-active-door-select').value);
+        let unl = byId('edit-active-unloader').value;
+        if(unl === 'Custom') unl = byId('edit-active-custom-unloader').value.trim();
+        if (!unl) unl = "Unassigned";
+        else if (unl !== "Unassigned" && unl === byId('edit-active-custom-unloader').value.trim()) unl = unl.toLowerCase().split(' ').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ');
+        
+        const type = byId('edit-active-modal').dataset.type;
+        let cpuOpts = []; if(type === 'CPU') { if(byId('edit-active-chk-hott').checked) cpuOpts.push('HOTT'); if(byId('edit-active-chk-recycle').checked) cpuOpts.push('RECYCLE'); if(byId('edit-active-chk-gv').checked) cpuOpts.push('GV'); }
+        
+        const d = doors[orig];
+        let newArrival = d.start;
+        let newLabor = d.laborStart;
+        
+        const arrTimeInput = byId('edit-active-arrival-time').value;
+        if (arrTimeInput) {
+            const origDate = new Date(d.start);
+            const [h, m] = arrTimeInput.split(':').map(Number);
+            let dObj = new Date(origDate); dObj.setHours(h, m, 0, 0);
+            let diff = dObj.getTime() - origDate.getTime();
+            if (diff > 12 * 3600000) dObj.setDate(dObj.getDate() - 1); 
+            else if (diff < -12 * 3600000) dObj.setDate(dObj.getDate() + 1); 
+            newArrival = dObj.getTime();
+        }
+        
+        const labTimeInput = byId('edit-active-labor-time').value;
+        if (d.status === 'active' && labTimeInput) {
+            const origLabDate = new Date(d.laborStart || d.start);
+            const [h, m] = labTimeInput.split(':').map(Number);
+            let lObj = new Date(origLabDate); lObj.setHours(h, m, 0, 0);
+            let diff = lObj.getTime() - origLabDate.getTime();
+            if (diff > 12 * 3600000) lObj.setDate(lObj.getDate() - 1); 
+            else if (diff < -12 * 3600000) lObj.setDate(lObj.getDate() + 1); 
+            newLabor = lObj.getTime();
+        }
+
+        const isStaged = (!unl || unl === "Unassigned");
+        const status = isStaged ? 'staged' : 'active';
+        if (isStaged) newLabor = null;
+
+        let newAssignments = [...(d.assignments || [])];
+        if (newLabor && newAssignments.length > 0) newAssignments[0].start = newLabor;
+        if (d.unloader !== unl && !isStaged) {
+            if (newAssignments.length > 0) newAssignments[newAssignments.length - 1].end = Date.now();
+            newAssignments.push({ name: unl, start: Date.now(), end: null });
+        }
+        if (isStaged) newAssignments = [];
+
+        const data = { 
+            status: status, start: newArrival, laborStart: newLabor, id: byId('edit-active-id').value.trim().toUpperCase(), 
+            account: byId('edit-active-account').value.trim().toUpperCase(), type: type, unloader: unl, 
+            unavailable: false, lastCompletionTime: d.lastCompletionTime, idleTimeMinutes: d.idleTimeMinutes, cpuOptions: cpuOpts,
+            assignments: newAssignments, logId: d.logId
+        };
+        
+        if(dest !== orig) { doors[dest] = data; doors[orig] = {status:'empty', start:0, laborStart:null, id:'', type:'', unloader:'', unavailable: false, lastCompletionTime: doors[orig].lastCompletionTime, assignments:[]}; }
+        else doors[orig] = data;
+        saveDoors();
+
+        sendToWebhook({ door: dest, id: data.id, account: data.account || '', type: data.type, unloader: data.unloader || '', assistants: data.assignments ? data.assignments.map(a => a.name).filter(n => n !== data.unloader) : [], start: data.start, laborStart: data.laborStart, end: null, dateKey: dateKeyFromTs(data.start), durationMinutes: null, statOffset: 0, logId: data.logId, duplicate: data.isDuplicate || false, completionHour: null, cpuOptions: data.cpuOptions || [], status: status, manual: false, idleTimeMinutes: data.idleTimeMinutes }, 'update');
+        closeModal('edit-active-modal'); renderActiveTab(); renderDashboard(); updateTabBadges(); showSaveToast();
     }
 
-    function setEditType(t) { 
-        byId('edit-opt-wally').classList.toggle('selected', t==='Wally'); 
-        byId('edit-opt-cpu').classList.toggle('selected', t==='CPU'); 
-        byId('edit-log-modal').dataset.type = t; 
-        const c = byId('edit-log-options-container');
-        if(c) c.style.display = (t === 'CPU') ? 'block' : 'none';
-    }
+    // --- COMPLETE DOOR LOGIC ---
+    function finalizeCompletion(doorNum, endTime, offset) {
+        const d = doors[doorNum];
+        let start = d.start;
+        let laborStart = d.laborStart || d.start; 
+        
+        if(d.assignments && d.assignments.length > 0) {
+            const last = d.assignments[d.assignments.length - 1];
+            if(!last.end) last.end = endTime;
+        }
+        const durationMap = {};
+        if (d.assignments && d.assignments.length > 0) {
+            d.assignments.forEach(a => {
+                if (a.name === 'Unassigned') return;
+                const dur = (a.end || endTime) - a.start;
+                if (!durationMap[a.name]) durationMap[a.name] = 0;
+                durationMap[a.name] += dur;
+            });
+        } else {
+            if(d.unloader !== 'Unassigned') durationMap[d.unloader] = endTime - laborStart;
+        }
+        let primaryUnloader = d.unloader; let maxDur = -1;
+        Object.keys(durationMap).forEach(name => { if (durationMap[name] > maxDur) { maxDur = durationMap[name]; primaryUnloader = name; } });
+        if (!primaryUnloader || primaryUnloader === 'Unassigned') primaryUnloader = "Unknown";
+        const assistants = Object.keys(durationMap).filter(n => n !== primaryUnloader);
+        
+        if (d.type === 'CPU' && d.account && !savedAccounts.includes(d.account.trim().toUpperCase())) { savedAccounts.push(d.account.trim().toUpperCase()); saveAccounts(); updateAccountDatalist(); }
+        
+        const stageTimeMinutes = Math.round((laborStart - start) / 60000);
+        const durationMinutes = Math.round((endTime - laborStart) / 60000); 
 
-    function openMoveMenu() {
+        const logEntry = {
+            door: doorNum, id: d.id, account: d.account||"", type: d.type, unloader: primaryUnloader, assistants: assistants,
+            start: start, laborStart: laborStart, end: endTime, dateKey: dateKeyFromTs(endTime), 
+            duration: endTime - laborStart, durationMinutes: durationMinutes, stageTimeMinutes: stageTimeMinutes, statOffset: offset,
+            logId: d.logId, duplicate: d.isDuplicate||false, completionHour: getCompletionHour(endTime - offset), cpuOptions: d.cpuOptions || [],
+            idleTimeMinutes: d.idleTimeMinutes !== undefined ? d.idleTimeMinutes : "", status: 'completed'
+        };
+        
         closeModal('active-detail-modal');
-        byId('move-menu-modal').style.display = 'flex';
+        historyLog.unshift(logEntry);
+        sendToWebhook(logEntry, 'end');
+
+        if (d.type === 'Wally' && navigator.share && !demoActive) { setTimeout(() => { navigator.share({ text: `Door ${doorNum} done` }).catch(err => console.log('Share dismissed or failed:', err)); }, 100); }
+
+        saveHistory(); doors[doorNum] = { status: 'empty', start: 0, laborStart: null, id: '', type: '', unloader: '', unavailable: false, lastCompletionTime: endTime, assignments: [] };
+        saveDoors(); renderDashboard(); renderActiveTab(); updateTabBadges(); showSaveToast();
+
+        if (demoActive && config.replenish) setTimeout(() => { if (doors[doorNum] && doors[doorNum].status === 'empty') randomArrival(doorNum); }, 10000);
     }
+
+    // --- LOGS RENDER ---
+    function renderLogBatch() {
+        const list = byId('logs-list'), loadMore = byId('logs-load-more');
+        if (filteredLogsCache.length === 0) { list.innerHTML = '<div style="text-align:center; color:#999; margin-top:20px;">No logs found.</div>'; loadMore.style.display = 'none'; return; }
+        const frag = document.createDocumentFragment();
+        const batch = filteredLogsCache.slice(list.children.length, currentVisibleLogs);
+        batch.forEach(l => {
+            const card = document.createElement('div'); card.className = 'log-card';
+            const dur = l.durationMinutes || Math.round((l.end - l.start)/60000); 
+            let statusPill = '';
+            if (l.status === 'moved') statusPill = `<span class="log-tag tag-gray"><i class="ph ph-arrows-left-right"></i> ${l.moveDest}</span>`;
+            else if (l.status === 'incomplete') statusPill = `<span class="log-tag tag-red"><i class="ph ph-x-circle"></i> Incomplete</span>`;
+            else {
+                statusPill = `<span class="log-tag tag-black">${l.type}</span>`;
+                if(l.duplicate) statusPill += ` <span class="log-tag tag-red">DUP</span>`;
+                if (l.type === 'CPU' && l.cpuOptions && l.cpuOptions.length > 0) l.cpuOptions.forEach(opt => { statusPill += ` <span class="log-tag tag-gray">${opt}</span>`; });
+            }
+            statusPill += `<span class="log-tag" style="background:#fff; border:1px solid #e5e5ea;">${l.completionHour ? getHourText(l.completionHour) : '—'}</span>`;
+            if (l.manual) statusPill += ` <span class="log-tag tag-gray"><i class="ph ph-pencil-simple-line"></i> Manual</span>`;
+            
+            const timeRange = `${new Date(l.laborStart || l.start).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} - ${new Date(l.end).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
+            const noteIcon = l.type === 'Wally' ? `<button class="note-icon-btn ${wallyNotes[l.id] ? 'has-note' : ''}" onclick="openNoteModal('${l.id}')"><i class="ph ph-note${wallyNotes[l.id] ? '-pencil' : ''}"></i></button>` : '';
+            
+            const idleText = l.idleTimeMinutes !== undefined && l.idleTimeMinutes !== "" ? `<div class="log-footer-item" style="color:#ff9500;"><i class="ph ph-pause-circle"></i> Idle: ${l.idleTimeMinutes}m</div>` : '';
+            const stageText = l.stageTimeMinutes ? `<div class="log-footer-item" style="color:#007aff;"><i class="ph ph-hourglass"></i> Stage: ${l.stageTimeMinutes}m</div>` : '';
+
+            card.innerHTML = `
+                <div class="log-info">
+                    <div class="log-header-row"><span class="log-door-pill" onclick="viewDoorLogs(${l.door})">Door ${l.door}</span><div class="log-title">${l.id}${noteIcon}<span class="log-account">${l.account ? l.account : ''}</span></div></div>
+                    <div class="log-tags-row">${statusPill}</div>
+                    <div class="log-footer-row">
+                        <div class="log-footer-item"><i class="ph ph-user"></i> ${l.unloader}</div>
+                        <div class="log-footer-item"><i class="ph ph-clock"></i> ${timeRange}</div>
+                        ${idleText} ${stageText}
+                    </div>
+                </div>
+                <div class="log-right-col">
+                    <div style="text-align:right;"><div class="log-duration">${dur}<span style="font-size:14px; font-weight:700;">m</span></div><div class="log-duration-label">Labor</div></div>
+                    <div class="log-actions-row">${(Date.now()-l.end < 120000 && !demoActive && l.status==='completed') ? `<button class="log-mini-btn" onclick="revertLog(${historyLog.indexOf(l)})"><i class="ph ph-arrow-u-up-left"></i></button>` : ''}<button class="log-mini-btn" onclick="openEditLogModal(${historyLog.indexOf(l)})"><i class="ph ph-pencil-simple"></i></button></div>
+                </div>`;
+            frag.appendChild(card);
+        });
+        list.appendChild(frag);
+        loadMore.style.display = (currentVisibleLogs < filteredLogsCache.length) ? 'block' : 'none';
+    }
+
+    // --- OTHER CORE FUNCTIONS (Minified) ---
+    function viewStatLogs(type) { closeModal('input-modal'); closeModal('active-detail-modal'); activeLogFilter = { door: 'All', type: 'All', timeRange: 'All', unloader: 'All', search: '', date: 'All' }; if(type==='Wally'||type==='CPU') activeLogFilter.type = type; else if(type==='Hour-0') { activeLogFilter.timeRange = 'ThisHour'; activeLogFilter.type = 'Wally'; } else if(type==='Hour-1') { activeLogFilter.timeRange = 'LastHour'; activeLogFilter.type = 'Wally'; } switchTab('logs'); }
+    function viewDoorLogs(n) { closeModal('input-modal'); closeModal('active-detail-modal'); setLogFilter(n); switchTab('logs'); }
+    function openFilterModal() { const g = byId('filter-grid'); g.innerHTML = `<div class="filter-btn ${currentLogFilter==='All'?'active':''}" onclick="setLogFilter('All')">All</div>`; for(let i=DOORS_START; i<=DOORS_END; i++) g.innerHTML += `<div class="filter-btn ${currentLogFilter==i?'active':''}" onclick="setLogFilter(${i})">Door ${i}</div>`; byId('filter-unloader-select').value = activeLogFilter.unloader; byId('filter-date-input').value = activeLogFilter.date !== 'All' ? activeLogFilter.date : ''; byId('filter-modal').style.display='flex'; }
+    function applyFilter() { activeLogFilter.unloader = byId('filter-unloader-select').value; const d = byId('filter-date-input').value; activeLogFilter.date = d || 'All'; closeModal('filter-modal'); renderLogs(); }
+    function clearLogFilter() { currentLogFilter='All'; activeLogFilter={door:'All',unloader:'All',type:'All',timeRange:'All',search:'',date:'All'}; byId('log-search').value=''; renderLogs(); }
+    function setLogFilter(v) { currentLogFilter = v; activeLogFilter.door = v; renderLogs(); }
+    function toggleStats(sec) { const c = byId(sec==='unloader'?'stats-content':'hourly-content'), i = byId(sec==='unloader'?'stats-caret':'hourly-caret'); const show = c.style.display!=='block'; c.style.display=show?'block':'none'; i.className=show?'ph ph-caret-up':'ph ph-caret-down'; if(show) sec==='unloader' ? calculateAndRenderStats() : calculateAndRenderHourlyStats(); }
+    function switchTab(tabId, btn) { document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active')); byId(`tab-${tabId}`).classList.add('active'); document.querySelectorAll('.tab-btn').forEach(el=>el.classList.remove('active')); if(btn) btn.classList.add('active'); else { const icons=document.querySelectorAll('.tab-btn'); const idx = ['dashboard','active','logs','tools','settings'].indexOf(tabId); if(idx>=0) icons[idx].classList.add('active'); } if(tabId==='dashboard') renderDashboard(); if(tabId==='active') renderActiveTab(); if(tabId==='logs') { currentVisibleLogs = 50; renderLogs(); } }
+    function closeModal(id) { const m = byId(id); if(m) m.style.display='none'; window.scrollTo(0,0); }
+    function loadMoreLogs() { currentVisibleLogs += 50; renderLogBatch(); }
+    function revertLog(i) { const l = historyLog[i]; if(!l || (Date.now()-l.end>120000 && !demoActive) || doors[l.door].status!=='empty') return alert("Cannot revert"); doors[l.door] = { status:'active', start:l.start, laborStart:l.laborStart, id:l.id, account:l.account, type:l.type, unloader:l.unloader, unavailable:false, lastCompletionTime:null, idleTimeMinutes: l.idleTimeMinutes, cpuOptions: l.cpuOptions || [], assignments: [{name: l.unloader, start: l.laborStart||l.start, end: null}], logId: l.logId }; historyLog.splice(i, 1); saveDoors(); saveHistory(); renderDashboard(); renderLogs(); updateTabBadges(); }
 
     init();
 </script>
