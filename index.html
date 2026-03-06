@@ -125,6 +125,7 @@
             width: 60px; height: 60px; border-radius: 50%;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             font-size: 20px; font-weight: 800; color: #000;
+            background-color: #f2f2f7; /* Default fallback color for open bays */
             cursor: pointer; transition: transform 0.1s;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             position: relative; box-sizing: border-box;
@@ -132,9 +133,12 @@
         .bay-circle:active { transform: scale(0.92); }
         .bay-circle.unavailable { background-color: #8e8e93 !important; opacity: 0.5; color: #666; border: none !important; }
         .bay-circle.unavailable .bay-timer { color: #666; }
+        
+        /* Active status borders */
         .bay-circle.status-ok { border: 4px solid #34c759; }
         .bay-circle.status-warn { border: 4px solid #ff9500; }
         .bay-circle.status-crit { border: 4px solid #ff3b30; }
+        
         /* NEW V6.1 STAGE STYLE */
         .bay-circle.status-staged { border: 4px solid var(--bay-blue); }
         .bay-circle.status-staged .bay-timer { background: rgba(255, 255, 255, 0.95); color: var(--bay-blue); border: 1px solid var(--bay-blue); }
@@ -147,6 +151,7 @@
         .bay-14 { background-color: var(--bay-orange); }
         .bay-15 { background-color: var(--bay-orange); }
         .bay-16 { background-color: var(--bay-orange); }
+        
         .type-badge {
             position: absolute; bottom: -2px; right: -2px;
             width: 24px; height: 24px; border-radius: 50%;
@@ -411,7 +416,7 @@
         <div class="dashboard-header">
             <h1 class="app-title">Wally Dashboard</h1>
             <div class="app-subtitle">by Fitz Joseph</div>
-            <div class="app-version">Version 6.1</div>
+            <div class="app-version">Version 6.1.1</div>
         </div>
         <div class="section-title">Sort Statistics</div>
         <div class="stats-grid">
@@ -809,7 +814,7 @@
     let pendingMoveDest = null;
 
     // --- CONFIG ---
-    const APP_VERSION = '6.1';  
+    const APP_VERSION = '6.1.1';  
     const DOORS_START = 9;
     const DOORS_END = 16;
     const DEFAULT_TEAM = ["David F", "Lorena R", "Matt R", "Robert W", "Trevon C", "Russell H", "Fonseca J", "Eddie F", "Juan F", "Arce J"];
@@ -836,6 +841,9 @@
 
     // --- CHANGELOG ---
     const CHANGELOG = `
+v6.1.1: Hotfix
+- Restored CSS for missing bay icons.
+
 v6.1: The Staging Update
 - ADDED: Blue "Staged" Bay Status. Onboard a door without an unloader to start the Yard clock without penalizing labor.
 - ADDED: Punch-In Modal. Tap a Staged door to assign an unloader and instantly start their labor clock.
@@ -882,12 +890,12 @@ v6.0: The Predictive & Visual Update
             type: logEntry.type,
             unloader: logEntry.unloader,
             assistants: logEntry.assistants,
-            start: logEntry.start, // Arrival Time
-            laborStart: logEntry.laborStart, // V6.1 Punch In Time
+            start: logEntry.start, 
+            laborStart: logEntry.laborStart, 
             end: logEntry.end,
             dateKey: logEntry.dateKey,
-            durationMinutes: logEntry.durationMinutes, // V6.1 This is strictly labor time
-            stageTimeMinutes: logEntry.stageTimeMinutes, // V6.1 Dwell Time
+            durationMinutes: logEntry.durationMinutes, 
+            stageTimeMinutes: logEntry.stageTimeMinutes, 
             cpuOptions: logEntry.cpuOptions,
             duplicate: logEntry.duplicate,
             manual: logEntry.manual,
@@ -1056,7 +1064,7 @@ v6.0: The Predictive & Visual Update
         byId('setting-shift-start').value = localStorage.getItem('ps9_shift_start') || "20:00";
         renderSavedAccounts(); updateAccountDatalist(); populateUnloaderSelect(); renderTeamManagement(); renderDashboard();
         setTimeout(() => { updateAttributionUI(); setupAttributionSlider(); }, 100);
-        setInterval(() => { renderDashboard(); renderActiveTab(); updateTabBadges(); }, 60000); // V6.1 Live Refresh Clocks
+        setInterval(() => { renderDashboard(); renderActiveTab(); updateTabBadges(); }, 60000); // Live Refresh Clocks
         updateTabBadges();
         window.addEventListener('online', processWebhookQueue); setInterval(processWebhookQueue, 30000); processWebhookQueue(); 
     }
@@ -1173,7 +1181,6 @@ v6.0: The Predictive & Visual Update
             if (d > now) d.setDate(d.getDate() - 1); startTime = d.getTime();
         }
         
-        // V6.1 STAGE LOGIC
         const isStaged = (!unl || unl === "Unassigned");
         const status = isStaged ? 'staged' : 'active';
         const laborStart = isStaged ? null : startTime;
@@ -1218,7 +1225,7 @@ v6.0: The Predictive & Visual Update
         byId('onboarding-note-badge').style.display = 'none';
     }
 
-    // --- DASHBOARD RENDER (V6.1) ---
+    // --- DASHBOARD RENDER ---
     function renderDashboard() {
         updateStats();
         const openGrid = byId('open-bays-grid'), activeGrid = byId('active-trailers-grid');
@@ -1236,7 +1243,6 @@ v6.0: The Predictive & Visual Update
                 hasActive = true;
                 btn.innerHTML = `${i}<div class="type-badge ${d.type==='Wally'?'badge-w':'badge-c'}">${d.type==='Wally'?'W':'C'}</div>`;
                 
-                // V6.1 Color Logic
                 if (d.status === 'staged') {
                     btn.classList.add('status-staged');
                     const stageMins = Math.floor((Date.now() - d.start) / 60000);
@@ -1262,7 +1268,7 @@ v6.0: The Predictive & Visual Update
         if(!hasActive) activeGrid.innerHTML = '<div class="empty-state-text">No active trailers.</div>';
     }
 
-    // --- ACTIVE TAB RENDER (V6.1) ---
+    // --- ACTIVE TAB RENDER ---
     function renderActiveTab() {
         const list = byId('active-tab-list'); list.innerHTML = '';
         let hasActive = false;
@@ -1282,7 +1288,7 @@ v6.0: The Predictive & Visual Update
         if(!hasActive) list.innerHTML = '<div style="text-align:center; color:#999; margin-top:40px;">No active trailers</div>';
     }
 
-    // --- ACTIVE DETAILS / PUNCH IN MODAL (V6.1) ---
+    // --- ACTIVE DETAILS / PUNCH IN MODAL ---
     function openActiveDetails(doorNum) {
         detailDoor = doorNum; const d = doors[doorNum];
         byId('detail-door-num').innerText = doorNum;
@@ -1300,14 +1306,12 @@ v6.0: The Predictive & Visual Update
         const ar = byId('row-account'); if (d.account) { ar.style.display = 'flex'; byId('detail-account').innerText = d.account; } else ar.style.display = 'none';
         const rowOpts = byId('row-cpu-opts'); if (d.type === 'CPU' && d.cpuOptions && d.cpuOptions.length > 0) { rowOpts.style.display = 'flex'; byId('detail-cpu-opts').innerText = d.cpuOptions.join(', '); } else { rowOpts.style.display = 'none'; }
         
-        // V6.1 Dynamic Clock Displays
         const now = Date.now();
         if (isStaged) {
             byId('detail-stage-time').innerText = Math.floor((now - d.start)/60000) + "m";
             byId('row-labor-start').style.display = 'none';
             byId('row-duration').style.display = 'none';
             
-            // Show Punch In
             const select = byId('punch-in-unloader');
             select.innerHTML = '<option value="" selected>Select Unloader...</option>';
             teamNamesSorted.forEach(n => select.innerHTML += `<option value="${n}">${n}</option>`);
@@ -1346,15 +1350,13 @@ v6.0: The Predictive & Visual Update
         doors[detailDoor].assignments = [{ name: unl, start: laborStart, end: null }];
         
         saveDoors();
-        
-        // Ping Webhook to update status without ending
         const d = doors[detailDoor];
         sendToWebhook({ door: detailDoor, id: d.id, account: d.account||"", type: d.type, unloader: d.unloader, assistants: [], start: d.start, laborStart: d.laborStart, end: null, dateKey: dateKeyFromTs(d.start), durationMinutes: null, statOffset: 0, logId: d.logId, duplicate: false, completionHour: null, cpuOptions: d.cpuOptions || [], status: 'active', manual: false, idleTimeMinutes: d.idleTimeMinutes }, 'update');
         
         closeModal('active-detail-modal'); renderDashboard(); renderActiveTab(); showSaveToast();
     }
 
-    // --- DUAL CLOCK EDITOR (V6.1) ---
+    // --- DUAL CLOCK EDITOR ---
     function openEditActiveModalFromDetail() { closeModal('active-detail-modal'); openEditActiveModal(detailDoor); }
     function openEditActiveModal(doorNum) {
         const d = doors[doorNum];
@@ -1376,7 +1378,6 @@ v6.0: The Predictive & Visual Update
         byId('edit-active-chk-recycle').checked = opts.includes('RECYCLE');
         byId('edit-active-chk-gv').checked = opts.includes('GV');
         
-        // Populate Times
         const arrDate = new Date(d.start);
         byId('edit-active-arrival-time').value = `${arrDate.getHours().toString().padStart(2,'0')}:${arrDate.getMinutes().toString().padStart(2,'0')}`;
         
@@ -1412,7 +1413,6 @@ v6.0: The Predictive & Visual Update
         let newArrival = d.start;
         let newLabor = d.laborStart;
         
-        // Handle Arrival Edit
         const arrTimeInput = byId('edit-active-arrival-time').value;
         if (arrTimeInput) {
             const origDate = new Date(d.start);
@@ -1424,7 +1424,6 @@ v6.0: The Predictive & Visual Update
             newArrival = dObj.getTime();
         }
         
-        // Handle Labor Edit
         const labTimeInput = byId('edit-active-labor-time').value;
         if (d.status === 'active' && labTimeInput) {
             const origLabDate = new Date(d.laborStart || d.start);
@@ -1436,10 +1435,9 @@ v6.0: The Predictive & Visual Update
             newLabor = lObj.getTime();
         }
 
-        // Status Logic
         const isStaged = (!unl || unl === "Unassigned");
         const status = isStaged ? 'staged' : 'active';
-        if (isStaged) newLabor = null; // Wipe labor if unassigned
+        if (isStaged) newLabor = null;
 
         let newAssignments = [...(d.assignments || [])];
         if (newLabor && newAssignments.length > 0) newAssignments[0].start = newLabor;
@@ -1464,59 +1462,7 @@ v6.0: The Predictive & Visual Update
         closeModal('edit-active-modal'); renderActiveTab(); renderDashboard(); updateTabBadges(); showSaveToast();
     }
 
-    // --- COMPLETE DOOR LOGIC ---
-    function finalizeCompletion(doorNum, endTime, offset) {
-        const d = doors[doorNum];
-        let start = d.start;
-        let laborStart = d.laborStart || d.start; // Fallback if completed without punch-in
-        
-        if(d.assignments && d.assignments.length > 0) {
-            const last = d.assignments[d.assignments.length - 1];
-            if(!last.end) last.end = endTime;
-        }
-        const durationMap = {};
-        if (d.assignments && d.assignments.length > 0) {
-            d.assignments.forEach(a => {
-                if (a.name === 'Unassigned') return;
-                const dur = (a.end || endTime) - a.start;
-                if (!durationMap[a.name]) durationMap[a.name] = 0;
-                durationMap[a.name] += dur;
-            });
-        } else {
-            if(d.unloader !== 'Unassigned') durationMap[d.unloader] = endTime - laborStart;
-        }
-        let primaryUnloader = d.unloader; let maxDur = -1;
-        Object.keys(durationMap).forEach(name => { if (durationMap[name] > maxDur) { maxDur = durationMap[name]; primaryUnloader = name; } });
-        if (!primaryUnloader || primaryUnloader === 'Unassigned') primaryUnloader = "Unknown";
-        const assistants = Object.keys(durationMap).filter(n => n !== primaryUnloader);
-        
-        if (d.type === 'CPU' && d.account && !savedAccounts.includes(d.account.trim().toUpperCase())) { savedAccounts.push(d.account.trim().toUpperCase()); saveAccounts(); updateAccountDatalist(); }
-        
-        // V6.1 TIME MATH
-        const stageTimeMinutes = Math.round((laborStart - start) / 60000);
-        const durationMinutes = Math.round((endTime - laborStart) / 60000); // Labor time only
-
-        const logEntry = {
-            door: doorNum, id: d.id, account: d.account||"", type: d.type, unloader: primaryUnloader, assistants: assistants,
-            start: start, laborStart: laborStart, end: endTime, dateKey: dateKeyFromTs(endTime), 
-            duration: endTime - laborStart, durationMinutes: durationMinutes, stageTimeMinutes: stageTimeMinutes, statOffset: offset,
-            logId: d.logId, duplicate: d.isDuplicate||false, completionHour: getCompletionHour(endTime - offset), cpuOptions: d.cpuOptions || [],
-            idleTimeMinutes: d.idleTimeMinutes !== undefined ? d.idleTimeMinutes : "", status: 'completed'
-        };
-        
-        closeModal('active-detail-modal');
-        historyLog.unshift(logEntry);
-        sendToWebhook(logEntry, 'end');
-
-        if (d.type === 'Wally' && navigator.share && !demoActive) { setTimeout(() => { navigator.share({ text: `Door ${doorNum} done` }).catch(err => console.log('Share dismissed or failed:', err)); }, 100); }
-
-        saveHistory(); doors[doorNum] = { status: 'empty', start: 0, laborStart: null, id: '', type: '', unloader: '', unavailable: false, lastCompletionTime: endTime, assignments: [] };
-        saveDoors(); renderDashboard(); renderActiveTab(); updateTabBadges(); showSaveToast();
-
-        if (demoActive && config.replenish) setTimeout(() => { if (doors[doorNum] && doors[doorNum].status === 'empty') randomArrival(doorNum); }, 10000);
-    }
-
-    // --- LOGS RENDER (V6.1) ---
+    // --- LOGS RENDER ---
     function renderLogBatch() {
         const list = byId('logs-list'), loadMore = byId('logs-load-more');
         if (filteredLogsCache.length === 0) { list.innerHTML = '<div style="text-align:center; color:#999; margin-top:20px;">No logs found.</div>'; loadMore.style.display = 'none'; return; }
@@ -1524,7 +1470,7 @@ v6.0: The Predictive & Visual Update
         const batch = filteredLogsCache.slice(list.children.length, currentVisibleLogs);
         batch.forEach(l => {
             const card = document.createElement('div'); card.className = 'log-card';
-            const dur = l.durationMinutes || Math.round((l.end - l.start)/60000); // Backwards compat
+            const dur = l.durationMinutes || Math.round((l.end - l.start)/60000);
             let statusPill = '';
             if (l.status === 'moved') statusPill = `<span class="log-tag tag-gray"><i class="ph ph-arrows-left-right"></i> ${l.moveDest}</span>`;
             else if (l.status === 'incomplete') statusPill = `<span class="log-tag tag-red"><i class="ph ph-x-circle"></i> Incomplete</span>`;
@@ -1539,7 +1485,6 @@ v6.0: The Predictive & Visual Update
             const timeRange = `${new Date(l.laborStart || l.start).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} - ${new Date(l.end).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
             const noteIcon = l.type === 'Wally' ? `<button class="note-icon-btn ${wallyNotes[l.id] ? 'has-note' : ''}" onclick="openNoteModal('${l.id}')"><i class="ph ph-note${wallyNotes[l.id] ? '-pencil' : ''}"></i></button>` : '';
             
-            // V6.1 IDLE & STAGE TAGS
             const idleText = l.idleTimeMinutes !== undefined && l.idleTimeMinutes !== "" ? `<div class="log-footer-item" style="color:#ff9500;"><i class="ph ph-pause-circle"></i> Idle: ${l.idleTimeMinutes}m</div>` : '';
             const stageText = l.stageTimeMinutes ? `<div class="log-footer-item" style="color:#007aff;"><i class="ph ph-hourglass"></i> Stage: ${l.stageTimeMinutes}m</div>` : '';
 
@@ -1562,12 +1507,13 @@ v6.0: The Predictive & Visual Update
         list.appendChild(frag);
         loadMore.style.display = (currentVisibleLogs < filteredLogsCache.length) ? 'block' : 'none';
     }
+    function loadMoreLogs() { currentVisibleLogs += 50; renderLogBatch(); }
+    function revertLog(i) {
+        const l = historyLog[i]; if(!l || (Date.now()-l.end>120000 && !demoActive) || doors[l.door].status!=='empty') return alert("Cannot revert");
+        doors[l.door] = { status:'active', start:l.start, laborStart:l.laborStart, id:l.id, account:l.account, type:l.type, unloader:l.unloader, unavailable:false, lastCompletionTime:null, idleTimeMinutes: l.idleTimeMinutes, cpuOptions: l.cpuOptions || [], assignments: [{name: l.unloader, start: l.laborStart||l.start, end: null}], logId: l.logId };
+        historyLog.splice(i, 1); saveDoors(); saveHistory(); renderDashboard(); renderLogs(); updateTabBadges();
+    }
 
-    // --- OTHER CORE FUNCTIONS (Minified for space) ---
-    function switchTab(tabId, btn) { document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active')); byId(`tab-${tabId}`).classList.add('active'); document.querySelectorAll('.tab-btn').forEach(el=>el.classList.remove('active')); if(btn) btn.classList.add('active'); else { const icons=document.querySelectorAll('.tab-btn'); const idx = ['dashboard','active','logs','tools','settings'].indexOf(tabId); if(idx>=0) icons[idx].classList.add('active'); } if(tabId==='dashboard') renderDashboard(); if(tabId==='active') renderActiveTab(); if(tabId==='logs') { currentVisibleLogs = 50; renderLogs(); } }
-    function closeModal(id) { const m = byId(id); if(m) m.style.display='none'; window.scrollTo(0,0); }
-    function revertLog(i) { const l = historyLog[i]; if(!l || (Date.now()-l.end>120000 && !demoActive) || doors[l.door].status!=='empty') return alert("Cannot revert"); doors[l.door] = { status:'active', start:l.start, laborStart:l.laborStart, id:l.id, account:l.account, type:l.type, unloader:l.unloader, unavailable:false, lastCompletionTime:null, idleTimeMinutes: l.idleTimeMinutes, cpuOptions: l.cpuOptions || [], assignments: [{name: l.unloader, start: l.laborStart||l.start, end: null}], logId: l.logId }; historyLog.splice(i, 1); saveDoors(); saveHistory(); renderDashboard(); renderLogs(); updateTabBadges(); }
-    
     init();
 </script>
 </body>
