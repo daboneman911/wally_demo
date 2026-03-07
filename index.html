@@ -194,7 +194,7 @@
             <button class="action-btn" onclick="openAddUnloaderModal()"><i class="ph ph-user-plus"></i> Add Unloader</button>
             <button class="action-btn" onclick="openManualAddModal()"><i class="ph ph-pencil-simple-line"></i> Manual</button>
         </div>
-        <div class="dashboard-header"><h1 class="app-title">Wally Dashboard</h1><div class="app-subtitle">by Fitz Joseph</div><div class="app-version">Version 6.1-fix</div></div>
+        <div class="dashboard-header"><h1 class="app-title">Wally Dashboard</h1><div class="app-subtitle">by Fitz Joseph</div><div class="app-version">Version 6.1-fix2</div></div>
         <div class="section-title">Sort Statistics</div>
         <div class="stats-grid">
             <div class="stat-card" onclick="viewStatLogs('Wally')"><div class="stat-label">Total Wallies</div><div class="stat-value" id="stat-total-wally">0</div></div>
@@ -312,7 +312,7 @@
 <script>
     window.onerror=function(m,u,l,c,e){var d=document.createElement('div');d.style.cssText='position:fixed;top:60px;left:10px;right:10px;background:red;color:white;padding:15px;border-radius:12px;z-index:9999;font-size:13px;font-family:monospace;word-break:break-all;';d.textContent='ERR: '+m+' L'+l;document.body.appendChild(d)};
     let demoActive=false,duplicateWallyFlag=false,pendingWallyDuplicate=null,currentDoor=null,currentType='Wally',detailDoor=null,currentLogFilter='All',activeLogFilter={door:'All',unloader:'All',type:'All',timeRange:'All',search:'',date:'All'},statsVisible=false,hourlyVisible=false,lastSortStartTime=null,isFirstOnboard=false,dashboardRefreshTimer=null,wallyNotes={},manualType='Wally',pendingMoveDest=null;
-    const APP_VERSION='6.1-fix',DOORS_START=9,DOORS_END=16,DEFAULT_TEAM=["David F","Lorena R","Matt R","Robert W","Trevon C","Russell H","Fonseca J","Eddie F","Juan F","Arce J"];
+    const APP_VERSION='6.1-fix2',DOORS_START=9,DOORS_END=16,DEFAULT_TEAM=["David F","Lorena R","Matt R","Robert W","Trevon C","Russell H","Fonseca J","Eddie F","Juan F","Arce J"];
     const WEBHOOK_URL='https://script.google.com/macros/s/AKfycbwss7dFIVBNUuQQHzp5KDURwpRJyH58wUrlJR3XbSrL3SjrF4tvAFSaQiLjJJeOmH9m/exec';
     const byId=(id)=>document.getElementById(id);
     function dateKeyFromTs(ts){const d=new Date(ts);return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
@@ -576,7 +576,18 @@ v5.08:
   function setEditType(t){byId(‘edit-opt-wally’).classList.toggle(‘selected’,t===‘Wally’);byId(‘edit-opt-cpu’).classList.toggle(‘selected’,t===‘CPU’);byId(‘edit-log-modal’).dataset.type=t;const c=byId(‘edit-log-options-container’);if(c)c.style.display=t===‘CPU’?‘block’:‘none’}
   function openMoveMenu(){closeModal(‘active-detail-modal’);byId(‘move-menu-modal’).style.display=‘flex’}
   
-  try{init()}catch(e){var err=document.createElement(‘div’);err.style.cssText=‘padding:40px;font-size:18px;color:red;’;err.innerHTML=‘INIT CRASH: ‘+e.message+’<br><br>’+e.stack;var rb=document.createElement(‘button’);rb.textContent=‘Reset & Reload’;rb.onclick=function(){localStorage.clear();location.reload()};err.appendChild(rb);document.body.innerHTML=’’;document.body.appendChild(err)}
+  var _dbg=document.getElementById(‘open-bays-grid’);
+  if(_dbg)_dbg.innerHTML=’<div style="color:red;font-size:14px;padding:10px;">JS loaded. Calling init()…</div>’;
+  try{
+  init();
+  if(_dbg){
+  var _bc=_dbg.querySelectorAll(’.bay-circle’);
+  if(_bc.length===0)_dbg.innerHTML+=’<div style="color:red;font-size:14px;padding:10px;">init() completed but 0 bay circles created. doors=’+JSON.stringify(Object.keys(doors))+’</div>’;
+  else _dbg.innerHTML+=’<div style="color:green;font-size:12px;">’+_bc.length+’ bays OK</div>’;
+  }
+  }catch(e){
+  document.getElementById(‘open-bays-grid’).innerHTML=’<div style="color:red;font-size:16px;padding:20px;word-break:break-all;">CRASH: ‘+e.message+’<br>’+e.stack+’<br><br><button onclick="localStorage.clear();location.reload()">Reset All Data</button></div>’;
+  }
 
 </script>
 </body>
