@@ -167,6 +167,10 @@
         .slider-tick{width:1px;height:8px;background:#ccc;position:relative}
         .slider-tick-label{position:absolute;top:12px;font-size:11px;color:#8e8e93;transform:translateX(-50%);white-space:nowrap;font-weight:600}
         #restore-file-input{display:none}
+        .sync-badge{position:fixed;top:calc(var(--safe-top) - 36px);right:16px;background:#007aff;color:white;font-size:11px;font-weight:800;padding:4px 10px;border-radius:20px;display:none;align-items:center;gap:5px;z-index:2000;box-shadow:0 2px 8px rgba(0,122,255,0.4);animation:pulse-badge 1.5s ease-in-out infinite}
+        .sync-badge.visible{display:flex}
+        .sync-badge.error{background:#ff3b30;animation:none}
+        @keyframes pulse-badge{0%,100%{opacity:1}50%{opacity:0.6}}
         .notes-list{max-height:400px;overflow-y:auto;margin-bottom:20px;border:1px solid #e5e5ea;border-radius:16px;background:#f9f9f9}
         .note-item{display:flex;justify-content:space-between;align-items:center;padding:15px 20px;border-bottom:1px solid #e5e5ea;cursor:pointer}
         .note-item:last-child{border-bottom:none}.note-item:active{background:#f2f2f7}
@@ -180,13 +184,14 @@
 <body>
 <input type="file" id="restore-file-input" accept=".json" onchange="restoreData(this)">
 <div id="save-toast" class="save-toast"><i class="ph ph-check-circle" style="color:#4cd964;font-size:16px;"></i><span>Saved</span></div>
+<div id="sync-badge" class="sync-badge"><i class="ph ph-arrows-clockwise"></i><span id="sync-badge-text">Syncing…</span></div>
 <div class="app-container">
     <div id="tab-dashboard" class="tab-content active">
         <div class="top-actions">
             <button class="action-btn" onclick="openAddUnloaderModal()"><i class="ph ph-user-plus"></i> Add Unloader</button>
             <button class="action-btn" onclick="openManualAddModal()"><i class="ph ph-pencil-simple-line"></i> Manual</button>
         </div>
-        <div class="dashboard-header"><h1 class="app-title">Wally Dashboard</h1><div class="app-subtitle">by Fitz Joseph</div><div class="app-version">Version 6.00</div></div>
+        <div class="dashboard-header"><h1 class="app-title">Wally Dashboard</h1><div class="app-subtitle">by Fitz Joseph</div><div class="app-version">Version 6.10</div></div>
         <div class="section-title">Sort Statistics</div>
         <div class="stats-grid">
             <div class="stat-card" onclick="viewStatLogs('Wally')"><div class="stat-label">Total Wallies</div><div class="stat-value" id="stat-total-wally">0</div></div>
@@ -302,12 +307,25 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
 <script>
     let demoActive=false,duplicateWallyFlag=false,pendingWallyDuplicate=null,currentDoor=null,currentType='Wally',detailDoor=null,currentLogFilter='All',activeLogFilter={door:'All',unloader:'All',type:'All',timeRange:'All',search:'',date:'All'},statsVisible=false,hourlyVisible=false,lastSortStartTime=null,isFirstOnboard=false,dashboardRefreshTimer=null,wallyNotes={},manualType='Wally',pendingMoveDest=null;
-    const APP_VERSION='6.00',DOORS_START=9,DOORS_END=16,DEFAULT_TEAM=["David F","Lorena R","Matt R","Robert W","Trevon C","Russell H","Fonseca J","Eddie F","Juan F","Arce J"];
+    const APP_VERSION='6.10',DOORS_START=9,DOORS_END=16,DEFAULT_TEAM=["David F","Lorena R","Matt R","Robert W","Trevon C","Russell H","Fonseca J","Eddie F","Juan F","Arce J"];
     const WEBHOOK_URL='https://script.google.com/macros/s/AKfycbwss7dFIVBNUuQQHzp5KDURwpRJyH58wUrlJR3XbSrL3SjrF4tvAFSaQiLjJJeOmH9m/exec';
     const byId=(id)=>document.getElementById(id);
     function dateKeyFromTs(ts){const d=new Date(ts);return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
     function debounce(func,wait){let timeout;return function(...args){clearTimeout(timeout);timeout=setTimeout(()=>func.apply(this,args),wait)}}
     const CHANGELOG=`
+v6.10:
+- New: Strict Sequential Webhook Queue — all Google Sheets syncs now queue in memory and fire one at a time. Rapid-fire completions can never collide or drop data.
+- New: 1.5s breathe gap between each send (measured from response received), plus 5s retry backoff on network failure.
+- New: Sync Badge — a live "Syncing (N)…" indicator appears at the top-right whenever items are pending. Turns red on network error. Disappears when queue is empty.
+- Fix: Queue size capped at 500 items with overflow protection and safe try/catch on localStorage write.
+- Fix: Dead 30-second queue polling interval removed from init. Queue now drains immediately on load and on coming back online.
+- Fix: Apps Script — header detection now verifies cell A1 content, not just row count, preventing silent column misalignment.
+- Fix: Apps Script — logId scan window is now dynamic (all rows), eliminating the rare 500-row missed-upsert edge case.
+- Fix: Apps Script — autoResizeColumns moved to sheet creation only, not every webhook call (significant performance gain).
+- Fix: Apps Script — leaderboard Avg Time now correctly uses UnloadDuration column, not Door Time duration.
+- Fix: Apps Script — double lock.releaseLock() race in KPI throttle branch resolved.
+- Fix: Apps Script — per-door idle averages added to KPI Dashboard alongside global average.
+
 v6.00:
 - New: "Staged" status — onboard a door without an unloader and the bay turns Blue. Door Time clock starts; Unload Time clock is held.
 - New: Door Time vs Unload Time split. Door Time = trailer arrival to completion. Unload Time = labor start to completion. Dwell = gap between the two.
@@ -345,11 +363,70 @@ v5.06:
     let config={replenish:false,randomHistory:false,doorCount:2,mixedTypes:false,demoType:'Wally',simulateWindow:false,disableWindow:false,shareOnComplete:true};
     let attributionConfig={minutes:0,enabled:true},pendingCompletion=null,tempSortStartTime="";
     function getHourText(h){if(h===1)return"1st hour";if(h===2)return"2nd hour";if(h===3)return"3rd hour";if(h===4)return"4th hour";if(h===5)return"5th hour";if(h===6)return"6th hour";if(h===7)return"7th hour";if(h===8)return"8th hour";if(h===9)return"9th hour";if(h===10)return"10th hour";if(h===11)return"11th hour";if(h===12)return"12th hour";return`${h}th hour`}
-    function sendToWebhook(logEntry,stage='end'){const shiftStart=getShiftStartTime();const payload={stage:stage,door:logEntry.door,id:logEntry.id,account:logEntry.account,type:logEntry.type,unloader:logEntry.unloader,assistants:logEntry.assistants||[],start:logEntry.start,laborStart:logEntry.laborStart||null,end:logEntry.end,dateKey:logEntry.dateKey,durationMinutes:logEntry.durationMinutes,unloadDurationMinutes:logEntry.unloadDurationMinutes||null,dwellMinutes:logEntry.dwellMinutes||null,idleBeforeMinutes:logEntry.idleBeforeMinutes!=null?logEntry.idleBeforeMinutes:null,cpuOptions:logEntry.cpuOptions,duplicate:logEntry.duplicate,manual:logEntry.manual,completionHour:logEntry.completionHour,status:logEntry.status,moveDest:logEntry.moveDest,shiftStart:shiftStart,logId:logEntry.logId};attemptWebhook(payload)}
-    function attemptWebhook(payload){if(!navigator.onLine){queuePayload(payload);return}fetch(WEBHOOK_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),keepalive:true}).catch(err=>{console.error('Webhook error, queuing:',err);queuePayload(payload)})}
-    function queuePayload(payload){let queue=JSON.parse(localStorage.getItem('ps9_webhook_queue')||'[]');queue.push(payload);localStorage.setItem('ps9_webhook_queue',JSON.stringify(queue))}
+    // --- SEQUENTIAL WEBHOOK QUEUE v6.10 ---
+    function sendToWebhook(logEntry,stage='end'){
+        const payload={
+            stage:stage,door:logEntry.door,id:logEntry.id,account:logEntry.account,
+            type:logEntry.type,unloader:logEntry.unloader,assistants:logEntry.assistants||[],
+            start:logEntry.start,laborStart:logEntry.laborStart||null,end:logEntry.end,
+            dateKey:logEntry.dateKey,durationMinutes:logEntry.durationMinutes,
+            unloadDurationMinutes:logEntry.unloadDurationMinutes||null,
+            dwellMinutes:logEntry.dwellMinutes||null,
+            idleBeforeMinutes:logEntry.idleBeforeMinutes!=null?logEntry.idleBeforeMinutes:null,
+            cpuOptions:logEntry.cpuOptions,duplicate:logEntry.duplicate,manual:logEntry.manual,
+            completionHour:logEntry.completionHour,status:logEntry.status,
+            moveDest:logEntry.moveDest,shiftStart:getShiftStartTime(),logId:logEntry.logId
+        };
+        queuePayload(payload);
+        processWebhookQueue();
+    }
+    // attemptWebhook: used for pre-built payloads (PPH uploads, direct calls)
+    function attemptWebhook(payload){queuePayload(payload);processWebhookQueue();}
+    function queuePayload(payload){
+        let queue=[];
+        try{queue=JSON.parse(localStorage.getItem('ps9_webhook_queue')||'[]');}catch(e){}
+        if(queue.length>=500){console.warn('Webhook queue full, dropping oldest');queue.shift();}
+        queue.push(payload);
+        try{localStorage.setItem('ps9_webhook_queue',JSON.stringify(queue));}catch(e){console.error('Queue storage failed:',e);}
+        updateSyncBadge();
+    }
     let isSyncingWebhook=false;
-    function processWebhookQueue(){if(isSyncingWebhook||!navigator.onLine)return;let queue=JSON.parse(localStorage.getItem('ps9_webhook_queue')||'[]');if(queue.length===0)return;isSyncingWebhook=true;const payload=queue[0];fetch(WEBHOOK_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(()=>{let cq=JSON.parse(localStorage.getItem('ps9_webhook_queue')||'[]');cq.shift();localStorage.setItem('ps9_webhook_queue',JSON.stringify(cq));isSyncingWebhook=false;if(cq.length>0)processWebhookQueue()}).catch(err=>{isSyncingWebhook=false})}
+    function updateSyncBadge(){
+        const badge=byId('sync-badge'),text=byId('sync-badge-text');
+        if(!badge)return;
+        let queue=[];
+        try{queue=JSON.parse(localStorage.getItem('ps9_webhook_queue')||'[]');}catch(e){}
+        if(queue.length===0){badge.classList.remove('visible','error');return;}
+        badge.classList.add('visible');badge.classList.remove('error');
+        text.textContent=queue.length===1?'Syncing…':`Syncing (${queue.length})…`;
+    }
+    function processWebhookQueue(){
+        if(isSyncingWebhook||!navigator.onLine){updateSyncBadge();return;}
+        let queue=[];
+        try{queue=JSON.parse(localStorage.getItem('ps9_webhook_queue')||'[]');}catch(e){}
+        if(queue.length===0){updateSyncBadge();return;}
+        isSyncingWebhook=true;
+        updateSyncBadge();
+        const payload=queue[0];
+        fetch(WEBHOOK_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
+        .then(function(){
+            let cq=[];
+            try{cq=JSON.parse(localStorage.getItem('ps9_webhook_queue')||'[]');}catch(e){}
+            cq.shift();
+            try{localStorage.setItem('ps9_webhook_queue',JSON.stringify(cq));}catch(e){}
+            isSyncingWebhook=false;
+            updateSyncBadge();
+            // 1.5s breathe gap — measured from response received
+            setTimeout(processWebhookQueue,1500);
+        })
+        .catch(function(err){
+            isSyncingWebhook=false;
+            const badge=byId('sync-badge');
+            if(badge){badge.classList.add('visible','error');const t=byId('sync-badge-text');if(t)t.textContent='Sync failed';}
+            // retry in 5s on network error
+            setTimeout(function(){updateSyncBadge();processWebhookQueue();},5000);
+        });
+    }
     function openPPHCalculator(){byId('pph-volume').value='';byId('pph-hours').value='';byId('pph-result').innerText='0';byId('pph-diff').innerText='0.00 hrs';byId('pph-diff').style.background='#e5e5ea';byId('pph-diff').style.color='#000';byId('pph-modal').style.display='flex'}
     function calculatePPH(){const vol=parseFloat(byId('pph-volume').value),hrs=parseFloat(byId('pph-hours').value),resEl=byId('pph-result'),diffEl=byId('pph-diff');if(isNaN(vol)||isNaN(hrs)||hrs<=0){resEl.innerText='0';diffEl.innerText='0.00 hrs';diffEl.style.background='#e5e5ea';diffEl.style.color='#000';return}const pph=Math.round(vol/hrs);resEl.innerText=pph;const targetHours=vol/600,diff=hrs-targetHours;let diffText=diff>0?'+'+diff.toFixed(2):diff.toFixed(2);diffEl.innerText=diffText+' hrs';if(diff<=0){diffEl.style.background='#e8f5e9';diffEl.style.color='#2e7d32'}else{diffEl.style.background='#ffebee';diffEl.style.color='#c62828'}}
     function uploadPPH(){const vol=parseFloat(byId('pph-volume').value),hrs=parseFloat(byId('pph-hours').value);if(isNaN(vol)||isNaN(hrs)||hrs<=0)return alert("Please enter valid volume and hours first.");const pph=Math.round(vol/hrs),diff=(hrs-vol/600).toFixed(2);attemptWebhook({dataType:'PPH_UPLOAD',dateKey:dateKeyFromTs(Date.now()),shiftStart:getShiftStartTime(),volume:vol,hours:hrs,pph:pph,diffHours:diff});const btn=byId('pph-push-btn'),origText=btn.innerText;btn.innerText='Pushed!';btn.style.background='#34c759';setTimeout(()=>{btn.innerText=origText;btn.style.background='#000'},2000)}
@@ -366,7 +443,7 @@ v5.06:
     function handleMoveCount(countAsCompletion){closeModal('move-count-modal');moveDoor(pendingMoveDest,countAsCompletion);pendingMoveDest=null}
     function openAddUnloaderModal(){byId('input-new-unloader-name').value='';byId('add-unloader-modal').style.display='flex';setTimeout(()=>{byId('input-new-unloader-name').focus()},100)}
     function confirmAddUnloader(){const raw=byId('input-new-unloader-name').value.trim();if(!raw)return alert("Please enter a name");const formatted=raw.toLowerCase().split(' ').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ');if(teamNames.includes(formatted)){alert(`"${formatted}" is already on the team list.`);return}teamNames.push(formatted);refreshTeamNamesSorted();saveTeam();populateUnloaderSelect();renderTeamManagement();closeModal('add-unloader-modal');showSaveToast()}
-    function init(){console.log(`Wally Dashboard v${APP_VERSION} initialized`);const sDoors=localStorage.getItem('ps9_doors');if(sDoors){try{doors=JSON.parse(sDoors)}catch(e){doors={}}}if(!doors||typeof doors!=='object')doors={};for(let i=DOORS_START;i<=DOORS_END;i++){if(!doors[i])doors[i]={status:'empty',start:0,laborStart:null,id:'',type:'',unloader:'',unavailable:false,lastCompletionTime:null,assignments:[]};else if(doors[i].laborStart===undefined)doors[i].laborStart=doors[i].start||null}byId('active-trailers-grid').addEventListener('click',(e)=>{const btn=e.target.closest('.bay-circle');if(btn)openActiveDetails(parseInt(btn.dataset.door))});byId('open-bays-grid').addEventListener('click',(e)=>{const btn=e.target.closest('.bay-circle');if(btn)openArrivalModal(parseInt(btn.dataset.door))});const searchInput=byId('log-search');if(searchInput)searchInput.addEventListener('input',debounce(()=>renderLogs(),300));const notesSearch=byId('notes-search');if(notesSearch)notesSearch.addEventListener('input',debounce(()=>renderNotesList(),300));const sAccts=localStorage.getItem('ps9_accounts');if(sAccts)savedAccounts=JSON.parse(sAccts);initAttributionSettings();loadNotes();loadPreferences();const sHistory=localStorage.getItem('ps9_history'),sTeam=localStorage.getItem('ps9_team'),shiftStart=localStorage.getItem('ps9_shift_start')||"20:00";lastSortStartTime=localStorage.getItem('ps9_last_sort_start');isFirstOnboard=localStorage.getItem('ps9_is_first_onboard')==='true';if(sHistory)historyLog=JSON.parse(sHistory);if(Array.isArray(historyLog)){const now=Date.now(),ONE_DAY_MS=24*60*60*1000;let pruned=false;historyLog=historyLog.filter(l=>{if(!l.end)return true;if(now-l.end>ONE_DAY_MS){pruned=true;return false}if(!l.dateKey)l.dateKey=dateKeyFromTs(l.end);if(!l.completionHour)l.completionHour=getCompletionHour(l.end-(l.statOffset||0));if(!l.cpuOptions)l.cpuOptions=[];if(!l.status)l.status='completed';if(!l.assistants)l.assistants=[];return true});if(pruned)saveHistory()}if(sTeam)teamNames=JSON.parse(sTeam);else teamNames=[...DEFAULT_TEAM];refreshTeamNamesSorted();const startInput=byId('setting-shift-start');if(startInput)startInput.value=shiftStart;renderSavedAccounts();updateAccountDatalist();populateUnloaderSelect();renderTeamManagement();renderDashboard();setTimeout(()=>{updateAttributionUI();setupAttributionSlider()},100);setInterval(updateTabBadges,2000);updateTabBadges();startDashboardRefresh();window.addEventListener('online',processWebhookQueue);setInterval(processWebhookQueue,30000);processWebhookQueue()}
+    function init(){console.log(`Wally Dashboard v${APP_VERSION} initialized`);const sDoors=localStorage.getItem('ps9_doors');if(sDoors){try{doors=JSON.parse(sDoors)}catch(e){doors={}}}if(!doors||typeof doors!=='object')doors={};for(let i=DOORS_START;i<=DOORS_END;i++){if(!doors[i])doors[i]={status:'empty',start:0,laborStart:null,id:'',type:'',unloader:'',unavailable:false,lastCompletionTime:null,assignments:[]};else if(doors[i].laborStart===undefined)doors[i].laborStart=doors[i].start||null}byId('active-trailers-grid').addEventListener('click',(e)=>{const btn=e.target.closest('.bay-circle');if(btn)openActiveDetails(parseInt(btn.dataset.door))});byId('open-bays-grid').addEventListener('click',(e)=>{const btn=e.target.closest('.bay-circle');if(btn)openArrivalModal(parseInt(btn.dataset.door))});const searchInput=byId('log-search');if(searchInput)searchInput.addEventListener('input',debounce(()=>renderLogs(),300));const notesSearch=byId('notes-search');if(notesSearch)notesSearch.addEventListener('input',debounce(()=>renderNotesList(),300));const sAccts=localStorage.getItem('ps9_accounts');if(sAccts)savedAccounts=JSON.parse(sAccts);initAttributionSettings();loadNotes();loadPreferences();const sHistory=localStorage.getItem('ps9_history'),sTeam=localStorage.getItem('ps9_team'),shiftStart=localStorage.getItem('ps9_shift_start')||"20:00";lastSortStartTime=localStorage.getItem('ps9_last_sort_start');isFirstOnboard=localStorage.getItem('ps9_is_first_onboard')==='true';if(sHistory)historyLog=JSON.parse(sHistory);if(Array.isArray(historyLog)){const now=Date.now(),ONE_DAY_MS=24*60*60*1000;let pruned=false;historyLog=historyLog.filter(l=>{if(!l.end)return true;if(now-l.end>ONE_DAY_MS){pruned=true;return false}if(!l.dateKey)l.dateKey=dateKeyFromTs(l.end);if(!l.completionHour)l.completionHour=getCompletionHour(l.end-(l.statOffset||0));if(!l.cpuOptions)l.cpuOptions=[];if(!l.status)l.status='completed';if(!l.assistants)l.assistants=[];return true});if(pruned)saveHistory()}if(sTeam)teamNames=JSON.parse(sTeam);else teamNames=[...DEFAULT_TEAM];refreshTeamNamesSorted();const startInput=byId('setting-shift-start');if(startInput)startInput.value=shiftStart;renderSavedAccounts();updateAccountDatalist();populateUnloaderSelect();renderTeamManagement();renderDashboard();setTimeout(()=>{updateAttributionUI();setupAttributionSlider()},100);setInterval(updateTabBadges,2000);updateTabBadges();startDashboardRefresh();window.addEventListener('online',processWebhookQueue);processWebhookQueue()}
     function startDashboardRefresh(){if(dashboardRefreshTimer)clearInterval(dashboardRefreshTimer);dashboardRefreshTimer=setInterval(()=>{if(byId('tab-dashboard').classList.contains('active'))renderDashboard();if(byId('tab-active').classList.contains('active'))renderActiveTab()},30000)}
     function loadPreferences(){const saved=localStorage.getItem('ps9_preferences');if(saved){try{const prefs=JSON.parse(saved);if(prefs.shareOnComplete!==undefined)config.shareOnComplete=prefs.shareOnComplete}catch(e){}}setTimeout(()=>{const el=byId('switch-share-on-complete');if(el){if(config.shareOnComplete)el.classList.add('checked');else el.classList.remove('checked')}},50)}
     function savePreferences(){localStorage.setItem('ps9_preferences',JSON.stringify({shareOnComplete:config.shareOnComplete}))}
