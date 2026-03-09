@@ -187,7 +187,7 @@
 <body>
 <input type="file" id="restore-file-input" accept=".json" onchange="restoreData(this)">
 <div id="save-toast" class="save-toast"><i class="ph ph-check-circle" style="color:#4cd964;font-size:16px;"></i><span>Saved</span></div>
-<div id="sync-badge" class="sync-badge"><i class="ph ph-arrows-clockwise"></i><span id="sync-badge-text">Syncing…</span></div>
+<div id="sync-badge" class="sync-badge"><i class="ph ph-arrows-clockwise"></i><span id="sync-badge-text">Syncing...</span></div>
 <div id="demo-banner" class="demo-banner"><i class="ph ph-flask"></i><span>DEMO MODE</span></div>
 <div class="app-container">
     <div id="tab-dashboard" class="tab-content active">
@@ -195,14 +195,14 @@
             <button class="action-btn" onclick="openAddUnloaderModal()"><i class="ph ph-user-plus"></i> Add Unloader</button>
             <button class="action-btn" onclick="openManualAddModal()"><i class="ph ph-pencil-simple-line"></i> Manual</button>
         </div>
-        <div class="dashboard-header"><h1 class="app-title">Wally Dashboard</h1><div class="app-subtitle">by Fitz Joseph</div><div class="app-version">Version 6.12</div></div>
+        <div class="dashboard-header"><h1 class="app-title">Wally Dashboard</h1><div class="app-subtitle">by Fitz Joseph</div><div class="app-version">Version 6.12b</div></div>
         <div class="section-title">Sort Statistics</div>
         <div class="stats-grid">
             <div class="stat-card" onclick="viewStatLogs('Wally')"><div class="stat-label">Total Wallies</div><div class="stat-value" id="stat-total-wally">0</div></div>
             <div class="stat-card" onclick="viewStatLogs('CPU')"><div class="stat-label">Total CPUs</div><div class="stat-value" id="stat-total-cpu">0</div></div>
             <div class="stat-card" onclick="viewStatLogs('Hour-0')"><div class="stat-label">Wallies This Hour</div><div class="stat-value" id="stat-hour-wally">0</div></div>
             <div class="stat-card" onclick="viewStatLogs('Hour-1')"><div class="stat-label">Wallies Last Hour</div><div class="stat-value" id="stat-last-wally">0</div></div>
-            <div class="stat-card" style="grid-column:1/-1;"><div class="stat-label">Avg Bay Idle Time</div><div style="display:flex;align-items:baseline;gap:6px;"><div class="stat-value" id="stat-avg-idle">—</div><div style="font-size:14px;font-weight:700;color:#8e8e93;" id="stat-avg-idle-unit"></div></div></div>
+            <div class="stat-card" style="grid-column:1/-1;"><div class="stat-label">Avg Bay Idle Time</div><div style="display:flex;align-items:baseline;gap:6px;"><div class="stat-value" id="stat-avg-idle">--</div><div style="font-size:14px;font-weight:700;color:#8e8e93;" id="stat-avg-idle-unit"></div></div></div>
         </div>
         <div class="section-title">Active Trailers</div>
         <div id="active-trailers-grid" class="bays-grid"></div>
@@ -249,7 +249,7 @@
                 <div class="settings-slider-container" style="border-top:1px solid #f2f2f7;">
                     <div class="slider-header"><span class="settings-label">Attribution Window Start</span><span class="slider-value" id="attribution-value">0m</span></div>
                     <div class="slider-wrapper"><div class="slider-track"></div><div class="slider-fill" id="slider-fill"></div><div class="slider-thumb" id="slider-thumb"></div><div class="slider-ticks"><div class="slider-tick" style="left:0%"><div class="slider-tick-label">0</div></div><div class="slider-tick" style="left:50%"><div class="slider-tick-label">5</div></div><div class="slider-tick" style="left:100%"><div class="slider-tick-label">10</div></div></div></div>
-                    <div class="settings-note" style="margin-top:20px;"><strong>Attribution Grace Period (Wallies Only)</strong><br>When a Wally is completed within the 10‑minute window that starts at the selected minute after the hour, you can choose to count it toward the <strong>previous</strong> hour or the <strong>current</strong> hour.</div>
+                    <div class="settings-note" style="margin-top:20px;"><strong>Attribution Grace Period (Wallies Only)</strong><br>When a Wally is completed within the 10-minute window that starts at the selected minute after the hour, you can choose to count it toward the <strong>previous</strong> hour or the <strong>current</strong> hour.</div>
                 </div>
                 <div class="settings-row"><span class="settings-label">Simulate Attribution</span><div class="toggle-switch" id="switch-sim-window" onclick="toggleSwitch('sim-window')"></div></div>
                 <div class="settings-row"><span class="settings-label">Disable Time Attribution</span><div class="toggle-switch" id="switch-dis-window" onclick="toggleSwitch('dis-window')"></div></div>
@@ -272,7 +272,7 @@
                 <div class="settings-row"><span class="settings-label">Generate Random History</span><div class="toggle-switch" id="switch-demo-random" onclick="toggleSwitch('demo-random')"></div></div>
                 <div class="settings-row"><span class="settings-label">Auto-Replenish Bays</span><div class="toggle-switch" id="switch-demo-replenish" onclick="toggleSwitch('demo-replenish')"></div></div>
                 <div class="settings-row"><span class="settings-label">Auto-Complete (15s)</span><div class="toggle-switch" id="switch-demo-autocomplete" onclick="toggleSwitch('demo-autocomplete')"></div></div>
-                <div class="settings-row"><span class="settings-label">Number of Doors</span><div class="stepper"><button class="stepper-btn" onclick="stepDoor(-1)">−</button><span class="stepper-val" id="demo-door-val">2</span><button class="stepper-btn" onclick="stepDoor(1)">+</button></div></div>
+                <div class="settings-row"><span class="settings-label">Number of Doors</span><div class="stepper"><button class="stepper-btn" onclick="stepDoor(-1)">-</button><span class="stepper-val" id="demo-door-val">2</span><button class="stepper-btn" onclick="stepDoor(1)">+</button></div></div>
                 <div class="settings-row"><span class="settings-label">Mix Trailer Types</span><div class="toggle-switch" id="switch-mixed-types" onclick="toggleSwitch('mixed-types')"></div></div>
                 <div class="settings-row" style="justify-content:center;background:#f9f9f9;"><div class="segment-control"><div class="segment-opt selected" id="seg-wally" onclick="setDemoType('Wally')">Wally</div><div class="segment-opt" id="seg-cpu" onclick="setDemoType('CPU')">CPU</div></div></div>
                 <div style="padding:15px;"><button class="btn-primary" style="background:#000;color:#fff;" onclick="startDemo()">Auto-Onboard</button></div>
@@ -312,7 +312,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
 <script>
     let demoActive=false,duplicateWallyFlag=false,pendingWallyDuplicate=null,currentDoor=null,currentType='Wally',detailDoor=null,currentLogFilter='All',activeLogFilter={door:'All',unloader:'All',type:'All',timeRange:'All',search:'',date:'All'},statsVisible=false,hourlyVisible=false,lastSortStartTime=null,isFirstOnboard=false,dashboardRefreshTimer=null,wallyNotes={},manualType='Wally',pendingMoveDest=null;
-    const APP_VERSION='6.12',DOORS_START=9,DOORS_END=16,DEFAULT_TEAM=["David F","Lorena R","Matt R","Robert W","Trevon C","Russell H","Fonseca J","Eddie F","Juan F","Arce J"];
+    const APP_VERSION='6.12b',DOORS_START=9,DOORS_END=16,DEFAULT_TEAM=["David F","Lorena R","Matt R","Robert W","Trevon C","Russell H","Fonseca J","Eddie F","Juan F","Arce J"];
     const WEBHOOK_URL='https://script.google.com/macros/s/AKfycbwss7dFIVBNUuQQHzp5KDURwpRJyH58wUrlJR3XbSrL3SjrF4tvAFSaQiLjJJeOmH9m/exec';
     const byId=(id)=>document.getElementById(id);
     function dateKeyFromTs(ts){const d=new Date(ts);return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
