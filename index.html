@@ -3,6 +3,23 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <script>
+    // Smart-quote sanitizer -- runs before any other script parses.
+    // If the file is corrupted in transit (copy/paste through GitHub web editor,
+    // Mail, Messages, etc.), this rewrites all inline script content to replace
+    // curly quotes and other non-ASCII punctuation with safe ASCII equivalents.
+    (function(){
+        var map={'\u2018':"'",'\u2019':"'",'\u201c':'"','\u201d':'"',
+                 '\u2014':'--','\u2013':'-','\u2011':'-','\u2212':'-',
+                 '\u2026':'...','\u00a0':' ','\u200b':'','\u200c':'','\u200d':'','\ufeff':''};
+        var re=new RegExp(Object.keys(map).join('|'),'g');
+        document.querySelectorAll('script:not([src])').forEach(function(s){
+            var orig=s.textContent;
+            var fixed=orig.replace(re,function(m){return map[m]||'';});
+            if(fixed!==orig){s.textContent=fixed;console.warn('[Wally] Smart quotes detected and fixed in script block.');}
+        });
+    })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -199,7 +216,7 @@
             <button class="action-btn" onclick="openAddUnloaderModal()"><i class="ph ph-user-plus"></i> Add Unloader</button>
             <button class="action-btn" onclick="openManualAddModal()"><i class="ph ph-pencil-simple-line"></i> Manual</button>
         </div>
-        <div class="dashboard-header"><h1 class="app-title">Wally Dashboard</h1><div class="app-subtitle">by Fitz Joseph</div><div class="app-version">Version 6.16</div></div>
+        <div class="dashboard-header"><h1 class="app-title">Wally Dashboard</h1><div class="app-subtitle">by Fitz Joseph</div><div class="app-version">Version 6.17</div></div>
         <div class="section-title">Sort Statistics</div>
         <div class="stats-grid">
             <div class="stat-card" onclick="viewStatLogs('Wally')"><div class="stat-label">Total Wallies</div><div class="stat-value" id="stat-total-wally">0</div></div>
@@ -317,14 +334,18 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
 <script>
     let demoActive=false,duplicateWallyFlag=false,pendingWallyDuplicate=null,currentDoor=null,currentType='Wally',detailDoor=null,currentLogFilter='All',activeLogFilter={door:'All',unloader:'All',type:'All',timeRange:'All',search:'',date:'All'},statsVisible=false,hourlyVisible=false,lastSortStartTime=null,isFirstOnboard=false,dashboardRefreshTimer=null,wallyNotes={},manualType='Wally',pendingMoveDest=null;
-    const APP_VERSION='6.16',DOORS_START=9,DOORS_END=16,DEFAULT_TEAM=["David F","Lorena R","Matt R","Robert W","Trevon C","Russell H","Fonseca J","Eddie F","Juan F","Arce J"];
+    const APP_VERSION='6.17',DOORS_START=9,DOORS_END=16,DEFAULT_TEAM=["David F","Lorena R","Matt R","Robert W","Trevon C","Russell H","Fonseca J","Eddie F","Juan F","Arce J"];
     const WEBHOOK_URL='https://script.google.com/macros/s/AKfycbwss7dFIVBNUuQQHzp5KDURwpRJyH58wUrlJR3XbSrL3SjrF4tvAFSaQiLjJJeOmH9m/exec';
     const byId=(id)=>document.getElementById(id);
     function dateKeyFromTs(ts){const d=new Date(ts);return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
     function debounce(func,wait){let timeout;return function(...args){clearTimeout(timeout);timeout=setTimeout(()=>func.apply(this,args),wait)}}
     const CHANGELOG=`
+v6.17:
+- Fix: Added inline smart-quote sanitizer as the very first script in the document. Runs before any other JS parses -- detects and replaces curly quotes (\u2018\u2019\u201c\u201d), em/en dashes, non-breaking spaces, and other non-ASCII punctuation that gets introduced when copying through GitHub web editor, Mail, or Messages. Prevents the fatal SyntaxError that causes bays to disappear and buttons to go unresponsive.
+
 v6.16:
-- New: "Disable Webhook Firing" toggle in Demo settings. When on, all webhook payloads are silently suppressed (logged to console only) -- arrivals, completions, edits, PPH, new shift pings, everything. Lets you test features freely without touching live Sheets data. Toggle resets to off on page reload.
+
+- New: “Disable Webhook Firing” toggle in Demo settings. When on, all webhook payloads are silently suppressed (logged to console only) – arrivals, completions, edits, PPH, new shift pings, everything. Lets you test features freely without touching live Sheets data. Toggle resets to off on page reload.
 
 v6.15:
 
