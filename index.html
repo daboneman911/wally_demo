@@ -444,6 +444,9 @@
         .ht-btn-cut{background:var(--accent-red-bg);border:1px solid var(--accent-red);color:var(--accent-red);}
         .ht-btn-time{background:transparent;border:1px solid var(--border);color:var(--text-sub);font-size:10px;padding:5px 9px;}
         .ht-cut-label{font-size:10px;font-weight:700;color:var(--text-sub);text-transform:uppercase;padding:4px 6px;text-align:center;}
+        .ht-clickable{cursor:pointer;}
+        .ht-clickable:active{background:var(--border-light);}
+        .ht-role-disabled{opacity:0.5;cursor:not-allowed;pointer-events:none;}
 
         /* Live pill */
         .ht-live-pill{display:none;align-items:center;gap:4px;background:var(--accent-green-bg);border:1px solid rgba(22,163,74,0.3);border-radius:20px;padding:4px 10px;font-size:10px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;color:var(--accent-green);}
@@ -512,7 +515,7 @@
         <div class="nameplate">
             <div class="nameplate-top">
                 <div class="nameplate-title">Wally Dashboard</div>
-                <div class="nameplate-sub" id="nameplate-sub">by Fitz Joseph &nbsp;&middot;&nbsp; v6.31</div>
+                <div class="nameplate-sub" id="nameplate-sub">by Fitz Joseph &nbsp;&middot;&nbsp; v6.32</div>
             </div>
             <div class="nameplate-actions">
                 <div class="shift-state-pill idle" id="shift-state-pill">
@@ -763,12 +766,40 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
 <script>
     let demoActive=false,duplicateWallyFlag=false,pendingWallyDuplicate=null,currentDoor=null,currentType='Wally',detailDoor=null,currentLogFilter='All',activeLogFilter={door:'All',unloader:'All',type:'All',timeRange:'All',search:'',date:'All'},statsVisible=false,hourlyVisible=false,lastSortStartTime=null,isFirstOnboard=false,dashboardRefreshTimer=null,wallyNotes={},manualType='Wally',pendingMoveDest=null,shiftState='idle',shiftEndTime=null;
-    const APP_VERSION='6.31',DOORS_START=9,DOORS_END=16,DEFAULT_TEAM=["David F","Lorena R","Matt R","Robert W","Trevon C","Russell H","Fonseca J","Eddie F","Juan F","Arce J"];
+    const APP_VERSION='6.32',DOORS_START=9,DOORS_END=16,DEFAULT_TEAM=["David F","Lorena R","Matt R","Robert W","Trevon C","Russell H","Fonseca J","Eddie F","Juan F","Arce J"];
     const WEBHOOK_URL='https://script.google.com/macros/s/AKfycbwss7dFIVBNUuQQHzp5KDURwpRJyH58wUrlJR3XbSrL3SjrF4tvAFSaQiLjJJeOmH9m/exec';
     const byId=(id)=>document.getElementById(id);
     function dateKeyFromTs(ts){const d=new Date(ts);return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
     function debounce(func,wait){let timeout;return function(...args){clearTimeout(timeout);timeout=setTimeout(()=>func.apply(this,args),wait)}}
     const CHANGELOG=`
+v6.32:
+- Fix (REQ 1): Robert W is now automatically pre-assigned as Belt Tender on activation.
+  He gets belt unless another employee has manually pinned belt, in which case the
+  system respects that manual override and assigns Robert W by rank.
+- Fix (REQ 2/3): Manual role overrides now enforce all constraints before applying.
+  Cannot assign belt if another employee already holds it. Cannot assign bulk if
+  2 bulk slots are filled. Modal blocks invalid selections with a lock icon.
+- Fix (REQ 3): Role engine validates and strips illegal manual pins on every render
+  (e.g., if two employees somehow both have manualRole=belt, the lower-ranked one
+  is cleared automatically).
+- Fix (REQ 4): Hours Tracker start time now syncs bidirectionally with Wally's
+  shift start time. Opening the tool reads from ps9_shift_start. Starting a shift
+  from the tool writes back to ps9_shift_start and updates the Settings input.
+  Wally's openStartShiftConfirm is wrapped to keep HT time in sync.
+- Fix (REQ 5): Employee list now sorted: Belt Tender always first, then Bulk by hours,
+  then Unloaders by hours. Previously sorted only by hours which meant the belt
+  tender could appear anywhere in the list.
+- Fix (REQ 6): KPI hours now calculated as (count in role) x (elapsed shift time),
+  not as sum of individual employee hours. This matches the spec:
+  2 Bulk x 1.5h shift = 3.0 bulk hours regardless of individual start times.
+- Fix (REQ 7): Clicking anywhere on an employee row opens the role modal (not just
+  the role icon). Buttons use event.stopPropagation() so Cut/Start/Set Time still
+  work independently. Disabled role options show a lock icon.
+- Fix (REQ 8): Role engine caps bulk at 2 and unload at dopConfig (5 or 6). Excess
+  employees still show as unload but DOP bar reflects the over-staffed state.
+- Fix (REQ 9): Role assignment priority order enforced: (1) hard constraints strip
+  invalid pins, (2) Robert W auto-belt, (3) manual pins, (4) auto rank-fill.
+
 v6.31:
 - New: Hours Tracker tool integrated under Tools tab.
   Full-screen panel with employee roster, role assignment engine, DOP status,
@@ -1490,32 +1521,36 @@ v5.06:
         const panel=document.getElementById('hours-panel');
         panel.classList.add('open');
         htLoadState();
+        // REQ 4: Sync start time from Wally's shift time on open
+        const wallyTime=localStorage.getItem('ps9_shift_start')||'20:00';
+        if(!hoursState.shiftStarted)hoursState.shiftStartStr=wallyTime;
+        document.getElementById('ht-time-input').value=hoursState.shiftStartStr;
         htSyncDOPButtons();
-        if(hoursState.shiftStartStr)document.getElementById('ht-time-input').value=hoursState.shiftStartStr;
         htRenderAll();
     }
     function closeHoursTool(){
         document.getElementById('hours-panel').classList.remove('open');
     }
 
-    // ── Constants ────────────────────────────────────────
+    // Constants
     const HT_PRESET_NAMES=['David F','Russell H','Jesus F','Robert W','Lorena R',
         'Matthew R','Eddie F','Arce J','Solis','Anthony','Jarrett','Damian'];
+    const HT_BELT_DEFAULT='Robert W'; // REQ 1: always pre-assigned belt unless overridden
     const HT_ROLES={
-        belt:{icon:'⚡',label:'Belt Tender',tagCls:'ht-tag-belt'},
-        bulk:{icon:'⚙️',label:'Bulk Sweep',tagCls:'ht-tag-bulk'},
-        unload:{icon:'📦',label:'Unloader',tagCls:'ht-tag-unload'}
+        belt:{icon:'\u26a1',label:'Belt Tender',tagCls:'ht-tag-belt'},
+        bulk:{icon:'\u2699\ufe0f',label:'Bulk Sweep',tagCls:'ht-tag-bulk'},
+        unload:{icon:'\u{1f4e6}',label:'Unloader',tagCls:'ht-tag-unload'}
     };
-    const HT_DOP_ICONS={none:'⬜',met:'✅',low:'⚠️',over:'🚨'};
+    const HT_DOP_ICONS={none:'\u2b1c',met:'\u2705',low:'\u26a0\ufe0f',over:'\U0001f6a8'};
 
-    // ── State ────────────────────────────────────────────
+    // State
     let hoursState={
         shiftStarted:false,shiftEnded:false,shiftStartTime:null,
         shiftStartStr:'20:00',dopConfig:6,employees:[],nextId:1,
         overDopMuted:false,pendingTimeId:null,pendingRoleId:null
     };
 
-    // ── Employee factory ──────────────────────────────────
+    // Employee factory
     function htMakeEmployee(name){
         return{id:hoursState.nextId++,name,status:'inactive',startTime:null,
                customStartStr:null,frozenHours:0,role:null,manualRole:null,prevRole:null};
@@ -1524,7 +1559,7 @@ v5.06:
         hoursState.employees=HT_PRESET_NAMES.map(n=>htMakeEmployee(n));
     }
 
-    // ── Persistence ───────────────────────────────────────
+    // Persistence
     function htSaveState(){
         try{localStorage.setItem('ps9_v4',JSON.stringify(hoursState));}catch(e){}
     }
@@ -1542,7 +1577,7 @@ v5.06:
         }catch(e){htInitEmployees();}
     }
 
-    // ── Time helpers ──────────────────────────────────────
+    // Time helpers
     function htParseHHMM(str){
         const[h,m]=str.split(':').map(Number);
         const d=new Date();d.setHours(h,m,0,0);return d;
@@ -1555,12 +1590,23 @@ v5.06:
     }
     function htFmtHrs(h){return h.toFixed(2);}
 
-    // ── Shift controls ────────────────────────────────────
+    // REQ 6: Elapsed shift time in decimal hours (used for role KPI calc)
+    function htShiftElapsed(){
+        if(!hoursState.shiftStartTime)return 0;
+        return Math.max(0,Date.now()-hoursState.shiftStartTime.getTime())/3600000;
+    }
+
+    // Shift controls
     function htHandleShiftBtn(){
         if(!hoursState.shiftStarted){
-            hoursState.shiftStartStr=document.getElementById('ht-time-input').value;
-            hoursState.shiftStartTime=htParseHHMM(hoursState.shiftStartStr);
+            const timeVal=document.getElementById('ht-time-input').value;
+            hoursState.shiftStartStr=timeVal;
+            hoursState.shiftStartTime=htParseHHMM(timeVal);
             hoursState.shiftStarted=true;hoursState.shiftEnded=false;
+            // REQ 4: Write back to Wally's shift start so both are in sync
+            localStorage.setItem('ps9_shift_start',timeVal);
+            const wallyInput=document.getElementById('setting-shift-start');
+            if(wallyInput)wallyInput.value=timeVal;
             htSaveState();htRenderAll();
         }else if(!hoursState.shiftEnded){
             if(confirm('End shift and lock all hours?'))htEndShift();
@@ -1581,7 +1627,7 @@ v5.06:
         htInitEmployees();htSaveState();htRenderAll();
     }
 
-    // ── DOP config ────────────────────────────────────────
+    // DOP config
     function htSetDOP(n){
         hoursState.dopConfig=n;htSyncDOPButtons();htSaveState();htRenderAll();
     }
@@ -1590,7 +1636,7 @@ v5.06:
         document.getElementById('ht-dop5').classList.toggle('active',hoursState.dopConfig===5);
     }
 
-    // ── Employee actions ──────────────────────────────────
+    // Employee actions
     function htActivateEmployee(id){
         if(!hoursState.shiftStarted){alert('Start the shift first.');return;}
         const emp=hoursState.employees.find(e=>e.id===id);
@@ -1614,7 +1660,7 @@ v5.06:
         htSaveState();htCloseModal('ht-add-modal');htRenderAll();
     }
 
-    // ── Custom start time ─────────────────────────────────
+    // Custom start time
     function htOpenCustomTime(id){
         hoursState.pendingTimeId=id;
         const emp=hoursState.employees.find(e=>e.id===id);
@@ -1630,87 +1676,167 @@ v5.06:
         htCloseModal('ht-time-modal');hoursState.pendingTimeId=null;htRenderAll();
     }
 
-    // ── Manual role assign ────────────────────────────────
-    function htOpenRoleModal(id){
+    // REQ 3/7/9: Constraint checker -- returns which roles are available for an employee
+    function htGetAvailableRoles(targetEmpId){
+        const engaged=hoursState.employees.filter(e=>(e.status==='active'||e.status==='cut')&&e.id!==targetEmpId);
+        const beltTaken=engaged.some(e=>e.manualRole==='belt'||e.name===HT_BELT_DEFAULT&&!e.manualRole&&e.status!=='inactive');
+        // Count current manual pins excluding target
+        const manualBulk=engaged.filter(e=>e.manualRole==='bulk').length;
+        return{
+            belt:!beltTaken,           // only 1 belt allowed
+            bulk:manualBulk<2,         // max 2 bulk
+            unload:true,               // unload always available
+            auto:true                  // auto always available
+        };
+    }
+
+    // REQ 2/3/7: Open role modal with constraint-aware options
+    function htOpenRoleModal(id,evt){
+        if(evt){evt.stopPropagation();}
         const emp=hoursState.employees.find(e=>e.id===id);
         if(!emp||emp.status==='inactive')return;
         hoursState.pendingRoleId=id;
-        document.getElementById('ht-role-modal-title').textContent=emp.name+' -- Role';
-        const opts=[
-            {key:'auto',icon:'🔄',label:'Auto (Rank-Based)',sub:'Highest hours = Belt, then Bulk, then Unload'},
-            {key:'belt',icon:'⚡',label:'Belt Tender',sub:'Pin as Belt Tender'},
-            {key:'bulk',icon:'⚙️',label:'Bulk Sweep',sub:'Pin as Bulk Sweep'},
-            {key:'unload',icon:'📦',label:'Unloader',sub:'Pin as Unloader'}
-        ];
+        document.getElementById('ht-role-modal-title').textContent=emp.name;
+        const avail=htGetAvailableRoles(id);
         const cur=emp.manualRole||'auto';
+        // If this employee IS the Robert W default belt, they can still be overridden
+        const isBeltDefault=emp.name===HT_BELT_DEFAULT;
+        const opts=[
+            {key:'auto',icon:'\ud83d\udd04',label:'Auto (Rank-Based)',sub:'System assigns based on hours and DOP',disabled:false},
+            {key:'belt',icon:'\u26a1',label:'Belt Tender',
+             sub:avail.belt?'Assign as Belt Tender':'Belt Tender already assigned',
+             disabled:!avail.belt},
+            {key:'bulk',icon:'\u2699\ufe0f',label:'Bulk Sweep',
+             sub:avail.bulk?'Assign as Bulk Sweep':'Bulk slots full (2/2)',
+             disabled:!avail.bulk},
+            {key:'unload',icon:'\ud83d\udce6',label:'Unloader',
+             sub:'Assign as Unloader',disabled:false}
+        ];
         document.getElementById('ht-role-options').innerHTML=opts.map(o=>`
-            <div class="ht-role-option sel-${o.key}${cur===o.key?' sel-'+o.key:''}"
-                 onclick="htApplyManualRole('${o.key}')">
-              <div class="ht-role-opt-icon">${o.icon}</div>
+            <div class="ht-role-option ${o.disabled?'ht-role-disabled':''} ${cur===o.key?'sel-'+o.key:''}"
+                 onclick="${o.disabled?'':'htApplyManualRole(\''+o.key+'\')'}">
+              <div class="ht-role-opt-icon" style="${o.disabled?'opacity:0.35;':''}">${o.icon}</div>
               <div>
-                <div class="ht-role-opt-label">${o.label}</div>
-                <div class="ht-role-opt-sub">${o.sub}</div>
+                <div class="ht-role-opt-label" style="${o.disabled?'color:var(--text-muted);':''}">${o.label}</div>
+                <div class="ht-role-opt-sub" style="${o.disabled?'color:var(--text-muted);':''}">${o.sub}</div>
               </div>
+              ${cur===o.key?'<i class="ph ph-check-circle" style="margin-left:auto;color:var(--accent-green);font-size:20px;"></i>':''}
+              ${o.disabled?'<i class="ph ph-lock" style="margin-left:auto;color:var(--text-muted);font-size:18px;"></i>':''}
             </div>`).join('');
         htOpenModal('ht-role-modal');
     }
+
     function htApplyManualRole(key){
         const emp=hoursState.employees.find(e=>e.id===hoursState.pendingRoleId);
-        if(emp){emp.manualRole=key==='auto'?null:key;htSaveState();}
+        if(emp){
+            // REQ 9: Validate constraint before applying
+            if(key!=='auto'){
+                const avail=htGetAvailableRoles(emp.id);
+                if(!avail[key]){
+                    // Constraint violated -- silently ignore (button should be disabled but belt check)
+                    htCloseModal('ht-role-modal');hoursState.pendingRoleId=null;return;
+                }
+            }
+            emp.manualRole=key==='auto'?null:key;
+            htSaveState();
+        }
         htCloseModal('ht-role-modal');hoursState.pendingRoleId=null;htRenderAll();
     }
 
-    // ── Role engine ───────────────────────────────────────
+    // REQ 1/2/3/8/9: Role assignment engine with full constraint enforcement
     function htAssignRoles(){
         const engaged=hoursState.employees.filter(e=>e.status==='active'||e.status==='cut');
+        const bulkMax=2;
+        const unloadMax=hoursState.dopConfig; // REQ 8: DOP caps unload slots
+
+        // Sort by hours DESC for rank-based assignment
         const sorted=[...engaged].sort((a,b)=>{
             const diff=htCalcHours(b)-htCalcHours(a);
             if(Math.abs(diff)>0.0001)return diff;
             if(a.startTime&&b.startTime)return a.startTime-b.startTime;
             return 0;
         });
-        let beltFilled=0,bulkFilled=0;
+
+        // REQ 9 Pass 1: Validate and strip illegal manualRoles
+        // If two people are pinned as belt, keep only the one with more hours
+        const beltPinned=sorted.filter(e=>e.manualRole==='belt');
+        if(beltPinned.length>1){
+            // Keep highest-hours belt pin, clear the rest
+            beltPinned.slice(1).forEach(e=>{e.manualRole=null;});
+        }
+        // Strip excess bulk pins (>2)
+        const bulkPinned=sorted.filter(e=>e.manualRole==='bulk');
+        if(bulkPinned.length>bulkMax){
+            bulkPinned.slice(bulkMax).forEach(e=>{e.manualRole=null;});
+        }
+
+        // REQ 1 Pass 2: Robert W auto-belt
+        // If Robert W is active and has no manualRole, pre-assign belt intent
+        // Represented as a priority flag, not polluting manualRole
+        const robertW=sorted.find(e=>e.name===HT_BELT_DEFAULT&&!e.manualRole);
+        // We'll use a temporary marker for the sort/assign below
+
+        // REQ 9 Pass 3: Assign roles in priority order
+        let beltFilled=0,bulkFilled=0,unloadFilled=0;
+
+        // First pass: apply manual pins (already validated)
         sorted.forEach(emp=>{
-            if(emp.manualRole){emp.role=emp.manualRole;
-                if(emp.manualRole==='belt')beltFilled++;
-                else if(emp.manualRole==='bulk')bulkFilled++;
-                return;}
-            if(beltFilled<1){emp.role='belt';beltFilled++;}
-            else if(bulkFilled<2){emp.role='bulk';bulkFilled++;}
-            else emp.role='unload';
+            emp.role=null; // reset
+            if(emp.manualRole==='belt')beltFilled++;
+            else if(emp.manualRole==='bulk')bulkFilled++;
+            else if(emp.manualRole==='unload')unloadFilled++;
         });
+
+        // Second pass: Robert W gets belt if belt slot still open and no manualRole
+        if(robertW&&beltFilled<1){
+            robertW._autoBelt=true;
+            beltFilled++;
+        }
+
+        // Third pass: auto-fill remaining employees in rank order
+        sorted.forEach(emp=>{
+            if(emp.manualRole){emp.role=emp.manualRole;return;}
+            if(emp._autoBelt){emp.role='belt';emp._autoBelt=false;return;}
+            if(beltFilled<1){emp.role='belt';beltFilled++;}
+            else if(bulkFilled<bulkMax){emp.role='bulk';bulkFilled++;}
+            else if(unloadFilled<unloadMax){emp.role='unload';unloadFilled++;}
+            else{
+                // REQ 8: Over DOP -- still assign unload (they're working) but DOP bar shows over
+                emp.role='unload';unloadFilled++;
+            }
+        });
+
         hoursState.employees.filter(e=>e.status==='inactive').forEach(e=>{e.role=null;});
     }
 
-    // ── DOP calculation ───────────────────────────────────
+    // DOP calculation
     function htCalcDOP(){
         const active=hoursState.employees.filter(e=>e.status==='active');
         if(!active.length)return{dopState:'none',label:'NO ACTIVE STAFF',
             sub:'Start employees to evaluate DOP',unloaderCount:0,bulkCount:0,
             targetUnloaders:hoursState.dopConfig,delta:0};
-        const nonBelt=active.filter(e=>e.role!=='belt');
-        const bulkCount=nonBelt.filter(e=>e.role==='bulk').length;
-        const unloaderCount=nonBelt.filter(e=>e.role==='unload').length;
+        const bulkCount=active.filter(e=>e.role==='bulk').length;
+        const unloaderCount=active.filter(e=>e.role==='unload').length;
         const totalRequired=1+2+hoursState.dopConfig;
         const delta=active.length-totalRequired;
         let dopState,label,sub;
         if(delta===0){dopState='met';label='DOP MET';
-            sub=`${hoursState.dopConfig}U / 2B / 1 Belt -- Fully staffed`;}
-        else if(delta<0){const d=Math.abs(delta);dopState='low';label=`DOWN ${d}`;
-            sub=`Need ${d} more employee${d>1?'s':''} for ${hoursState.dopConfig}U DOP`;}
-        else{dopState='over';label=`OVER ${delta}`;
-            sub=`${delta} employee${delta>1?'s':''} above ${hoursState.dopConfig}U DOP`;}
+            sub=hoursState.dopConfig+'U / 2B / 1 Belt -- Fully staffed';}
+        else if(delta<0){const d=Math.abs(delta);dopState='low';label='DOWN '+d;
+            sub='Need '+d+' more employee'+(d>1?'s':'')+' for '+hoursState.dopConfig+'U DOP';}
+        else{dopState='over';label='OVER '+delta;
+            sub=delta+' employee'+(delta>1?'s':'')+' above '+hoursState.dopConfig+'U DOP';}
         return{dopState,label,sub,unloaderCount,bulkCount,targetUnloaders:hoursState.dopConfig,delta};
     }
 
-    // ── Over-DOP toast ────────────────────────────────────
+    // Over-DOP toast
     let htLastDOPOver=false;
     function htCheckOverDOP(){
         const{dopState,delta}=htCalcDOP();
         const isOver=dopState==='over';
         if(isOver&&!htLastDOPOver&&!hoursState.overDopMuted){
             document.getElementById('ht-toast-msg').textContent=
-                `You are ${delta} employee${delta>1?'s':''} above DOP (${hoursState.dopConfig}U / 2B).`;
+                'You are '+delta+' employee'+(delta>1?'s':'')+' above DOP ('+hoursState.dopConfig+'U / 2B).';
             document.getElementById('ht-toast').classList.add('show');
         }
         htLastDOPOver=isOver;
@@ -1720,84 +1846,97 @@ v5.06:
         if(mute){hoursState.overDopMuted=true;htSaveState();}
     }
 
-    // ── Render DOP bar ────────────────────────────────────
+    // Render DOP bar
+    const HT_DOP_ICON_MAP={none:'\u2b1c',met:'\u2705',low:'\u26a0\ufe0f',over:'\ud83d\udea8'};
     function htRenderDOPBar(d){
         const bar=document.getElementById('ht-dop-bar');
         bar.className='ht-dop-bar state-'+d.dopState;
-        document.getElementById('ht-dop-icon').textContent=HT_DOP_ICONS[d.dopState];
+        document.getElementById('ht-dop-icon').textContent=HT_DOP_ICON_MAP[d.dopState];
         document.getElementById('ht-dop-label').textContent=d.label;
         document.getElementById('ht-dop-sub').textContent=d.sub;
         const counts=document.getElementById('ht-dop-counts');
-        counts.innerHTML=d.dopState!=='none'?`
-            <div class="ht-count-chip">⚡ 1</div>
-            <div class="ht-count-chip">⚙️ ${d.bulkCount}/2</div>
-            <div class="ht-count-chip">📦 ${d.unloaderCount}/${d.targetUnloaders}</div>`:'';
+        counts.innerHTML=d.dopState!=='none'?
+            '<div class="ht-count-chip">\u26a1 1</div>'+
+            '<div class="ht-count-chip">\u2699\ufe0f '+d.bulkCount+'/2</div>'+
+            '<div class="ht-count-chip">\ud83d\udce6 '+d.unloaderCount+'/'+d.targetUnloaders+'</div>':'';
     }
 
-    // ── Render KPI ────────────────────────────────────────
+    // REQ 6: KPI -- count * elapsed (not sum of individual hrs)
     function htRenderKPI(){
-        let beltH=0,bulkH=0,unloadH=0,bulkN=0,unloadN=0;
-        hoursState.employees.forEach(e=>{
-            if(e.status==='inactive')return;
-            const h=htCalcHours(e);
-            if(e.role==='belt')beltH+=h;
-            else if(e.role==='bulk'){bulkH+=h;bulkN++;}
-            else if(e.role==='unload'){unloadH+=h;unloadN++;}
-        });
-        document.getElementById('ht-kpi-belt').textContent=htFmtHrs(beltH);
-        document.getElementById('ht-kpi-bulk').textContent=htFmtHrs(bulkH);
-        document.getElementById('ht-kpi-unload').textContent=htFmtHrs(unloadH);
-        document.getElementById('ht-kpi-bulk-sub').textContent='hrs · '+bulkN+' people';
-        document.getElementById('ht-kpi-unload-sub').textContent='hrs · '+unloadN+' people';
+        if(!hoursState.shiftStarted||!hoursState.shiftStartTime){
+            document.getElementById('ht-kpi-belt').textContent='0.00';
+            document.getElementById('ht-kpi-bulk').textContent='0.00';
+            document.getElementById('ht-kpi-unload').textContent='0.00';
+            document.getElementById('ht-kpi-bulk-sub').textContent='hrs \u00b7 0 people';
+            document.getElementById('ht-kpi-unload-sub').textContent='hrs \u00b7 0 people';
+            return;
+        }
+        const elapsed=htShiftElapsed(); // single shared elapsed time
+        // Count active (not cut) employees per role
+        const active=hoursState.employees.filter(e=>e.status==='active');
+        const beltN=active.filter(e=>e.role==='belt').length;
+        const bulkN=active.filter(e=>e.role==='bulk').length;
+        const unloadN=active.filter(e=>e.role==='unload').length;
+        // REQ 6: role hrs = count * elapsed
+        document.getElementById('ht-kpi-belt').textContent=htFmtHrs(beltN*elapsed);
+        document.getElementById('ht-kpi-bulk').textContent=htFmtHrs(bulkN*elapsed);
+        document.getElementById('ht-kpi-unload').textContent=htFmtHrs(unloadN*elapsed);
+        document.getElementById('ht-kpi-bulk-sub').textContent='hrs \u00b7 '+bulkN+' people';
+        document.getElementById('ht-kpi-unload-sub').textContent='hrs \u00b7 '+unloadN+' people';
     }
 
-    // ── Render employee row ───────────────────────────────
+    // Render employee row -- REQ 7: full row clickable
     function htRenderRow(emp,rank){
         const hrs=htCalcHours(emp);
         const roleCfg=emp.role?HT_ROLES[emp.role]:null;
+        const isBeltDefault=emp.name===HT_BELT_DEFAULT&&emp.role==='belt'&&!emp.manualRole;
         const rowCls=['ht-emp-row',
             emp.status==='active'?'ht-active':'',
             emp.status==='cut'?'ht-cut':'',
-            emp.role?'ht-role-'+emp.role:''].filter(Boolean).join(' ');
+            emp.role?'ht-role-'+emp.role:'',
+            emp.status!=='inactive'?'ht-clickable':''].filter(Boolean).join(' ');
         const rankTxt=emp.status!=='inactive'?rank+1:'--';
         const startTs=emp.startTime?htFmtTime(emp.startTime):(emp.customStartStr||'');
         let meta='';
-        if(roleCfg)meta+=`<span class="ht-role-tag ${roleCfg.tagCls}">${roleCfg.label}</span>`;
-        if(emp.manualRole)meta+=`<span class="ht-tag-manual">Pinned</span>`;
-        if(startTs)meta+=`<span class="ht-emp-ts">${startTs}</span>`;
+        if(roleCfg)meta+='<span class="ht-role-tag '+roleCfg.tagCls+'">'+roleCfg.label+'</span>';
+        if(emp.manualRole)meta+='<span class="ht-tag-manual">\ud83d\udccc Pinned</span>';
+        else if(isBeltDefault)meta+='<span class="ht-tag-manual">\u2605 Default</span>';
+        if(startTs)meta+='<span class="ht-emp-ts">'+startTs+'</span>';
         const hrsHTML=emp.status!=='inactive'
-            ?`<div class="ht-hrs">${htFmtHrs(hrs)}</div><div class="ht-hrs-lbl">hrs</div>`
-            :`<div class="ht-hrs" style="color:var(--text-muted);font-size:18px;">--</div>`;
-        const iconClick=emp.status!=='inactive'?`onclick="htOpenRoleModal(${emp.id})"`:'';
+            ?'<div class="ht-hrs">'+htFmtHrs(hrs)+'</div><div class="ht-hrs-lbl">hrs</div>'
+            :'<div class="ht-hrs" style="color:var(--text-muted);font-size:18px;">--</div>';
+        // REQ 7: Row click opens modal; buttons use stopPropagation
+        const rowClick=emp.status!=='inactive'?'onclick="htOpenRoleModal('+emp.id+',event)"':'';
         let actHTML='';
         if(emp.status==='inactive'){
             const ctLbl=emp.customStartStr||'Set Time';
-            actHTML=`<div class="ht-actions">
-                <button class="ht-btn ht-btn-start" onclick="htActivateEmployee(${emp.id})">Start</button>
-                <button class="ht-btn ht-btn-time"  onclick="htOpenCustomTime(${emp.id})">${ctLbl}</button>
-            </div>`;
+            actHTML='<div class="ht-actions">'+
+                '<button class="ht-btn ht-btn-start" onclick="htActivateEmployee('+emp.id+');event.stopPropagation()">Start</button>'+
+                '<button class="ht-btn ht-btn-time" onclick="htOpenCustomTime('+emp.id+');event.stopPropagation()">'+ctLbl+'</button>'+
+                '</div>';
         }else if(emp.status==='active'){
             const ts=emp.startTime?htFmtTime(emp.startTime):'Edit';
-            actHTML=`<div class="ht-actions">
-                <button class="ht-btn ht-btn-cut"  onclick="htCutEmployee(${emp.id})">Cut</button>
-                <button class="ht-btn ht-btn-time" onclick="htOpenCustomTime(${emp.id})">${ts}</button>
-            </div>`;
+            actHTML='<div class="ht-actions">'+
+                '<button class="ht-btn ht-btn-cut" onclick="htCutEmployee('+emp.id+');event.stopPropagation()">Cut</button>'+
+                '<button class="ht-btn ht-btn-time" onclick="htOpenCustomTime('+emp.id+');event.stopPropagation()">'+ts+'</button>'+
+                '</div>';
         }else{
-            actHTML=`<div class="ht-actions"><div class="ht-cut-label">CUT</div></div>`;
+            actHTML='<div class="ht-actions"><div class="ht-cut-label">CUT</div></div>';
         }
-        return`<div class="${rowCls}" id="ht-row-${emp.id}">
-            <div class="ht-rank">${rankTxt}</div>
-            <div class="ht-role-icon" ${iconClick}>${roleCfg?roleCfg.icon:'·'}</div>
-            <div class="ht-emp-info">
-                <div class="ht-emp-name">${emp.name}</div>
-                <div class="ht-emp-meta">${meta}</div>
-            </div>
-            <div class="ht-hrs-wrap">${hrsHTML}</div>
-            ${actHTML}
-        </div>`;
+        const iconContent=roleCfg?roleCfg.icon:'\u00b7';
+        return'<div class="'+rowCls+'" id="ht-row-'+emp.id+'" '+rowClick+'>'+
+            '<div class="ht-rank">'+rankTxt+'</div>'+
+            '<div class="ht-role-icon">'+iconContent+'</div>'+
+            '<div class="ht-emp-info">'+
+                '<div class="ht-emp-name">'+emp.name+'</div>'+
+                '<div class="ht-emp-meta">'+meta+'</div>'+
+            '</div>'+
+            '<div class="ht-hrs-wrap">'+hrsHTML+'</div>'+
+            actHTML+
+        '</div>';
     }
 
-    // ── Full render ───────────────────────────────────────
+    // Full render
     function htRenderAll(){
         htAssignRoles();
         // Shift button state
@@ -1814,20 +1953,24 @@ v5.06:
             btn.textContent='Done';btn.className='ht-shift-btn ended';inp.disabled=true;
             pill.classList.remove('show');
         }
-        // Ended banner
         document.getElementById('ht-ended-banner').classList.toggle('show',hoursState.shiftEnded);
-        // DOP & KPI
         const dopInfo=htCalcDOP();
         htRenderDOPBar(dopInfo);htRenderKPI();
-        // Lists
+
         const engaged=hoursState.employees.filter(e=>e.status==='active'||e.status==='cut');
         const inactive=hoursState.employees.filter(e=>e.status==='inactive');
+
+        // REQ 5: Sort -- belt ALWAYS first, then bulk by hours, then unload by hours
+        const ROLE_ORDER={belt:0,bulk:1,unload:2};
         const sortedEngaged=[...engaged].sort((a,b)=>{
+            const ra=ROLE_ORDER[a.role]??3,rb=ROLE_ORDER[b.role]??3;
+            if(ra!==rb)return ra-rb;
             const diff=htCalcHours(b)-htCalcHours(a);
             if(Math.abs(diff)>0.0001)return diff;
             if(a.startTime&&b.startTime)return a.startTime-b.startTime;
             return 0;
         });
+
         document.getElementById('ht-active-section').style.display=engaged.length?'flex':'none';
         document.getElementById('ht-active-list').innerHTML=sortedEngaged.map((e,i)=>htRenderRow(e,i)).join('');
         document.getElementById('ht-inactive-list').innerHTML=inactive.map(e=>htRenderRow(e,-1)).join('');
@@ -1835,16 +1978,16 @@ v5.06:
         htCheckOverDOP();
     }
 
-    // ── Tick (1s live update) ─────────────────────────────
+    // Tick -- lightweight 1s update
     function htTick(){
         const panel=document.getElementById('hours-panel');
-        if(!panel.classList.contains('open'))return; // don't tick when panel closed
+        if(!panel.classList.contains('open'))return;
         if(!hoursState.shiftStarted||hoursState.shiftEnded)return;
         htAssignRoles();
         let rolesChanged=false;
         hoursState.employees.forEach(e=>{if(e.role!==e.prevRole)rolesChanged=true;});
         if(rolesChanged){htRenderAll();return;}
-        // Lightweight patch
+        // REQ 6: patch individual hours in rows
         hoursState.employees.forEach(e=>{
             if(e.status!=='active')return;
             const row=document.getElementById('ht-row-'+e.id);
@@ -1852,12 +1995,30 @@ v5.06:
             const el=row.querySelector('.ht-hrs');
             if(el)el.textContent=htFmtHrs(htCalcHours(e));
         });
-        htRenderKPI();
+        htRenderKPI(); // REQ 6: role KPI uses elapsed * count
         const dopInfo=htCalcDOP();htRenderDOPBar(dopInfo);
         hoursState.employees.forEach(e=>{e.prevRole=e.role;});
     }
 
-    // ── Modal helpers (separate from Wally's closeModal) ──
+    // REQ 4: Hook into Wally's shift start to sync time
+    // Wrap openStartShiftConfirm to also sync HT time
+    (function(){
+        const _orig=window.openStartShiftConfirm;
+        if(typeof _orig==='function'){
+            window.openStartShiftConfirm=function(){
+                _orig.apply(this,arguments);
+                // Sync HT time input if tool not yet started
+                if(!hoursState.shiftStarted){
+                    const wallyTime=localStorage.getItem('ps9_shift_start')||'20:00';
+                    hoursState.shiftStartStr=wallyTime;
+                    const htInp=document.getElementById('ht-time-input');
+                    if(htInp)htInp.value=wallyTime;
+                }
+            };
+        }
+    })();
+
+    // Modal helpers
     function htOpenModal(id){document.getElementById(id).classList.add('open');}
     function htCloseModal(id){document.getElementById(id).classList.remove('open');}
     function htOverlayClick(e,id){if(e.target===document.getElementById(id))htCloseModal(id);}
@@ -1867,7 +2028,7 @@ v5.06:
         setTimeout(()=>document.getElementById('ht-new-name').focus(),350);
     }
 
-    // ── Boot tick ─────────────────────────────────────────
+    // Boot tick
     setInterval(htTick,1000);
 
 </script>
