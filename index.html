@@ -675,6 +675,93 @@
             </div>
 
         </div>
+
+<!-- ══════════════════════════════════════════
+     HOURS TRACKER PANEL
+══════════════════════════════════════════ -->
+<div id="tab-hours" class="tab-content" style="background:#f2f2f7;padding:0;">
+
+  <!-- HEADER -->
+  <div class="ht-header">
+    <div class="ht-header-row1">
+      <div style="font-size:16px;font-weight:900;color:var(--text-main);letter-spacing:-0.3px;">Hours Tracker</div>
+      <div class="ht-live-pill" id="ht-live-pill">
+        <div class="ht-live-dot"></div>LIVE
+      </div>
+      <div class="ht-dop-toggle">
+        <button class="ht-dop-btn active" id="ht-dop6" onclick="htSetDOP(6)">6U/2B</button>
+        <button class="ht-dop-btn"        id="ht-dop5" onclick="htSetDOP(5)">5U/2B</button>
+      </div>
+    </div>
+    <div class="ht-header-row2">
+      <div class="ht-time-wrap">
+        <span class="ht-time-lbl">Shift</span>
+        <input type="time" class="ht-time-input" id="ht-time-input" value="20:00">
+      </div>
+      <button class="ht-shift-btn idle" id="ht-shift-btn" onclick="htHandleShiftBtn()">Begin</button>
+    </div>
+    <div class="ht-dop-bar state-none" id="ht-dop-bar" style="margin-top:10px;">
+      <div class="ht-dop-left">
+        <div id="ht-dop-icon" style="font-size:20px;">⬜</div>
+        <div>
+          <div class="ht-dop-label" id="ht-dop-label">NO ACTIVE STAFF</div>
+          <div class="ht-dop-sub" id="ht-dop-sub">Start employees to evaluate DOP</div>
+        </div>
+      </div>
+      <div class="ht-dop-counts" id="ht-dop-counts"></div>
+    </div>
+  </div>
+
+  <!-- SCROLLABLE BODY -->
+  <div class="ht-body" id="ht-body">
+
+    <!-- KPI strip -->
+    <div class="ht-kpi-strip">
+      <div class="ht-kpi-card ht-kpi-belt" onclick="htOpenBreakdownModal('belt')" style="cursor:pointer;">
+        <div class="ht-kpi-bar"></div>
+        <div class="ht-kpi-head"><span class="ht-kpi-icon">⚡</span><span class="ht-kpi-role">Belt</span></div>
+        <div class="ht-kpi-hrs" id="ht-kpi-belt">0.00</div>
+        <div class="ht-kpi-sub">hrs &middot; 1 person</div>
+      </div>
+      <div class="ht-kpi-card ht-kpi-bulk" onclick="htOpenBreakdownModal('bulk')" style="cursor:pointer;">
+        <div class="ht-kpi-bar"></div>
+        <div class="ht-kpi-head"><span class="ht-kpi-icon">⚙️</span><span class="ht-kpi-role">Bulk</span></div>
+        <div class="ht-kpi-hrs" id="ht-kpi-bulk">0.00</div>
+        <div class="ht-kpi-sub" id="ht-kpi-bulk-sub">hrs &middot; 0 people</div>
+      </div>
+      <div class="ht-kpi-card ht-kpi-unload" onclick="htOpenBreakdownModal('unload')" style="cursor:pointer;">
+        <div class="ht-kpi-bar"></div>
+        <div class="ht-kpi-head"><span class="ht-kpi-icon">📦</span><span class="ht-kpi-role">Unload</span></div>
+        <div class="ht-kpi-hrs" id="ht-kpi-unload">0.00</div>
+        <div class="ht-kpi-sub" id="ht-kpi-unload-sub">hrs &middot; 0 people</div>
+      </div>
+    </div>
+
+    <!-- Ended banner -->
+    <div class="ht-ended-banner" id="ht-ended-banner">Shift Complete &mdash; Final Hours Locked</div>
+
+    <!-- Active employees -->
+    <div class="ht-section" id="ht-active-section" style="display:none;">Active</div>
+    <div class="ht-emp-list" id="ht-active-list"></div>
+
+    <!-- Roster -->
+    <div class="ht-section">Roster</div>
+    <div class="ht-add-row">
+      <button class="ht-add-btn" onclick="htOpenAddModal()">
+        <i class="ph ph-user-plus"></i> Add Employee
+      </button>
+    </div>
+    <div class="ht-emp-list" id="ht-inactive-list"></div>
+
+  </div><!-- /ht-body -->
+
+  <!-- Reset FAB -->
+  <button class="ht-fab" onclick="htConfirmReset()">
+    <i class="ph ph-arrow-clockwise"></i> Reset
+  </button>
+
+</div><!-- /hours-panel -->
+
     </div>
 </div>
 <nav class="tab-bar">
@@ -760,7 +847,7 @@
     <button class="btn-cancel" onclick="closeModal('end-shift-modal')">Cancel</button>
 </div></div>
 <div class="modal-overlay z-high" id="edit-log-modal"><div class="modal-sheet"><h2 style="margin:0 0 20px;font-size:24px;text-align:center;">Edit Log Entry</h2><input type="hidden" id="edit-log-index"><div class="type-selector"><div class="type-opt selected" id="edit-opt-wally" onclick="setEditType('Wally')">Wally</div><div class="type-opt" id="edit-opt-cpu" onclick="setEditType('CPU')">CPU</div></div><div style="margin-bottom:15px;"><label style="font-size:12px;color:var(--text-sub);font-weight:600;margin-left:4px;margin-bottom:4px;display:block;">ID / Trailer #</label><input type="text" id="edit-input-id" class="form-input" oninput="this.value=this.value.toUpperCase()"></div><div id="edit-log-options-container" style="display:none;margin-bottom:15px;"><label style="font-size:12px;color:var(--text-sub);font-weight:600;margin-left:4px;margin-bottom:8px;display:block;">Options</label><div class="options-grid"><label class="option-toggle"><input type="checkbox" id="edit-log-chk-hott" value="HOTT"><span>HOTT</span></label><label class="option-toggle"><input type="checkbox" id="edit-log-chk-recycle" value="RECYCLE"><span>RECYCLE</span></label><label class="option-toggle"><input type="checkbox" id="edit-log-chk-gv" value="GV"><span>GV</span></label></div></div><div style="margin-bottom:15px;"><label style="font-size:12px;color:var(--text-sub);font-weight:600;margin-left:4px;margin-bottom:4px;display:block;">Unloader</label><select id="edit-select-unloader" class="form-input"></select></div><div style="margin-bottom:15px;"><label style="font-size:12px;color:var(--text-sub);font-weight:600;margin-left:4px;margin-bottom:4px;display:block;">Completion Hour</label><select id="edit-completion-hour" class="form-input"><option value="1">1st Hour</option><option value="2">2nd Hour</option><option value="3">3rd Hour</option><option value="4">4th Hour</option><option value="5">5th Hour</option><option value="6">6th Hour</option><option value="7">7th Hour</option><option value="8">8th Hour</option><option value="9">9th Hour</option><option value="10">10th Hour</option><option value="11">11th Hour</option><option value="12">12th Hour</option></select></div><button class="btn-primary" onclick="confirmLogEdit()">Save Changes</button><button class="btn-cancel" onclick="closeModal('edit-log-modal')">Discard</button></div></div>
-<script src="https://unpkg.com/@phosphor-icons/web@2.1.1/dist/index.js"></script>
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1/dist/index.umd.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
 <script>
@@ -2096,92 +2183,6 @@ v5.06:
     setInterval(htTick,1000);
 
 </script>
-
-<!-- ══════════════════════════════════════════
-     HOURS TRACKER PANEL
-══════════════════════════════════════════ -->
-<div id="tab-hours" class="tab-content" style="background:#f2f2f7;padding:0;">
-
-  <!-- HEADER -->
-  <div class="ht-header">
-    <div class="ht-header-row1">
-      <div style="font-size:16px;font-weight:900;color:var(--text-main);letter-spacing:-0.3px;">Hours Tracker</div>
-      <div class="ht-live-pill" id="ht-live-pill">
-        <div class="ht-live-dot"></div>LIVE
-      </div>
-      <div class="ht-dop-toggle">
-        <button class="ht-dop-btn active" id="ht-dop6" onclick="htSetDOP(6)">6U/2B</button>
-        <button class="ht-dop-btn"        id="ht-dop5" onclick="htSetDOP(5)">5U/2B</button>
-      </div>
-    </div>
-    <div class="ht-header-row2">
-      <div class="ht-time-wrap">
-        <span class="ht-time-lbl">Shift</span>
-        <input type="time" class="ht-time-input" id="ht-time-input" value="20:00">
-      </div>
-      <button class="ht-shift-btn idle" id="ht-shift-btn" onclick="htHandleShiftBtn()">Begin</button>
-    </div>
-    <div class="ht-dop-bar state-none" id="ht-dop-bar" style="margin-top:10px;">
-      <div class="ht-dop-left">
-        <div id="ht-dop-icon" style="font-size:20px;">⬜</div>
-        <div>
-          <div class="ht-dop-label" id="ht-dop-label">NO ACTIVE STAFF</div>
-          <div class="ht-dop-sub" id="ht-dop-sub">Start employees to evaluate DOP</div>
-        </div>
-      </div>
-      <div class="ht-dop-counts" id="ht-dop-counts"></div>
-    </div>
-  </div>
-
-  <!-- SCROLLABLE BODY -->
-  <div class="ht-body" id="ht-body">
-
-    <!-- KPI strip -->
-    <div class="ht-kpi-strip">
-      <div class="ht-kpi-card ht-kpi-belt" onclick="htOpenBreakdownModal('belt')" style="cursor:pointer;">
-        <div class="ht-kpi-bar"></div>
-        <div class="ht-kpi-head"><span class="ht-kpi-icon">⚡</span><span class="ht-kpi-role">Belt</span></div>
-        <div class="ht-kpi-hrs" id="ht-kpi-belt">0.00</div>
-        <div class="ht-kpi-sub">hrs &middot; 1 person</div>
-      </div>
-      <div class="ht-kpi-card ht-kpi-bulk" onclick="htOpenBreakdownModal('bulk')" style="cursor:pointer;">
-        <div class="ht-kpi-bar"></div>
-        <div class="ht-kpi-head"><span class="ht-kpi-icon">⚙️</span><span class="ht-kpi-role">Bulk</span></div>
-        <div class="ht-kpi-hrs" id="ht-kpi-bulk">0.00</div>
-        <div class="ht-kpi-sub" id="ht-kpi-bulk-sub">hrs &middot; 0 people</div>
-      </div>
-      <div class="ht-kpi-card ht-kpi-unload" onclick="htOpenBreakdownModal('unload')" style="cursor:pointer;">
-        <div class="ht-kpi-bar"></div>
-        <div class="ht-kpi-head"><span class="ht-kpi-icon">📦</span><span class="ht-kpi-role">Unload</span></div>
-        <div class="ht-kpi-hrs" id="ht-kpi-unload">0.00</div>
-        <div class="ht-kpi-sub" id="ht-kpi-unload-sub">hrs &middot; 0 people</div>
-      </div>
-    </div>
-
-    <!-- Ended banner -->
-    <div class="ht-ended-banner" id="ht-ended-banner">Shift Complete &mdash; Final Hours Locked</div>
-
-    <!-- Active employees -->
-    <div class="ht-section" id="ht-active-section" style="display:none;">Active</div>
-    <div class="ht-emp-list" id="ht-active-list"></div>
-
-    <!-- Roster -->
-    <div class="ht-section">Roster</div>
-    <div class="ht-add-row">
-      <button class="ht-add-btn" onclick="htOpenAddModal()">
-        <i class="ph ph-user-plus"></i> Add Employee
-      </button>
-    </div>
-    <div class="ht-emp-list" id="ht-inactive-list"></div>
-
-  </div><!-- /ht-body -->
-
-  <!-- Reset FAB -->
-  <button class="ht-fab" onclick="htConfirmReset()">
-    <i class="ph ph-arrow-clockwise"></i> Reset
-  </button>
-
-</div><!-- /hours-panel -->
 
 <!-- ── HOURS TOOL MODALS ──────────────────────── -->
 
