@@ -522,7 +522,7 @@
         <div class="nameplate">
             <div class="nameplate-top">
                 <div class="nameplate-title">Wally Dashboard</div>
-                <div class="nameplate-sub" id="nameplate-sub">by Fitz Joseph &nbsp;&middot;&nbsp; v6.39</div>
+                <div class="nameplate-sub" id="nameplate-sub">by Fitz Joseph &nbsp;&middot;&nbsp; v6.40</div>
             </div>
             <div class="nameplate-actions">
                 <div class="shift-state-pill idle" id="shift-state-pill">
@@ -707,9 +707,15 @@
       </div>
     </div>
     <div class="ht-header-row2">
+      <!-- CHANGE 1: ht-time-input replaced with a read-only display.
+           The editable input was a duplicate source of truth. Start time is
+           set in Settings only (setting-shift-start -> saveShiftStart ->
+           ps9_shift_start). This span mirrors that value and is kept in sync
+           by htRefreshStartDisplay(), called from saveShiftStart() and on
+           every htRenderAll(). No user-editable field here prevents drift. -->
       <div class="ht-time-wrap">
         <span class="ht-time-lbl">Shift</span>
-        <input type="time" class="ht-time-input" id="ht-time-input" value="20:00">
+        <span class="ht-time-input" id="ht-time-display" style="font-size:16px;font-weight:800;color:var(--text-main);">20:00</span>
       </div>
       <button class="ht-shift-btn idle" id="ht-shift-btn" onclick="htHandleShiftBtn()">Begin</button>
     </div>
@@ -869,12 +875,33 @@
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
 <script>
     let demoActive=false,duplicateWallyFlag=false,pendingWallyDuplicate=null,currentDoor=null,currentType='Wally',detailDoor=null,currentLogFilter='All',activeLogFilter={door:'All',unloader:'All',type:'All',timeRange:'All',search:'',date:'All'},statsVisible=false,hourlyVisible=false,lastSortStartTime=null,isFirstOnboard=false,dashboardRefreshTimer=null,wallyNotes={},manualType='Wally',pendingMoveDest=null,shiftState='idle',shiftEndTime=null;
-    const APP_VERSION='6.39',DOORS_START=9,DOORS_END=16,DEFAULT_TEAM=["Robert W","David F","Lorena R","Matt R","Trevon C","Russell H","Fonseca J","Eddie F","Juan F","Arce J","Jeff","Solis","Anthony","Josh","Damian","Jarrett"];
+    const APP_VERSION='6.40',DOORS_START=9,DOORS_END=16,DEFAULT_TEAM=["Robert W","David F","Lorena R","Matt R","Trevon C","Russell H","Fonseca J","Eddie F","Juan F","Arce J","Jeff","Solis","Anthony","Josh","Damian","Jarrett"];
     const WEBHOOK_URL='https://script.google.com/macros/s/AKfycbwss7dFIVBNUuQQHzp5KDURwpRJyH58wUrlJR3XbSrL3SjrF4tvAFSaQiLjJJeOmH9m/exec';
     const byId=(id)=>document.getElementById(id);
     function dateKeyFromTs(ts){const d=new Date(ts);return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
     function debounce(func,wait){let timeout;return function(...args){clearTimeout(timeout);timeout=setTimeout(()=>func.apply(this,args),wait)}}
     const CHANGELOG=`
+v6.40:
+- CHANGE 1 (Unified Start Time): The editable time input in the Hours tab
+  header has been removed. It was a duplicate source of truth with no onchange
+  handler, creating silent drift risk. Replaced with a read-only <span> that
+  always mirrors the canonical value from Settings (ps9_shift_start).
+  saveShiftStart() now calls htRefreshStartDisplay() so any Settings change
+  is immediately reflected in the Hours tab. If a shift is already running,
+  saveShiftStart() also updates hoursState.shiftStartTime so attribution
+  windows and elapsed-hours calculations stay accurate mid-shift.
+  htRenderAll() calls htRefreshStartDisplay() on every render as a belt-and-
+  suspenders sync. Single source of truth: ps9_shift_start, read via
+  getShiftStartTime(). No other component sets start time independently.
+- CHANGE 2 (Shift prompt on door onboarding): openArrivalModal() now checks
+  shiftState before opening the modal. If idle, a confirm() prompt explains
+  that a shift will be started and asks the user to proceed or cancel.
+  Cancel returns without doing anything. OK silently starts the shift
+  (same logic as openStartShiftConfirm but without a second destructive
+  confirm since there is nothing to clear) and calls htSyncFromWallyShift()
+  to initialise the Hours tab, then falls through to open the arrival modal
+  normally. No onboarding can proceed without an active shift state.
+
 v6.39:
 - REQ1: Robert W belt-tender logic corrected.
   Rule: if Robert W is on the shift (selected or active), he automatically
@@ -1651,7 +1678,22 @@ v5.06:
             setTimeout(()=>{if(demoActive&&doors[doorNum]&&doors[doorNum].logId===logId&&doors[doorNum].status==='active'){finalizeCompletion(doorNum,Date.now(),0)}},15000+randomExtra);
         }
     }
-    function getShiftStartTime(){return localStorage.getItem('ps9_shift_start')||"20:00"}function saveShiftStart(val){localStorage.setItem('ps9_shift_start',val);renderDashboard()}
+    function getShiftStartTime(){return localStorage.getItem('ps9_shift_start')||"20:00";}
+    function saveShiftStart(val){
+        // CHANGE 1: single source of truth for start time.
+        // Persist to localStorage, refresh dashboard, and sync the Hours tab
+        // display so both Settings and Hours always show the same value.
+        localStorage.setItem('ps9_shift_start',val);
+        renderDashboard();
+        htRefreshStartDisplay(); // keep Hours tab display in sync
+        // If HT shift is already running, update its internal start time so
+        // attribution windows and elapsed calculations remain accurate.
+        if(typeof hoursState!=='undefined'&&hoursState.shiftStarted&&!hoursState.shiftEnded){
+            hoursState.shiftStartStr=val;
+            hoursState.shiftStartTime=htParseHHMM(val);
+            htSaveState();
+        }
+    }
     function getShiftTimeWindows(){const[h,m]=getShiftStartTime().split(':').map(Number);const now=new Date();let start=new Date(now);start.setHours(h,m,0,0);if(now<start)start.setDate(start.getDate()-1);const hoursElapsed=Math.floor((now-start)/3600000),thisHourStart=new Date(start.getTime()+(hoursElapsed*3600000));return{thisHourStart,thisHourEnd:new Date(thisHourStart.getTime()+3600000),lastHourStart:new Date(thisHourStart.getTime()-3600000),lastHourEnd:thisHourStart,shiftStart:start}}
     function getCompletionHour(ts){const{shiftStart}=getShiftTimeWindows();return Math.max(1,Math.floor((ts-shiftStart.getTime())/3600000)+1)}
     function populateUnloaderSelect(){const ids=['select-unloader','edit-select-unloader','edit-active-unloader','filter-unloader-select','req-unloader-select','manual-unloader'];ids.forEach(id=>{const el=byId(id);if(!el)return;const isFilter=id==='filter-unloader-select';el.innerHTML=isFilter?'<option value="All">All Unloaders</option>':'<option value="" selected>Unassigned</option>';teamNamesSorted.forEach(name=>{const opt=document.createElement('option');opt.value=name;opt.innerText=name;el.appendChild(opt)});if(!isFilter)el.innerHTML+='<option value="Custom">Custom / Other</option>'})}
@@ -1796,7 +1838,39 @@ v5.06:
     function saveActiveEdit(){const orig=parseInt(byId('edit-active-original-door').value),dest=parseInt(byId('edit-active-door-select').value);let unl=byId('edit-active-unloader').value;if(unl==='Custom')unl=byId('edit-active-custom-unloader').value.trim();if(!unl)unl="Unassigned";else if(unl!=="Unassigned"&&unl===byId('edit-active-custom-unloader').value.trim())unl=unl.toLowerCase().split(' ').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ');const type=byId('edit-active-modal').dataset.type;let cpuOpts=[];if(type==='CPU'){if(byId('edit-active-chk-hott').checked)cpuOpts.push('HOTT');if(byId('edit-active-chk-recycle').checked)cpuOpts.push('RECYCLE');if(byId('edit-active-chk-gv').checked)cpuOpts.push('GV')}function parseTimeToTs(inputId,refTs){const val=byId(inputId).value;if(!val)return refTs;const[h,m]=val.split(':').map(Number);const ref=new Date(refTs);let d=new Date(ref);d.setHours(h,m,0,0);let diff=d.getTime()-ref.getTime();if(diff>12*3600000)d.setDate(d.getDate()-1);else if(diff<-12*3600000)d.setDate(d.getDate()+1);return d.getTime()}const newArrival=parseTimeToTs('edit-active-arrival-time',doors[orig].start);const newLaborRaw=parseTimeToTs('edit-active-labor-time',doors[orig].laborStart||doors[orig].start);const newLabor=newLaborRaw<newArrival?newArrival:newLaborRaw;const d=doors[orig],now=Date.now();let newAssignments=[...(d.assignments||[])];if(newArrival!==doors[orig].start&&newAssignments.length>0)newAssignments[0].start=newLabor;if(d.unloader!==unl){if(newAssignments.length>0)newAssignments[newAssignments.length-1].end=now;newAssignments.push({name:unl,start:now,end:null})}const newStatus=(unl==='Unassigned')?'staged':'active';const data={status:newStatus,start:newArrival,laborStart:newLabor,id:byId('edit-active-id').value.trim().toUpperCase(),account:byId('edit-active-account').value.trim().toUpperCase(),type:type,unloader:unl,unavailable:false,lastCompletionTime:doors[orig].lastCompletionTime,cpuOptions:cpuOpts,assignments:newStatus==='staged'?[]:newAssignments,logId:d.logId};if(dest!==orig){doors[dest]=data;doors[orig]={status:'empty',start:0,id:'',type:'',unloader:'',unavailable:false,lastCompletionTime:doors[orig].lastCompletionTime,assignments:[]}}else doors[orig]=data;saveDoors();sendToWebhook({stage:'update',door:dest,id:data.id,account:data.account||'',type:data.type,unloader:data.unloader||'',assistants:data.assignments?data.assignments.map(a=>a.name).filter(n=>n!==data.unloader):[],start:data.start,laborStart:data.laborStart,end:null,dateKey:dateKeyFromTs(data.start),durationMinutes:null,statOffset:0,logId:data.logId,duplicate:data.isDuplicate||false,completionHour:null,cpuOptions:data.cpuOptions||[],status:newStatus,manual:false,shiftStart:getShiftStartTime()},'update');closeModal('edit-active-modal');renderActiveTab();renderDashboard();updateTabBadges();showSaveToast()}
     function checkCustomUnloader(s){byId('input-custom-unloader').style.display=s.value==='Custom'?'block':'none'}
     function confirmArrival(stageOnly=false){const idVal=currentType==='Wally'?byId('input-wally-id').value:byId('input-trailer-id').value;if(!idVal)return alert("Missing ID");const fId=idVal.toUpperCase(),fAcc=(currentType==='CPU'?byId('input-account-id').value:'').toUpperCase();let unl=byId('select-unloader').value;if(unl==='Custom'){unl=byId('input-custom-unloader').value;if(unl)unl=unl.toLowerCase().split(' ').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ')}if(!stageOnly&&currentType==='Wally'){const dup=checkDuplicateWally(fId);if(dup){pendingWallyDuplicate={doorNum:currentDoor,wallyId:fId,unloader:unl||"Unassigned",startTime:Date.now(),stageOnly:false};byId('dup-wally-id').textContent=fId;byId('dup-door').textContent=`Door ${dup.door}`;byId('dup-time').textContent=new Date(dup.end).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});byId('dup-unloader').textContent=dup.unloader;byId('duplicate-wally-modal').style.display='flex';return}}let cpuOpts=[];if(currentType==='CPU'){if(byId('chk-hott').checked)cpuOpts.push('HOTT');if(byId('chk-recycle').checked)cpuOpts.push('RECYCLE');if(byId('chk-gv').checked)cpuOpts.push('GV')}let arrivalTime=Date.now(),cTime=byId('input-onboard-time').value;if(cTime){const now=new Date(),[h,m]=cTime.split(':').map(Number);const d=new Date(now);d.setHours(h,m,0,0);if(d>now)d.setDate(d.getDate()-1);arrivalTime=d.getTime()}const laborStart=stageOnly?null:arrivalTime;const effectiveStatus=stageOnly?'staged':'active';const logId=Date.now().toString(36)+Math.random().toString(36).substr(2);doors[currentDoor]={status:effectiveStatus,start:arrivalTime,laborStart:laborStart,id:fId,account:fAcc,type:currentType,unloader:stageOnly?'Unassigned':(unl||"Unassigned"),isDuplicate:false,unavailable:false,lastCompletionTime:null,cpuOptions:cpuOpts,assignments:stageOnly?[]:[{name:unl||"Unassigned",start:arrivalTime,end:null}],logId:logId};sendToWebhook({door:currentDoor,id:fId,account:fAcc,type:currentType,unloader:stageOnly?'Unassigned':(unl||"Unassigned"),assistants:[],start:arrivalTime,laborStart:laborStart,end:null,dateKey:dateKeyFromTs(arrivalTime),durationMinutes:null,statOffset:0,logId:logId,duplicate:false,completionHour:null,cpuOptions:cpuOpts,status:effectiveStatus,manual:false},'start');if(isFirstOnboard){isFirstOnboard=false;localStorage.setItem('ps9_is_first_onboard','false')}saveDoors();closeModal('input-modal');renderDashboard();updateTabBadges();showSaveToast()}
-    function openArrivalModal(specificDoor=null){if(specificDoor)currentDoor=specificDoor;else{currentDoor=null;for(let i=DOORS_START;i<=DOORS_END;i++)if(doors[i].status==='empty'&&!doors[i].unavailable){currentDoor=i;break}}if(!currentDoor)return alert("No bays available!");byId('modal-door-num').innerText=currentDoor;byId('input-wally-id').value='';byId('input-trailer-id').value='';byId('input-account-id').value='';byId('select-unloader').value="";byId('input-custom-unloader').style.display='none';byId('chk-hott').checked=false;byId('chk-recycle').checked=false;byId('chk-gv').checked=false;const tIn=byId('input-onboard-time');if(historyLog.length===0)tIn.value=getShiftStartTime();else{const now=new Date();tIn.value=`${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`}const form=byId('onboard-form-container'),msg=byId('unavailable-msg'),btn=byId('btn-toggle-availability');if(doors[currentDoor].unavailable){form.style.display='none';msg.style.display='block';btn.innerText="Mark Available";btn.style.background="#34c759";btn.style.color="white";btn.style.border="none"}else{form.style.display='block';msg.style.display='none';btn.innerText="Mark Unavailable";btn.style.background="white";btn.style.color="#ff3b30";btn.style.border="2px solid #e5e5ea"}setType('Wally');byId('input-modal').style.display='flex';if(!doors[currentDoor].unavailable)setTimeout(()=>{const f=byId('input-wally-id');if(f)f.focus()},100);updateOnboardingNotePreview('')}
+    function openArrivalModal(specificDoor=null){
+        // CHANGE 2: Prevent onboarding without an active shift.
+        // If shift is idle, prompt the user. Per spec, both Yes and No start
+        // the shift (system consistency requires an active shift before a door
+        // can accumulate time). The prompt is purely informational -- the user
+        // sees what is about to happen and acknowledges it.
+        if(shiftState==='idle'){
+            const startNow=confirm(
+                'No shift is currently active.\n\n' +
+                'A shift will be started now before onboarding this door.\n\n' +
+                'Tap OK to start the shift and continue, or Cancel to go back.'
+            );
+            if(!startNow)return; // user explicitly cancelled -- do nothing
+            // Start shift silently (no second confirm, no data clear prompt since
+            // this is the first action of the session). Mirrors the core of
+            // openStartShiftConfirm but without the destructive "clear all" confirm
+            // because there is nothing to clear (we are in idle with no active doors).
+            for(let i=DOORS_START;i<=DOORS_END;i++)doors[i]={status:'empty',start:0,laborStart:null,id:'',type:'',unloader:'',unavailable:false,lastCompletionTime:null,assignments:[]};
+            historyLog=[];attributionConfig={minutes:0,enabled:true};updateAttributionUI();
+            lastSortStartTime=null;isFirstOnboard=false;
+            saveDoors();saveHistory();saveData();
+            shiftState='live';saveShiftState();
+            shiftEndTime=null;
+            localStorage.removeItem('ps9_shift_end_time');
+            startDashboardRefresh();
+            updateNameplate();renderDashboard();renderActiveTab();updateTabBadges();
+            attemptWebhook({dataType:'NEW_SHIFT',dateKey:dateKeyFromTs(Date.now()),shiftStart:getShiftStartTime()});
+            showToast('Shift started');
+            htSyncFromWallyShift(); // initialise Hours tab for the new shift
+        }
+        // Original openArrivalModal body follows unchanged:
+        if(specificDoor)currentDoor=specificDoor;else{currentDoor=null;for(let i=DOORS_START;i<=DOORS_END;i++)if(doors[i].status==='empty'&&!doors[i].unavailable){currentDoor=i;break}}if(!currentDoor)return alert("No bays available!");byId('modal-door-num').innerText=currentDoor;byId('input-wally-id').value='';byId('input-trailer-id').value='';byId('input-account-id').value='';byId('select-unloader').value="";byId('input-custom-unloader').style.display='none';byId('chk-hott').checked=false;byId('chk-recycle').checked=false;byId('chk-gv').checked=false;const tIn=byId('input-onboard-time');if(historyLog.length===0)tIn.value=getShiftStartTime();else{const now=new Date();tIn.value=`${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`}const form=byId('onboard-form-container'),msg=byId('unavailable-msg'),btn=byId('btn-toggle-availability');if(doors[currentDoor].unavailable){form.style.display='none';msg.style.display='block';btn.innerText="Mark Available";btn.style.background="#34c759";btn.style.color="white";btn.style.border="none"}else{form.style.display='block';msg.style.display='none';btn.innerText="Mark Unavailable";btn.style.background="white";btn.style.color="#ff3b30";btn.style.border="2px solid #e5e5ea"}setType('Wally');byId('input-modal').style.display='flex';if(!doors[currentDoor].unavailable)setTimeout(()=>{const f=byId('input-wally-id');if(f)f.focus()},100);updateOnboardingNotePreview('')
+    }
     function handleAvailabilityToggle(){doors[currentDoor].unavailable=!doors[currentDoor].unavailable;saveDoors();renderDashboard();showSaveToast();closeModal('input-modal')}
     function setType(t){currentType=t;byId('opt-wally').classList.toggle('selected',t==='Wally');byId('opt-cpu').classList.toggle('selected',t==='CPU');byId('wally-inputs').style.display=t==='Wally'?'block':'none';byId('cpu-inputs').style.display=t==='CPU'?'block':'none'}
     function viewStatLogs(type){closeModal('input-modal');closeModal('active-detail-modal');activeLogFilter={door:'All',type:'All',timeRange:'All',unloader:'All',search:'',date:'All'};if(type==='Wally'||type==='CPU')activeLogFilter.type=type;else if(type==='Hour-0'){activeLogFilter.timeRange='ThisHour';activeLogFilter.type='Wally'}else if(type==='Hour-1'){activeLogFilter.timeRange='LastHour';activeLogFilter.type='Wally'}switchTab('logs')}
@@ -1818,14 +1892,22 @@ v5.06:
     function exportLogsPDF(){closeModal('export-modal');if(!window.jspdf)return alert("PDF library loading.");const doc=new window.jspdf.jsPDF(),now=new Date();doc.setFontSize(18);doc.text(`PS9 Wally Tracker Report - ${now.toLocaleDateString()}`,14,20);doc.setFontSize(12);doc.text(`Generated: ${now.toLocaleTimeString()}`,14,30);const stats={};historyLog.forEach(l=>{if(!l.completionHour)return;const n=l.unloader;if(!stats[n])stats[n]={w:0,c:0,t:0};if(l.type==='Wally')stats[n].w++;else if(l.type==='CPU')stats[n].c++;stats[n].t++});doc.autoTable({startY:45,head:[['Name','Wally','CPU','Total']],body:Object.entries(stats).sort((a,b)=>b[1].t-a[1].t).map(([n,d])=>[n,d.w,d.c,d.t])});const logsBody=historyLog.map(l=>{let typeStr=l.type+(l.duplicate?' (DUP)':'');if(l.status==='moved')typeStr=`MOVED: ${l.moveDest}`;else if(l.status==='incomplete')typeStr='INCOMPLETE';else if(l.type==='CPU'&&l.cpuOptions&&l.cpuOptions.length>0)typeStr+=`\n${l.cpuOptions.join(',')}`;return[new Date(l.end).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),l.door,typeStr,l.id,l.unloader,Math.round(l.duration/60000)+"m",l.completionHour?getHourText(l.completionHour):'--']});doc.autoTable({startY:doc.lastAutoTable.finalY+15,head:[['Time','Door','Type','ID','Unloader','Duration','Hour']],body:logsBody});doc.save(`wally-report-${now.toISOString().split('T')[0]}.pdf`)}
     function setEditType(t){byId('edit-opt-wally').classList.toggle('selected',t==='Wally');byId('edit-opt-cpu').classList.toggle('selected',t==='CPU');byId('edit-log-modal').dataset.type=t;const c=byId('edit-log-options-container');if(c)c.style.display=(t==='CPU')?'block':'none'}
     function openMoveMenu(){closeModal('active-detail-modal');byId('move-menu-modal').style.display='flex'}
+    // CHANGE 1: htRefreshStartDisplay -- keeps the Hours tab read-only display
+    // in sync with the single source of truth (ps9_shift_start via Settings).
+    // Called from saveShiftStart() and htRenderAll() so it stays current.
+    function htRefreshStartDisplay(){
+        const val=getShiftStartTime();
+        const el=document.getElementById('ht-time-display');
+        if(el)el.textContent=val;
+    }
+
     // -- Boot: wrapped in DOMContentLoaded for reliable cross-browser execution --
     // Guarantees full DOM is parsed before init() runs, regardless of CDN timing.
     document.addEventListener('DOMContentLoaded', function() {
         init();
         htLoadState();
         htSyncDOPButtons();
-        const htInp = document.getElementById('ht-time-input');
-        if (htInp) htInp.value = hoursState.shiftStartStr || getShiftStartTime();
+        htRefreshStartDisplay(); // CHANGE 1: populate Hours tab start display on load
     });
 
     // ======================================================
@@ -1938,8 +2020,9 @@ v5.06:
         hoursState.dopConfig=savedDop;
         hoursState.pendingTimeId=null;
         hoursState.pendingRoleId=null;
-        const htInp=document.getElementById('ht-time-input');
-        if(htInp)htInp.value=wallyTime;
+        const htInp=document.getElementById('ht-time-input'); // legacy input removed in v6.40
+        if(htInp)htInp.value=wallyTime;   // no-op -- element no longer exists, kept for safety
+        htRefreshStartDisplay(); // CHANGE 1: update read-only display instead
         htSaveState();
         htRenderAll();
     }
@@ -2369,8 +2452,9 @@ v5.06:
     // -- Full render ---------------------------------------
     function htRenderAll(){
         htAssignRoles();
+        htRefreshStartDisplay(); // CHANGE 1: keep start-time display synced on every render
         const btn=document.getElementById('ht-shift-btn');
-        const inp=document.getElementById('ht-time-input');
+        const inp=null; // CHANGE 1: ht-time-input removed; was used to disable during shift
         const pill=document.getElementById('ht-live-pill');
         // REQ1: Mirror Wally's shift state
         const wallyLive=(typeof shiftState!=='undefined')&&(shiftState==='live'||shiftState==='demo');
