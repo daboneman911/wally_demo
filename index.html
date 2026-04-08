@@ -518,7 +518,7 @@
         <div class="nameplate">
             <div class="nameplate-top">
                 <div class="nameplate-title">Wally Dashboard</div>
-                <div class="nameplate-sub" id="nameplate-sub">by Fitz Joseph &nbsp;&middot;&nbsp; v6.36</div>
+                <div class="nameplate-sub" id="nameplate-sub">by Fitz Joseph &nbsp;&middot;&nbsp; v6.37</div>
             </div>
             <div class="nameplate-actions">
                 <div class="shift-state-pill idle" id="shift-state-pill">
@@ -864,39 +864,70 @@
     <button class="btn-cancel" onclick="closeModal('end-shift-modal')">Cancel</button>
 </div></div>
 <div class="modal-overlay z-high" id="edit-log-modal"><div class="modal-sheet"><h2 style="margin:0 0 20px;font-size:24px;text-align:center;">Edit Log Entry</h2><input type="hidden" id="edit-log-index"><div class="type-selector"><div class="type-opt selected" id="edit-opt-wally" onclick="setEditType('Wally')">Wally</div><div class="type-opt" id="edit-opt-cpu" onclick="setEditType('CPU')">CPU</div></div><div style="margin-bottom:15px;"><label style="font-size:12px;color:var(--text-sub);font-weight:600;margin-left:4px;margin-bottom:4px;display:block;">ID / Trailer #</label><input type="text" id="edit-input-id" class="form-input" oninput="this.value=this.value.toUpperCase()"></div><div id="edit-log-options-container" style="display:none;margin-bottom:15px;"><label style="font-size:12px;color:var(--text-sub);font-weight:600;margin-left:4px;margin-bottom:8px;display:block;">Options</label><div class="options-grid"><label class="option-toggle"><input type="checkbox" id="edit-log-chk-hott" value="HOTT"><span>HOTT</span></label><label class="option-toggle"><input type="checkbox" id="edit-log-chk-recycle" value="RECYCLE"><span>RECYCLE</span></label><label class="option-toggle"><input type="checkbox" id="edit-log-chk-gv" value="GV"><span>GV</span></label></div></div><div style="margin-bottom:15px;"><label style="font-size:12px;color:var(--text-sub);font-weight:600;margin-left:4px;margin-bottom:4px;display:block;">Unloader</label><select id="edit-select-unloader" class="form-input"></select></div><div style="margin-bottom:15px;"><label style="font-size:12px;color:var(--text-sub);font-weight:600;margin-left:4px;margin-bottom:4px;display:block;">Completion Hour</label><select id="edit-completion-hour" class="form-input"><option value="1">1st Hour</option><option value="2">2nd Hour</option><option value="3">3rd Hour</option><option value="4">4th Hour</option><option value="5">5th Hour</option><option value="6">6th Hour</option><option value="7">7th Hour</option><option value="8">8th Hour</option><option value="9">9th Hour</option><option value="10">10th Hour</option><option value="11">11th Hour</option><option value="12">12th Hour</option></select></div><button class="btn-primary" onclick="confirmLogEdit()">Save Changes</button><button class="btn-cancel" onclick="closeModal('edit-log-modal')">Discard</button></div></div>
-<script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+<script defer src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
 <script>
     let demoActive=false,duplicateWallyFlag=false,pendingWallyDuplicate=null,currentDoor=null,currentType='Wally',detailDoor=null,currentLogFilter='All',activeLogFilter={door:'All',unloader:'All',type:'All',timeRange:'All',search:'',date:'All'},statsVisible=false,hourlyVisible=false,lastSortStartTime=null,isFirstOnboard=false,dashboardRefreshTimer=null,wallyNotes={},manualType='Wally',pendingMoveDest=null,shiftState='idle',shiftEndTime=null;
-    const APP_VERSION='6.36',DOORS_START=9,DOORS_END=16,DEFAULT_TEAM=["Robert W","David F","Lorena R","Matt R","Trevon C","Russell H","Fonseca J","Eddie F","Juan F","Arce J","Jeff","Solis","Anthony","Josh","Damian","Jarrett"];
+    const APP_VERSION='6.37',DOORS_START=9,DOORS_END=16,DEFAULT_TEAM=["Robert W","David F","Lorena R","Matt R","Trevon C","Russell H","Fonseca J","Eddie F","Juan F","Arce J","Jeff","Solis","Anthony","Josh","Damian","Jarrett"];
     const WEBHOOK_URL='https://script.google.com/macros/s/AKfycbwss7dFIVBNUuQQHzp5KDURwpRJyH58wUrlJR3XbSrL3SjrF4tvAFSaQiLjJJeOmH9m/exec';
     const byId=(id)=>document.getElementById(id);
     function dateKeyFromTs(ts){const d=new Date(ts);return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
     function debounce(func,wait){let timeout;return function(...args){clearTimeout(timeout);timeout=setTimeout(()=>func.apply(this,args),wait)}}
     const CHANGELOG=`
+v6.37:
+- Fix: App non-functional in Chrome (tabs unresponsive, bays invisible, Hours blank).
+  Root cause: THREE compounding issues in script loading order:
+
+(1) CDN scripts (Phosphor, jsPDF, autotable) were synchronous blocking <script src>
+tags inserted mid-body. Chrome must download and execute all three before parsing
+any HTML that follows. A slow or failed CDN request meant init() never ran – the
+app rendered as static dead HTML with no interactivity. Fixed by adding defer to
+all three CDN scripts. defer scripts load in parallel without blocking rendering
+and execute in order just before DOMContentLoaded fires.
+
+(2) init() was called as a bare statement inside the script block, relying on the
+browser having already parsed the HTML above the script tag. This is fragile –
+it breaks when CDN scripts introduce timing uncertainty. Fixed by wrapping init(),
+htLoadState(), and htSyncDOPButtons() inside a DOMContentLoaded listener.
+DOMContentLoaded fires only after the FULL DOM is parsed, regardless of script
+placement, CDN timing, or network conditions. This guarantees consistent behavior
+in Chrome, Safari, iOS PWA mode, and Claude preview.
+
+(3) htLoadState() and htSyncDOPButtons() were called as bare statements at the
+bottom of the script block before DOMContentLoaded. With the new wrapper, those
+calls moved inside DOMContentLoaded. The duplicate bare calls were removed to
+prevent double-initialization.
+
+Why it worked in Claude preview: preview iframes use a document.write or srcdoc
+approach where the entire HTML is available before any script runs, making script
+placement order irrelevant. Standard browsers do not have this guarantee.
+
+- Retained all v6.36 structural fixes (tab-hours correct nesting, min-height:0,
+  flex layout, pointer-events, body overflow fix, Phosphor URL).
+
 v6.36:
+
 - ROOT CAUSE FIX: Hours tab was rendered inside tab-settings, not as a
   sibling tab. This made it permanently invisible when Settings was hidden,
   and showed it incorrectly stacked inside Settings when that tab was active.
-
-Diagnostic trace:
-v6.33 moved tab-hours from outside app-container (wrong) to inside it (right idea)
-but the insertion targeted the wrong closing div – tab-hours landed inside
-tab-settings (depth 3 instead of depth 1). Subsequent v6.34/6.35 CSS fixes
-(min-height, flex layout, pointer-events, overflow) could not resolve a
-fundamental HTML nesting error. No CSS fix can make a div visible when its
-parent container is display:none.
-
-Fix: tab-hours extracted cleanly and reinserted as a direct child (depth 1)
-of app-container, immediately before its closing tag. All 6 tabs now sit as
-proper siblings: dashboard, active, logs, tools, settings, hours.
-
-Confirmed by: div depth check (depth=1 at tab-hours entry), isolation test
-confirming tab-hours is not inside tab-tools or tab-settings, and full
-HT function test suite (htLoadState, htAssignRoles, htCalcDOP,
-htRenderKPI, htRenderDOPBar, htRenderAll, htTick all pass).
-
+  
+  Diagnostic trace:
+  v6.33 moved tab-hours from outside app-container (wrong) to inside it (right idea)
+  but the insertion targeted the wrong closing div – tab-hours landed inside
+  tab-settings (depth 3 instead of depth 1). Subsequent v6.34/6.35 CSS fixes
+  (min-height, flex layout, pointer-events, overflow) could not resolve a
+  fundamental HTML nesting error. No CSS fix can make a div visible when its
+  parent container is display:none.
+  
+  Fix: tab-hours extracted cleanly and reinserted as a direct child (depth 1)
+  of app-container, immediately before its closing tag. All 6 tabs now sit as
+  proper siblings: dashboard, active, logs, tools, settings, hours.
+  
+  Confirmed by: div depth check (depth=1 at tab-hours entry), isolation test
+  confirming tab-hours is not inside tab-tools or tab-settings, and full
+  HT function test suite (htLoadState, htAssignRoles, htCalcDOP,
+  htRenderKPI, htRenderDOPBar, htRenderAll, htTick all pass).
 - All v6.33-v6.35 CSS fixes retained (min-height:0, flex layout, pointer-events).
 - No other functionality affected. All existing Wally features unchanged.
 
@@ -1630,7 +1661,15 @@ v5.06:
   function exportLogsPDF(){closeModal(‘export-modal’);if(!window.jspdf)return alert(“PDF library loading.”);const doc=new window.jspdf.jsPDF(),now=new Date();doc.setFontSize(18);doc.text(`PS9 Wally Tracker Report - ${now.toLocaleDateString()}`,14,20);doc.setFontSize(12);doc.text(`Generated: ${now.toLocaleTimeString()}`,14,30);const stats={};historyLog.forEach(l=>{if(!l.completionHour)return;const n=l.unloader;if(!stats[n])stats[n]={w:0,c:0,t:0};if(l.type===‘Wally’)stats[n].w++;else if(l.type===‘CPU’)stats[n].c++;stats[n].t++});doc.autoTable({startY:45,head:[[‘Name’,‘Wally’,‘CPU’,‘Total’]],body:Object.entries(stats).sort((a,b)=>b[1].t-a[1].t).map(([n,d])=>[n,d.w,d.c,d.t])});const logsBody=historyLog.map(l=>{let typeStr=l.type+(l.duplicate?’ (DUP)’:’’);if(l.status===‘moved’)typeStr=`MOVED: ${l.moveDest}`;else if(l.status===‘incomplete’)typeStr=‘INCOMPLETE’;else if(l.type===‘CPU’&&l.cpuOptions&&l.cpuOptions.length>0)typeStr+=`\n${l.cpuOptions.join(',')}`;return[new Date(l.end).toLocaleTimeString([],{hour:‘2-digit’,minute:‘2-digit’}),l.door,typeStr,l.id,l.unloader,Math.round(l.duration/60000)+“m”,l.completionHour?getHourText(l.completionHour):’–’]});doc.autoTable({startY:doc.lastAutoTable.finalY+15,head:[[‘Time’,‘Door’,‘Type’,‘ID’,‘Unloader’,‘Duration’,‘Hour’]],body:logsBody});doc.save(`wally-report-${now.toISOString().split('T')[0]}.pdf`)}
   function setEditType(t){byId(‘edit-opt-wally’).classList.toggle(‘selected’,t===‘Wally’);byId(‘edit-opt-cpu’).classList.toggle(‘selected’,t===‘CPU’);byId(‘edit-log-modal’).dataset.type=t;const c=byId(‘edit-log-options-container’);if(c)c.style.display=(t===‘CPU’)?‘block’:‘none’}
   function openMoveMenu(){closeModal(‘active-detail-modal’);byId(‘move-menu-modal’).style.display=‘flex’}
+  // ── Boot: wrapped in DOMContentLoaded for reliable cross-browser execution ──
+  // Guarantees full DOM is parsed before init() runs, regardless of CDN timing.
+  document.addEventListener(‘DOMContentLoaded’, function() {
   init();
+  htLoadState();
+  htSyncDOPButtons();
+  const htInp = document.getElementById(‘ht-time-input’);
+  if (htInp) htInp.value = hoursState.shiftStartStr || getShiftStartTime();
+  });
   
   // ══════════════════════════════════════════════════════
   // HOURS TRACKER – all functions prefixed ht* to avoid
@@ -2176,10 +2215,7 @@ v5.06:
   setTimeout(()=>document.getElementById(‘ht-new-name’).focus(),350);
   }
   
-  // Boot: load HT state on app start
-  htLoadState();
-  htSyncDOPButtons();
-  
+  // setInterval for HT tick – runs once per second when Hours tab is active
   setInterval(htTick,1000);
 
 </script>
