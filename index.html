@@ -448,6 +448,9 @@
         .ht-btn-cut{background:var(--accent-red-bg);border:1px solid var(--accent-red);color:var(--accent-red);}
         .ht-btn-time{background:transparent;border:1px solid var(--border);color:var(--text-sub);font-size:10px;padding:5px 9px;}
         .ht-cut-label{font-size:10px;font-weight:700;color:var(--text-sub);text-transform:uppercase;padding:4px 6px;text-align:center;}
+        /* REQ4: selected state -- on DOP roster, clock not started */
+        .ht-emp-row.ht-selected{border-left-color:#a78bfa;background:#ede9fe;}
+        .ht-btn-select{background:var(--accent-purple-bg);border:1px solid var(--accent-purple);color:var(--accent-purple);}
         .ht-clickable{cursor:pointer;}
         .ht-clickable:active{background:var(--border-light);}
         .ht-role-disabled{opacity:0.5;cursor:not-allowed;pointer-events:none;}
@@ -519,7 +522,7 @@
         <div class="nameplate">
             <div class="nameplate-top">
                 <div class="nameplate-title">Wally Dashboard</div>
-                <div class="nameplate-sub" id="nameplate-sub">by Fitz Joseph &nbsp;&middot;&nbsp; v6.38gem</div>
+                <div class="nameplate-sub" id="nameplate-sub">by Fitz Joseph &nbsp;&middot;&nbsp; v6.39</div>
             </div>
             <div class="nameplate-actions">
                 <div class="shift-state-pill idle" id="shift-state-pill">
@@ -839,7 +842,13 @@
     </label>
     <div style="font-size:12px;color:#8e8e93;margin-top:8px;">Team will be notified what is rolling to Door <span class="cpu-next-door-num-ref"></span> next.</div>
   </div>
-</div><button class="btn-primary btn-danger" onclick="confirmCompleteDoor()">Complete Unload</button><div class="modal-actions-row"><button class="modal-icon-btn" onclick="openEditActiveModalFromDetail()" style="flex:1"><i class="ph ph-pencil-simple"></i></button><button class="modal-icon-btn" onclick="openMoveMenu()" style="flex:1;background:#fff;border:1px solid #e5e5ea;"><i class="ph ph-arrows-left-right"></i></button><button class="btn-primary btn-history" onclick="viewDoorLogs(detailDoor)" style="flex:3;margin:0;">View History</button></div><button class="btn-cancel" onclick="closeModal('active-detail-modal')">Close</button></div></div>
+</div>
+  <!-- REQ5: Suppress share sheet for this completion only -->
+  <label style="display:flex;align-items:center;gap:10px;padding:10px 0 6px;cursor:pointer;">
+    <input type="checkbox" id="chk-suppress-share" style="width:20px;height:20px;accent-color:#000;cursor:pointer;">
+    <span style="font-size:14px;font-weight:600;color:#333;">Skip share sheet for this door</span>
+  </label>
+<button class="btn-primary btn-danger" onclick="confirmCompleteDoor()">Complete Unload</button><div class="modal-actions-row"><button class="modal-icon-btn" onclick="openEditActiveModalFromDetail()" style="flex:1"><i class="ph ph-pencil-simple"></i></button><button class="modal-icon-btn" onclick="openMoveMenu()" style="flex:1;background:#fff;border:1px solid #e5e5ea;"><i class="ph ph-arrows-left-right"></i></button><button class="btn-primary btn-history" onclick="viewDoorLogs(detailDoor)" style="flex:3;margin:0;">View History</button></div><button class="btn-cancel" onclick="closeModal('active-detail-modal')">Close</button></div></div>
 <div class="modal-overlay z-high" id="unloader-required-modal"><div class="modal-sheet"><h2 style="margin:0 0 10px;font-size:24px;text-align:center;">Assign Unloader</h2><p style="text-align:center;color:#757575;margin-bottom:25px;">Who completed this door?</p><select id="req-unloader-select" class="form-input" onchange="checkReqCustom(this)"></select><input type="text" id="req-custom-unloader" class="form-input" style="display:none;margin-top:10px;" placeholder="Enter Name" autocapitalize="words"><button class="btn-primary" onclick="saveRequiredUnloader()">Confirm & Finish</button><button class="btn-cancel" onclick="closeModal('unloader-required-modal')">Cancel</button></div></div>
 <div class="modal-overlay" id="move-menu-modal"><div class="modal-sheet"><h2 style="margin:0 0 20px;font-size:24px;text-align:center;">Move / Mark Incomplete</h2><p style="text-align:center;color:#757575;margin-bottom:20px;">Select destination or mark as incomplete.</p><select id="move-dest-select" class="form-input"><option value="Small Sort">Small Sort</option><option value="Bulk Directs">Bulk Directs</option><option value="Incomplete">Incomplete (no unload)</option></select><button class="btn-primary" onclick="confirmMoveDoor()">Confirm</button><button class="btn-cancel" onclick="closeModal('move-menu-modal')">Cancel</button></div></div>
 <div class="modal-overlay" id="edit-active-modal"><div class="modal-sheet"><h2 style="margin:0 0 20px;font-size:24px;text-align:center;">Edit Active Bay</h2><input type="hidden" id="edit-active-original-door"><div style="margin-bottom:15px;"><label style="font-size:12px;color:var(--text-sub);font-weight:600;margin-left:4px;margin-bottom:4px;display:block;">Bay Number</label><select id="edit-active-door-select" class="form-input"></select></div><div class="type-selector"><div class="type-opt selected" id="active-opt-wally" onclick="setEditActiveType('Wally')">Wally</div><div class="type-opt" id="active-opt-cpu" onclick="setEditActiveType('CPU')">CPU</div></div><div style="margin-bottom:15px;"><label style="font-size:12px;color:var(--text-sub);font-weight:600;margin-left:4px;margin-bottom:4px;display:block;" id="edit-id-label">Wally Number</label><input type="text" id="edit-active-id" class="form-input" oninput="this.value=this.value.toUpperCase()"></div><div style="margin-bottom:15px;"><label style="font-size:12px;color:var(--text-sub);font-weight:600;margin-left:4px;margin-bottom:4px;display:block;">Account # (CPU only)</label><input type="text" id="edit-active-account" class="form-input" oninput="this.value=this.value.toUpperCase()"></div><div id="edit-active-options-container" style="display:none;margin-bottom:15px;"><label style="font-size:12px;color:var(--text-sub);font-weight:600;margin-left:4px;margin-bottom:8px;display:block;">Options</label><div class="options-grid"><label class="option-toggle"><input type="checkbox" id="edit-active-chk-hott" value="HOTT"><span>HOTT</span></label><label class="option-toggle"><input type="checkbox" id="edit-active-chk-recycle" value="RECYCLE"><span>RECYCLE</span></label><label class="option-toggle"><input type="checkbox" id="edit-active-chk-gv" value="GV"><span>GV</span></label></div></div><div style="margin-bottom:15px;"><label style="font-size:12px;color:var(--text-sub);font-weight:600;margin-left:4px;margin-bottom:4px;display:block;">Unloader</label><select id="edit-active-unloader" class="form-input" onchange="checkActiveCustomUnloader(this)"></select><input type="text" id="edit-active-custom-unloader" class="form-input" style="display:none;margin-top:10px;" placeholder="Enter Name" autocapitalize="words"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:15px;"><div><label style="font-size:12px;color:var(--text-sub);font-weight:600;margin-left:4px;margin-bottom:4px;display:block;">Trailer Arrival Time</label><input type="time" id="edit-active-arrival-time" class="form-input"></div><div><label style="font-size:12px;color:var(--text-sub);font-weight:600;margin-left:4px;margin-bottom:4px;display:block;">Labor Start Time</label><input type="time" id="edit-active-labor-time" class="form-input"></div></div><div style="font-size:12px;color:#8e8e93;margin-bottom:15px;padding:10px 14px;background:#f9f9f9;border-radius:10px;line-height:1.5;">Dwell time (gap between arrival and labor start) is tracked automatically.</div><button class="btn-primary" onclick="saveActiveEdit()">Save Changes</button><button class="btn-cancel" onclick="closeModal('edit-active-modal')">Discard</button></div></div>
@@ -860,12 +869,44 @@
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
 <script>
     let demoActive=false,duplicateWallyFlag=false,pendingWallyDuplicate=null,currentDoor=null,currentType='Wally',detailDoor=null,currentLogFilter='All',activeLogFilter={door:'All',unloader:'All',type:'All',timeRange:'All',search:'',date:'All'},statsVisible=false,hourlyVisible=false,lastSortStartTime=null,isFirstOnboard=false,dashboardRefreshTimer=null,wallyNotes={},manualType='Wally',pendingMoveDest=null,shiftState='idle',shiftEndTime=null;
-    const APP_VERSION='6.38gem',DOORS_START=9,DOORS_END=16,DEFAULT_TEAM=["Robert W","David F","Lorena R","Matt R","Trevon C","Russell H","Fonseca J","Eddie F","Juan F","Arce J","Jeff","Solis","Anthony","Josh","Damian","Jarrett"];
+    const APP_VERSION='6.39',DOORS_START=9,DOORS_END=16,DEFAULT_TEAM=["Robert W","David F","Lorena R","Matt R","Trevon C","Russell H","Fonseca J","Eddie F","Juan F","Arce J","Jeff","Solis","Anthony","Josh","Damian","Jarrett"];
     const WEBHOOK_URL='https://script.google.com/macros/s/AKfycbwss7dFIVBNUuQQHzp5KDURwpRJyH58wUrlJR3XbSrL3SjrF4tvAFSaQiLjJJeOmH9m/exec';
     const byId=(id)=>document.getElementById(id);
     function dateKeyFromTs(ts){const d=new Date(ts);return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
     function debounce(func,wait){let timeout;return function(...args){clearTimeout(timeout);timeout=setTimeout(()=>func.apply(this,args),wait)}}
     const CHANGELOG=`
+v6.39:
+- REQ1: Robert W belt-tender logic corrected.
+  Rule: if Robert W is on the shift (selected or active), he automatically
+  receives Belt Tender -- no manual pin needed. If he is NOT selected/active
+  (not on shift), the belt goes to the highest-ranked active employee as
+  normal. If his role is manually changed to something else (e.g. pinned to
+  unload so he can leave early), the auto-belt is suppressed and normal rank
+  election continues. If someone else is already manually pinned to belt,
+  Robert W does not override that pin.
+  htSyncFromWallyShift no longer auto-activates Robert W -- he must be
+  explicitly selected from the roster.
+- REQ2: Hours tab End button now opens the same Wally end-shift modal
+  (openEndShiftModal) instead of a bare confirm. End and End Shift are
+  fully interchangeable. confirmEndShift already calls htEndShift.
+- REQ3: Employee hours reset on new shift. htSyncFromWallyShift now rebuilds
+  the employee list from teamNames with all-inactive status. dopConfig
+  preserved across shifts.
+- REQ4: Staggered employee control. New 'selected' status: employee counted
+  toward DOP but clock not started. New Select button in roster.
+  Start button (existing) begins hour accumulation. Remove/Cut returns to
+  inactive. htCalcDOP and htAssignRoles include 'selected' employees.
+- REQ5: Suppress share sheet checkbox added to active-detail modal.
+  When checked, navigator.share is skipped for that completion only.
+  Checkbox resets to unchecked each time the modal opens.
+- REQ6: Attribution window timing clarified and drift-proofed.
+  Window anchored to actual shiftStart timestamp (no floor/ceiling math).
+  Minute anchor = shiftMinute + sliderOffset mod 60. Window is 10min wide.
+  Activates after >= 1 full hour elapsed. Wrap-around past :59 handled.
+- REQ7: Notes persistence with migration guard. loadNotes merges from
+  legacy ps9_notes key if present, removes it after merge. Canonical key
+  ps9_wally_notes unchanged -- all existing notes survive update.
+
 v6.38gem:
 - Fix (Issue #1): Corrected fatal SyntaxError in encoding guard <head> script.
   var SENTINEL = ''' contained three consecutive single quotes -- the parser
@@ -1307,7 +1348,27 @@ v5.06:
     function noteHasContent(id){const n=getNoteObj(id);return n&&(n.tags.length>0||n.text.trim().length>0)}
     function renderNoteTagsInline(noteObj){if(!noteObj)return'';const chips=noteObj.tags.map(t=>`<span class="note-tag-inline">${t}</span>`).join('');const txt=noteObj.text?`<span style="font-size:12px;color:#555;font-weight:500;">${noteObj.text}</span>`:'';return[chips,txt].filter(Boolean).join(' ')}
 
-    function loadNotes(){const saved=localStorage.getItem('ps9_wally_notes');if(saved){try{wallyNotes=JSON.parse(saved)}catch(e){wallyNotes={}}}else wallyNotes={}}
+    // REQ7: Notes persistence with migration guard.
+    // Canonical key: ps9_wally_notes (unchanged -- existing notes survive).
+    // On load: merges any notes from the legacy ps9_notes key (if present).
+    // migrateNote() already handles string->object format upgrade.
+    function loadNotes(){
+        wallyNotes={};
+        // Load from canonical key
+        try{const s=localStorage.getItem('ps9_wally_notes');if(s)wallyNotes=JSON.parse(s);}catch(e){wallyNotes={};}
+        // Merge from legacy key if it exists and has entries not in canonical
+        try{
+            const leg=localStorage.getItem('ps9_notes');
+            if(leg){
+                const legObj=JSON.parse(leg);
+                Object.keys(legObj).forEach(k=>{
+                    if(!wallyNotes[k])wallyNotes[k]=migrateNote(legObj[k]);
+                });
+                // Remove legacy key now that data is merged
+                localStorage.removeItem('ps9_notes');
+            }
+        }catch(e){}
+    }
     function saveNotes(){localStorage.setItem('ps9_wally_notes',JSON.stringify(wallyNotes))}
 
     function openNoteModal(id,source){// source: 'active'|'log'|'manager'|'onboard'
@@ -1628,9 +1689,43 @@ v5.06:
         }
         completeDoor(detailDoor,false,cpuNext);
     }
-    function completeDoor(doorNum,force=false,cpuNext=false){const d=doors[doorNum];if(d.status==='staged'||(!force&&(!d.unloader||d.unloader==='Unassigned'))){closeModal('active-detail-modal');byId('req-unloader-select').value="";byId('unloader-required-modal').style.display='flex';return}const now=new Date(),mins=now.getMinutes(),{shiftStart}=getShiftTimeWindows();// Attribution window is anchored to shift start minute + slider offset
-        const[shiftH,shiftM]=getShiftStartTime().split(':').map(Number);const windowStart=(shiftM+attributionConfig.minutes)%60;const windowEnd=(windowStart+10)%60;let shouldCheck=false;if(d.type==='Wally'){// Window wraps midnight handled: check if mins falls in [windowStart, windowStart+10)
-        const inWindow=windowEnd>windowStart?(mins>=windowStart&&mins<windowEnd):(mins>=windowStart||mins<windowEnd);shouldCheck=config.simulateWindow||(attributionConfig.enabled&&!config.disableWindow&&(now-shiftStart>3600000)&&inWindow)}if(shouldCheck){byId('attribution-window-text').textContent=`${windowStart.toString().padStart(2,'0')}-${windowEnd.toString().padStart(2,'0')}`;pendingCompletion={doorNum,time:now.getTime(),cpuNext};byId('hour-attribution-modal').style.display='flex'}else finalizeCompletion(doorNum,now.getTime(),0,cpuNext)}
+    function completeDoor(doorNum,force=false,cpuNext=false){
+        const d=doors[doorNum];
+        if(d.status==='staged'||(!force&&(!d.unloader||d.unloader==='Unassigned'))){
+            closeModal('active-detail-modal');byId('req-unloader-select').value='';
+            byId('unloader-required-modal').style.display='flex';return;
+        }
+        const now=new Date();
+        // REQ6: Attribution window anchored precisely to shift start time.
+        // Window = [shiftMinute + sliderOffset, same + 10) within each clock hour.
+        // Activates only after >= 1 full hour has elapsed since shift start.
+        // Uses actual shiftStart timestamp -- no cumulative drift possible.
+        if(d.type==='Wally'&&(attributionConfig.enabled&&!config.disableWindow||config.simulateWindow)){
+            const{shiftStart}=getShiftTimeWindows();
+            const elapsedMs=now.getTime()-shiftStart.getTime();
+            const oneHourPassed=elapsedMs>=3600000;
+            if(oneHourPassed||config.simulateWindow){
+                const[,shiftM]=getShiftStartTime().split(':').map(Number);
+                // Anchor: shiftM + slider offset, modulo 60 avoids overflow
+                const rawAnchor=shiftM+attributionConfig.minutes;
+                const windowStart=rawAnchor%60;
+                const windowEnd=(rawAnchor+10)%60;
+                const mins=now.getMinutes();
+                // Handle window wrapping past :59
+                const inWindow=windowEnd>windowStart
+                    ?(mins>=windowStart&&mins<windowEnd)
+                    :(mins>=windowStart||mins<windowEnd);
+                if(config.simulateWindow||inWindow){
+                    byId('attribution-window-text').textContent=
+                        windowStart.toString().padStart(2,'0')+'-'+windowEnd.toString().padStart(2,'0');
+                    pendingCompletion={doorNum,time:now.getTime(),cpuNext};
+                    byId('hour-attribution-modal').style.display='flex';
+                    return;
+                }
+            }
+        }
+        finalizeCompletion(doorNum,now.getTime(),0,cpuNext);
+    }
     function checkReqCustom(s){byId('req-custom-unloader').style.display=s.value==='Custom'?'block':'none'}
     function saveRequiredUnloader(){let unl=byId('req-unloader-select').value;if(unl==='Custom')unl=byId('req-custom-unloader').value.trim();if(!unl)return alert("Please select an unloader");if(unl!=="Unassigned"&&unl===byId('req-custom-unloader').value.trim())unl=unl.toLowerCase().split(' ').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ');const d=doors[detailDoor];const now=Date.now();d.unloader=unl;d.status='active';if(!d.laborStart)d.laborStart=now;if(d.assignments.length>0){if(d.assignments[d.assignments.length-1].name==='Unassigned')d.assignments[d.assignments.length-1]={name:unl,start:now,end:null};else d.assignments.push({name:unl,start:now,end:null})}else d.assignments=[{name:unl,start:now,end:null}];saveDoors();closeModal('unloader-required-modal');completeDoor(detailDoor,true)}
     function resolveAttribution(choice){closeModal('hour-attribution-modal');if(!pendingCompletion)return;let offset=0;if(choice==='Previous')offset=(new Date(pendingCompletion.time).getMinutes()+1)*60000;finalizeCompletion(pendingCompletion.doorNum,pendingCompletion.time,offset,pendingCompletion.cpuNext!=null?pendingCompletion.cpuNext:false);pendingCompletion=null}
@@ -1645,13 +1740,14 @@ v5.06:
         // Wally + cpuNext=true:  "Door X done\nDoor X CPU"  (both lines, single share)
         // CPU   + cpuNext=true:  "Door X CPU"
         // CPU   + cpuNext=false: no share
-        if(navigator.share&&!demoActive&&config.shareOnComplete){
+        // REQ5: Check suppress-share checkbox before firing share sheet.
+        // The checkbox is in the active-detail modal and reset on each open.
+        const suppressShare=!!(byId('chk-suppress-share')&&byId('chk-suppress-share').checked);
+        if(navigator.share&&!demoActive&&config.shareOnComplete&&!suppressShare){
             let shareText='';
             if(d.type==='Wally'){
-                // Wally done: always share. If CPU next, append second line.
                 shareText=cpuNext?`Door ${doorNum} done\nDoor ${doorNum} CPU`:`Door ${doorNum} done`;
             }else if(d.type==='CPU'){
-                // CPU done: share based on which replacement was selected
                 if(cpuNext==='Wally')shareText=`Door ${doorNum} Wally`;
                 else if(cpuNext==='CPU')shareText=`Door ${doorNum} CPU`;
             }
@@ -1674,10 +1770,12 @@ v5.06:
         const chk=byId('chk-cpu-next');
         const chkCpu=byId('chk-replace-cpu');
         const chkWally=byId('chk-replace-wally');
-        // Reset all
+        // Reset all checkboxes including suppress-share
         if(chk)chk.checked=false;
         if(chkCpu)chkCpu.checked=false;
         if(chkWally)chkWally.checked=false;
+        const suppChk=byId('chk-suppress-share'); // REQ5: reset suppress flag
+        if(suppChk)suppChk.checked=false;
         // Set door number refs
         document.querySelectorAll('.cpu-next-door-num-ref').forEach(el=>el.innerText=doorNum);
         const cpuDoorSpan=byId('cpu-next-door-num');
@@ -1807,6 +1905,7 @@ v5.06:
     function htFmtTime(date){return date.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}
     function htCalcHours(emp){
         if(emp.status==='cut')return emp.frozenHours;
+        // REQ4: 'selected' employees are on the roster for DOP but clock not running
         if(emp.status!=='active')return 0;
         return Math.max(0,Date.now()-emp.startTime.getTime())/3600000;
     }
@@ -1818,36 +1917,43 @@ v5.06:
         return Math.max(0,Date.now()-hoursState.shiftStartTime.getTime())/3600000;
     }
 
-    // -- REQ1: htSyncFromWallyShift -- called when Wally shift starts ------
-    // Single source of truth: Wally's ps9_shift_start drives everything
+    // htSyncFromWallyShift -- called when Wally shift starts
+    // REQ1: Robert W no longer auto-activated.
+    // REQ3: Employee list is reset to all-inactive at shift start.
+    //   Names are preserved from the current teamNames list so the roster
+    //   stays current. dopConfig is preserved across shifts.
     function htSyncFromWallyShift(){
         const wallyTime=getShiftStartTime();
+        const savedDop=hoursState.dopConfig; // preserve DOP across shifts
+        // REQ3: Reset all employees to inactive, clear hours/roles
+        const source=(typeof teamNames!=='undefined'&&teamNames.length>0)?teamNames:DEFAULT_TEAM;
+        hoursState.nextId=1; // reset ID counter
+        hoursState.employees=source.map(n=>htMakeEmployee(n));
+        // Restore state fields
         hoursState.shiftStartStr=wallyTime;
         hoursState.shiftStartTime=htParseHHMM(wallyTime);
         hoursState.shiftStarted=true;
         hoursState.shiftEnded=false;
         hoursState.overDopMuted=false;
-        // Activate Robert W automatically if he's on the roster
-        const robertW=hoursState.employees.find(e=>e.name===HT_BELT_DEFAULT&&e.status==='inactive');
-        if(robertW){
-            robertW.status='active';
-            robertW.startTime=new Date(hoursState.shiftStartTime);
-        }
+        hoursState.dopConfig=savedDop;
+        hoursState.pendingTimeId=null;
+        hoursState.pendingRoleId=null;
         const htInp=document.getElementById('ht-time-input');
         if(htInp)htInp.value=wallyTime;
         htSaveState();
         htRenderAll();
     }
 
-    // -- REQ2: htEndShift -- called by Wally's confirmEndShift -------------
+    // htEndShift -- called by Wally confirmEndShift (and Hours tab End button)
+    // REQ4: 'selected' employees are deselected (no hours to freeze).
     function htEndShift(){
         if(!hoursState.shiftStarted)return;
         hoursState.employees.forEach(e=>{
             if(e.status==='active'){e.frozenHours=htCalcHours(e);e.status='cut';}
+            else if(e.status==='selected'){e.status='inactive';}
         });
         hoursState.shiftEnded=true;
         htSaveState();
-        // If hours tab is visible, re-render it
         const hoursTab=document.getElementById('tab-hours');
         if(hoursTab&&hoursTab.classList.contains('active'))htRenderAll();
     }
@@ -1882,19 +1988,21 @@ v5.06:
         return html;
     }
 
-    // -- Shift controls (Hours tab Begin button) ---------------------------
-    // REQ1: Begin button triggers Wally's shift start (single source of truth)
+    // -- Shift controls (Hours tab Begin / End button) --------------------
+    // Begin: delegates to Wally openStartShiftConfirm (single source of truth).
+    // REQ2: End now opens the same Wally end-shift modal (openEndShiftModal),
+    // making Hours "End" and the main "End Shift" button fully interchangeable.
+    // confirmEndShift() already calls htEndShift() at completion, so no
+    // double-cut risk.
     function htHandleShiftBtn(){
         if(!hoursState.shiftStarted){
-            // Delegate to Wally's shift start -- this syncs everything
             if(shiftState==='idle'){
-                openStartShiftConfirm();
+                openStartShiftConfirm(); // Begin: full Wally shift start flow
             }else if(shiftState==='live'||shiftState==='demo'){
-                // Wally shift already live, just sync HT
-                htSyncFromWallyShift();
+                htSyncFromWallyShift(); // Wally already live -- sync HT
             }
         }else if(!hoursState.shiftEnded){
-            if(confirm('End shift and lock all hours?'))htEndShift();
+            openEndShiftModal(); // REQ2: identical to main End Shift button
         }
     }
 
@@ -1917,24 +2025,38 @@ v5.06:
     }
 
     // -- Employee actions ----------------------------------
-    function htActivateEmployee(id){
+    // REQ4: htSelectEmployee -- adds employee to DOP without starting clock
+    function htSelectEmployee(id){
         if(!hoursState.shiftStarted){
-            // Prompt to start shift if not yet started
             if(confirm('Start the shift first. Start shift now?'))openStartShiftConfirm();
             return;
         }
         const emp=hoursState.employees.find(e=>e.id===id);
         if(!emp||emp.status!=='inactive')return;
+        emp.status='selected'; // DOP-eligible, no hours accumulating
+        htSaveState();htRenderAll();htCheckOverDOP();
+    }
+    function htActivateEmployee(id){
+        if(!hoursState.shiftStarted){
+            if(confirm('Start the shift first. Start shift now?'))openStartShiftConfirm();
+            return;
+        }
+        const emp=hoursState.employees.find(e=>e.id===id);
+        // REQ4: can activate from either inactive or selected
+        if(!emp||(emp.status!=='inactive'&&emp.status!=='selected'))return;
         emp.status='active';
         emp.startTime=emp.customStartStr?htParseHHMM(emp.customStartStr):new Date(hoursState.shiftStartTime);
         htSaveState();htRenderAll();htCheckOverDOP();
     }
     function htCutEmployee(id){
         const emp=hoursState.employees.find(e=>e.id===id);
-        if(!emp||emp.status!=='active')return;
+        // REQ4: can deselect 'selected' employees (returns them to inactive)
+        if(!emp)return;
+        if(emp.status==='selected'){emp.status='inactive';emp.manualRole=null;htSaveState();htRenderAll();return;}
+        if(emp.status!=='active')return;
         emp.frozenHours=htCalcHours(emp);emp.status='cut';emp.manualRole=null;
         htSaveState();
-        if(!hoursState.employees.some(e=>e.status==='active')){hoursState.shiftEnded=true;htSaveState();}
+        if(!hoursState.employees.some(e=>e.status==='active'||e.status==='selected')){hoursState.shiftEnded=true;htSaveState();}
         htRenderAll();
     }
     function htAddEmployee(){
@@ -2055,8 +2177,13 @@ v5.06:
     }
 
     // -- Role assignment engine ----------------------------
+    // REQ1: Robert W auto-belt (_autoBelt pass) has been removed.
+    // Roles are assigned purely by: (1) manual pin, (2) rank by hours.
+    // Robert W gets belt only if manually pinned OR if he has the most hours
+    // and the belt slot is open (normal rank-based behavior).
     function htAssignRoles(){
-        const engaged=hoursState.employees.filter(e=>e.status==='active'||e.status==='cut');
+        // REQ4: selected + active + cut all participate in role assignment
+        const engaged=hoursState.employees.filter(e=>e.status==='active'||e.status==='cut'||e.status==='selected');
         const bulkMax=2,unloadMax=hoursState.dopConfig;
         const sorted=[...engaged].sort((a,b)=>{
             const diff=htCalcHours(b)-htCalcHours(a);
@@ -2064,23 +2191,44 @@ v5.06:
             if(a.startTime&&b.startTime)return a.startTime-b.startTime;
             return 0;
         });
-        // Pass 1: strip invalid manual pins
+        // Pass 1: strip invalid manual pins (enforce caps)
         const beltPinned=sorted.filter(e=>e.manualRole==='belt');
         if(beltPinned.length>1)beltPinned.slice(1).forEach(e=>{e.manualRole=null;});
         const bulkPinned=sorted.filter(e=>e.manualRole==='bulk');
         if(bulkPinned.length>bulkMax)bulkPinned.slice(bulkMax).forEach(e=>{e.manualRole=null;});
-        // Pass 2: Robert W auto-belt
-        const robertW=sorted.find(e=>e.name===HT_BELT_DEFAULT&&!e.manualRole);
+        // Pass 2: determine if Robert W gets the auto-belt.
+        // Conditions for auto-belt:
+        //   (a) Robert W is in the engaged list (selected, active, or cut)
+        //   (b) Robert W has NOT been manually pinned to a different role
+        //   (c) No one else has already been manually pinned to belt
+        // If any condition fails, belt is filled by normal rank order.
+        const robertW=sorted.find(e=>e.name===HT_BELT_DEFAULT);
+        const robertOnShift=!!robertW;
+        const robertManuallyMoved=robertW&&robertW.manualRole&&robertW.manualRole!=='belt';
+        const someoneElsePinnedBelt=beltPinned.length>0&&!(robertW&&robertW.manualRole==='belt');
+        const robertAutoGetsBelt=robertOnShift&&!robertManuallyMoved&&!someoneElsePinnedBelt;
+        // Pass 3: assign roles -- manual pins first, then Robert W auto-belt, then rank
         let beltFilled=beltPinned.length>0?1:0,bulkFilled=0,unloadFilled=0;
         sorted.forEach(e=>{e.role=null;});
-        if(robertW&&beltFilled<1){robertW._autoBelt=true;beltFilled++;}
-        // Pass 3: assign
+        // Mark Robert W for auto-belt before the rank loop runs so he is
+        // skipped in the rank-fill pass and given belt explicitly.
+        if(robertAutoGetsBelt&&beltFilled<1){
+            robertW._autoBelt=true;
+            beltFilled=1; // reserve the belt slot for him
+        }
         sorted.forEach(emp=>{
-            if(emp.manualRole){emp.role=emp.manualRole;
+            if(emp.manualRole){
+                emp.role=emp.manualRole;
                 if(emp.manualRole==='bulk')bulkFilled++;
                 else if(emp.manualRole==='unload')unloadFilled++;
-                return;}
-            if(emp._autoBelt){emp.role='belt';emp._autoBelt=false;return;}
+                return;
+            }
+            if(emp._autoBelt){
+                emp.role='belt';
+                emp._autoBelt=false;
+                return;
+            }
+            // Normal rank-based fill for everyone else
             if(beltFilled<1){emp.role='belt';beltFilled++;}
             else if(bulkFilled<bulkMax){emp.role='bulk';bulkFilled++;}
             else{emp.role='unload';unloadFilled++;}
@@ -2089,10 +2237,12 @@ v5.06:
     }
 
     // -- DOP calculation -----------------------------------
+    // REQ4: 'selected' employees count toward DOP even though their clock
+    // is not running. They are treated as if active for staffing purposes.
     function htCalcDOP(){
-        const active=hoursState.employees.filter(e=>e.status==='active');
+        const active=hoursState.employees.filter(e=>e.status==='active'||e.status==='selected');
         if(!active.length)return{dopState:'none',label:'NO ACTIVE STAFF',
-            sub:'Start employees to evaluate DOP',unloaderCount:0,bulkCount:0,
+            sub:'Select or start employees to evaluate DOP',unloaderCount:0,bulkCount:0,
             targetUnloaders:hoursState.dopConfig,delta:0};
         const bulkCount=active.filter(e=>e.role==='bulk').length;
         const unloaderCount=active.filter(e=>e.role==='unload').length;
@@ -2165,9 +2315,10 @@ v5.06:
         const isBeltDefault=emp.name===HT_BELT_DEFAULT&&emp.role==='belt'&&!emp.manualRole;
         const rowCls=['ht-emp-row',
             emp.status==='active'?'ht-active':'',
+            emp.status==='selected'?'ht-selected':'',  // REQ4: selected visual state
             emp.status==='cut'?'ht-cut':'',
             emp.role?'ht-role-'+emp.role:'',
-            emp.status!=='inactive'?'ht-clickable':''].filter(Boolean).join(' ');
+            (emp.status!=='inactive')?'ht-clickable':''].filter(Boolean).join(' ');
         const rankTxt=emp.status!=='inactive'?rank+1:'--';
         const startTs=emp.startTime?htFmtTime(emp.startTime):(emp.customStartStr||'');
         let meta='';
@@ -2182,9 +2333,17 @@ v5.06:
         let actHTML='';
         if(emp.status==='inactive'){
             const ctLbl=emp.customStartStr||'Set Time';
+            // REQ4: Two buttons -- Select (DOP only) and Start (clock+DOP)
+            actHTML='<div class="ht-actions">'+
+                '<button class="ht-btn ht-btn-select" onclick="htSelectEmployee('+emp.id+');event.stopPropagation()">Select</button>'+
+                '<button class="ht-btn ht-btn-start" onclick="htActivateEmployee('+emp.id+');event.stopPropagation()">Start</button>'+
+                '</div>';
+        }else if(emp.status==='selected'){
+            // REQ4: selected -- counts for DOP, clock not running
+            // Row click opens role modal; Remove returns to inactive
             actHTML='<div class="ht-actions">'+
                 '<button class="ht-btn ht-btn-start" onclick="htActivateEmployee('+emp.id+');event.stopPropagation()">Start</button>'+
-                '<button class="ht-btn ht-btn-time" onclick="htOpenCustomTime('+emp.id+');event.stopPropagation()">'+ctLbl+'</button>'+
+                '<button class="ht-btn ht-btn-cut" onclick="htCutEmployee('+emp.id+');event.stopPropagation()">Remove</button>'+
                 '</div>';
         }else if(emp.status==='active'){
             const ts=emp.startTime?htFmtTime(emp.startTime):'Edit';
