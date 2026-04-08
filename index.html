@@ -4,20 +4,25 @@
 <head>
     <meta charset="UTF-8">
     <script>
-    // Smart-quote sanitizer -- runs before any other script parses.
-    // If the file is corrupted in transit (copy/paste through GitHub web editor,
-    // Mail, Messages, etc.), this rewrites all inline script content to replace
-    // curly quotes and other non-ASCII punctuation with safe ASCII equivalents.
+    // Encoding guard -- verifies the document was received with correct UTF-8 encoding.
+    // The smart-quote sanitizer pattern (dynamically patching script textContent) cannot
+    // work reliably because: (1) scripts in <head> run before <body> is parsed, so
+    // querySelectorAll finds nothing; (2) setting textContent on a <script> after a
+    // SyntaxError has fired does not cause re-evaluation. The real protection is
+    // ensuring the source file is saved and served as clean ASCII. This guard detects
+    // corruption at load time and surfaces it visibly for debugging.
     (function(){
-        var map={'\u2018':"'",'\u2019':"'",'\u201c':'"','\u201d':'"',
-                 '\u2014':'--','\u2013':'-','\u2011':'-','\u2212':'-',
-                 '\u2026':'...','\u00a0':' ','\u200b':'','\u200c':'','\u200d':'','\ufeff':''};
-        var re=new RegExp(Object.keys(map).join('|'),'g');
-        document.querySelectorAll('script:not([src])').forEach(function(s){
-            var orig=s.textContent;
-            var fixed=orig.replace(re,function(m){return map[m]||'';});
-            if(fixed!==orig){s.textContent=fixed;console.warn('[Wally] Smart quotes detected and fixed in script block.');}
-        });
+        // If any of these characters appear in a test string, encoding is correct.
+        // If they are corrupted to smart quotes, the check will catch it.
+        var SENTINEL = '''; // straight apostrophe - if this is \u2019 encoding is broken
+        if(SENTINEL.charCodeAt(0) !== 39){
+            document.addEventListener('DOMContentLoaded', function(){
+                var warn = document.createElement('div');
+                warn.style.cssText = 'position:fixed;top:0;left:0;right:0;background:red;color:white;padding:12px;font-size:14px;font-weight:bold;z-index:99999;text-align:center;';
+                warn.textContent = 'ENCODING ERROR: File contains smart quotes. Re-save as UTF-8 and avoid copy-pasting through rich-text editors.';
+                document.body.appendChild(warn);
+            });
+        }
     })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -518,7 +523,7 @@
         <div class="nameplate">
             <div class="nameplate-top">
                 <div class="nameplate-title">Wally Dashboard</div>
-                <div class="nameplate-sub" id="nameplate-sub">by Fitz Joseph &nbsp;&middot;&nbsp; v6.37</div>
+                <div class="nameplate-sub" id="nameplate-sub">by Fitz Joseph &nbsp;&middot;&nbsp; v6.38</div>
             </div>
             <div class="nameplate-actions">
                 <div class="shift-state-pill idle" id="shift-state-pill">
@@ -869,7 +874,7 @@
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
 <script>
     let demoActive=false,duplicateWallyFlag=false,pendingWallyDuplicate=null,currentDoor=null,currentType='Wally',detailDoor=null,currentLogFilter='All',activeLogFilter={door:'All',unloader:'All',type:'All',timeRange:'All',search:'',date:'All'},statsVisible=false,hourlyVisible=false,lastSortStartTime=null,isFirstOnboard=false,dashboardRefreshTimer=null,wallyNotes={},manualType='Wally',pendingMoveDest=null,shiftState='idle',shiftEndTime=null;
-    const APP_VERSION='6.37',DOORS_START=9,DOORS_END=16,DEFAULT_TEAM=["Robert W","David F","Lorena R","Matt R","Trevon C","Russell H","Fonseca J","Eddie F","Juan F","Arce J","Jeff","Solis","Anthony","Josh","Damian","Jarrett"];
+    const APP_VERSION='6.38',DOORS_START=9,DOORS_END=16,DEFAULT_TEAM=["Robert W","David F","Lorena R","Matt R","Trevon C","Russell H","Fonseca J","Eddie F","Juan F","Arce J","Jeff","Solis","Anthony","Josh","Damian","Jarrett"];
     const WEBHOOK_URL='https://script.google.com/macros/s/AKfycbwss7dFIVBNUuQQHzp5KDURwpRJyH58wUrlJR3XbSrL3SjrF4tvAFSaQiLjJJeOmH9m/exec';
     const byId=(id)=>document.getElementById(id);
     function dateKeyFromTs(ts){const d=new Date(ts);return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
@@ -1071,7 +1076,7 @@ v6.28:
 
 v6.27:
 
-- Fix: Active card in Active tab now shows both arrival time AND labor start time for doors that were staged before labor began. Format: “Arrived: HH:MM · Labor: HH:MM”. Doors onboarded directly as active show only “Arrived: HH:MM” (unchanged).
+- Fix: Active card in Active tab now shows both arrival time AND labor start time for doors that were staged before labor began. Format: “Arrived: HH:MM * Labor: HH:MM”. Doors onboarded directly as active show only “Arrived: HH:MM” (unchanged).
 - Fix: CPU door completion checkbox now says “Wally replacing this CPU” instead of “CPU replacing this CPU”. Share text when checked: “Door X Wally” so team knows a Wally is rolling to that door.
 - Fix: Checkbox description text now reads dynamically based on door type (“getting a CPU next” vs “getting a Wally next”).
 - Share matrix (final):
@@ -1339,7 +1344,7 @@ v5.06:
   } else {
   preview.style.display=‘block’;
   preview.innerHTML=`<div class="onboard-note-ghost" onclick="openNoteModal('${wallyId}','onboard')"><i class="ph ph-note-pencil" style="font-size:18px;"></i> Add note for Wally ${wallyId}</div>`}}
-  // ── SHIFT STATE MACHINE ─────────────────────────────────
+  // – SHIFT STATE MACHINE ———————————
   function loadShiftState(){const s=localStorage.getItem(‘ps9_shift_state’);if(s===‘live’||s===‘demo’)shiftState=s;else shiftState=‘idle’;const et=localStorage.getItem(‘ps9_shift_end_time’);shiftEndTime=et?parseInt(et,10):null;}
   function saveShiftState(){localStorage.setItem(‘ps9_shift_state’,shiftState)}
   function updateNameplate(){
@@ -1461,7 +1466,7 @@ v5.06:
   showToast(keepBays?`Shift ended \u2014 ${completedW+completedC} completions synced`:`Shift ended \u2014 ${closedCount} bay${closedCount!==1?'s':''} closed`);htEndShift();}
   
   function showToast(msg){const t=byId(‘save-toast’);t.querySelector(‘span’).textContent=msg;t.classList.add(‘visible’);setTimeout(()=>{t.querySelector(‘span’).textContent=‘Saved’;t.classList.remove(‘visible’)},2500)}
-  // ────────────────────────────────────────────────────────
+  // ––––––––––––––––––––––––––––
   
   function newShift(){
   if(!confirm(“Start a new shift? This will clear all active trailers and logs, but keep your notes, accounts, and team names.”))return;
@@ -1661,7 +1666,7 @@ v5.06:
   function exportLogsPDF(){closeModal(‘export-modal’);if(!window.jspdf)return alert(“PDF library loading.”);const doc=new window.jspdf.jsPDF(),now=new Date();doc.setFontSize(18);doc.text(`PS9 Wally Tracker Report - ${now.toLocaleDateString()}`,14,20);doc.setFontSize(12);doc.text(`Generated: ${now.toLocaleTimeString()}`,14,30);const stats={};historyLog.forEach(l=>{if(!l.completionHour)return;const n=l.unloader;if(!stats[n])stats[n]={w:0,c:0,t:0};if(l.type===‘Wally’)stats[n].w++;else if(l.type===‘CPU’)stats[n].c++;stats[n].t++});doc.autoTable({startY:45,head:[[‘Name’,‘Wally’,‘CPU’,‘Total’]],body:Object.entries(stats).sort((a,b)=>b[1].t-a[1].t).map(([n,d])=>[n,d.w,d.c,d.t])});const logsBody=historyLog.map(l=>{let typeStr=l.type+(l.duplicate?’ (DUP)’:’’);if(l.status===‘moved’)typeStr=`MOVED: ${l.moveDest}`;else if(l.status===‘incomplete’)typeStr=‘INCOMPLETE’;else if(l.type===‘CPU’&&l.cpuOptions&&l.cpuOptions.length>0)typeStr+=`\n${l.cpuOptions.join(',')}`;return[new Date(l.end).toLocaleTimeString([],{hour:‘2-digit’,minute:‘2-digit’}),l.door,typeStr,l.id,l.unloader,Math.round(l.duration/60000)+“m”,l.completionHour?getHourText(l.completionHour):’–’]});doc.autoTable({startY:doc.lastAutoTable.finalY+15,head:[[‘Time’,‘Door’,‘Type’,‘ID’,‘Unloader’,‘Duration’,‘Hour’]],body:logsBody});doc.save(`wally-report-${now.toISOString().split('T')[0]}.pdf`)}
   function setEditType(t){byId(‘edit-opt-wally’).classList.toggle(‘selected’,t===‘Wally’);byId(‘edit-opt-cpu’).classList.toggle(‘selected’,t===‘CPU’);byId(‘edit-log-modal’).dataset.type=t;const c=byId(‘edit-log-options-container’);if(c)c.style.display=(t===‘CPU’)?‘block’:‘none’}
   function openMoveMenu(){closeModal(‘active-detail-modal’);byId(‘move-menu-modal’).style.display=‘flex’}
-  // ── Boot: wrapped in DOMContentLoaded for reliable cross-browser execution ──
+  // – Boot: wrapped in DOMContentLoaded for reliable cross-browser execution –
   // Guarantees full DOM is parsed before init() runs, regardless of CDN timing.
   document.addEventListener(‘DOMContentLoaded’, function() {
   init();
@@ -1671,12 +1676,12 @@ v5.06:
   if (htInp) htInp.value = hoursState.shiftStartStr || getShiftStartTime();
   });
   
-  // ══════════════════════════════════════════════════════
+  // ======================================================
   // HOURS TRACKER – all functions prefixed ht* to avoid
   // conflicts with existing Wally functions and globals
-  // ══════════════════════════════════════════════════════
+  // ======================================================
   
-  // ── Panel open/close ─────────────────────────────────
+  // – Panel open/close ———————————
   function openHoursTool(){
   // Legacy: if called directly, switch to the hours tab
   switchTab(‘hours’, document.getElementById(‘tab-btn-hours’));
@@ -1685,7 +1690,7 @@ v5.06:
   switchTab(‘dashboard’, document.getElementById(‘tab-btn-dashboard’));
   }
   
-  // ── Constants ────────────────────────────────────────
+  // – Constants ––––––––––––––––––––
   // REQ3: HT_PRESET_NAMES removed – htInitEmployees pulls from teamNames instead
   const HT_BELT_DEFAULT=‘Robert W’;
   const HT_ROLES={
@@ -1695,14 +1700,14 @@ v5.06:
   };
   const HT_DOP_ICON_MAP={none:’\u2b1c’,met:’\u2705’,low:’\u26a0\ufe0f’,over:’\ud83d\udea8’};
   
-  // ── State ────────────────────────────────────────────
+  // – State ––––––––––––––––––––––
   let hoursState={
   shiftStarted:false,shiftEnded:false,shiftStartTime:null,
   shiftStartStr:‘20:00’,dopConfig:6,employees:[],nextId:1,
   overDopMuted:false,pendingTimeId:null,pendingRoleId:null
   };
   
-  // ── Employee factory ──────────────────────────────────
+  // – Employee factory –––––––––––––––––
   function htMakeEmployee(name){
   return{id:hoursState.nextId++,name,status:‘inactive’,startTime:null,
   customStartStr:null,frozenHours:0,role:null,manualRole:null,prevRole:null};
@@ -1714,7 +1719,7 @@ v5.06:
   hoursState.employees=source.map(n=>htMakeEmployee(n));
   }
   
-  // ── Persistence ───────────────────────────────────────
+  // – Persistence —————————————
   function htSaveState(){
   try{localStorage.setItem(‘ps9_v4’,JSON.stringify(hoursState));}catch(e){}
   }
@@ -1740,7 +1745,7 @@ v5.06:
   }catch(e){htInitEmployees();}
   }
   
-  // ── Time helpers ──────────────────────────────────────
+  // – Time helpers –––––––––––––––––––
   function htParseHHMM(str){
   const[h,m]=str.split(’:’).map(Number);
   const d=new Date();d.setHours(h,m,0,0);return d;
@@ -1759,7 +1764,7 @@ v5.06:
   return Math.max(0,Date.now()-hoursState.shiftStartTime.getTime())/3600000;
   }
   
-  // ── REQ1: htSyncFromWallyShift – called when Wally shift starts ──────
+  // – REQ1: htSyncFromWallyShift – called when Wally shift starts ——
   // Single source of truth: Wally’s ps9_shift_start drives everything
   function htSyncFromWallyShift(){
   const wallyTime=getShiftStartTime();
@@ -1780,7 +1785,7 @@ v5.06:
   htRenderAll();
   }
   
-  // ── REQ2: htEndShift – called by Wally’s confirmEndShift ─────────────
+  // – REQ2: htEndShift – called by Wally’s confirmEndShift ———––
   function htEndShift(){
   if(!hoursState.shiftStarted)return;
   hoursState.employees.forEach(e=>{
@@ -1823,7 +1828,7 @@ v5.06:
   return html;
   }
   
-  // ── Shift controls (Hours tab Begin button) ───────────────────────────
+  // – Shift controls (Hours tab Begin button) —————————
   // REQ1: Begin button triggers Wally’s shift start (single source of truth)
   function htHandleShiftBtn(){
   if(!hoursState.shiftStarted){
@@ -1848,7 +1853,7 @@ v5.06:
   htInitEmployees();htSaveState();htRenderAll();
   }
   
-  // ── DOP config ────────────────────────────────────────
+  // – DOP config ––––––––––––––––––––
   function htSetDOP(n){
   hoursState.dopConfig=n;htSyncDOPButtons();htSaveState();htRenderAll();
   }
@@ -1857,7 +1862,7 @@ v5.06:
   document.getElementById(‘ht-dop5’).classList.toggle(‘active’,hoursState.dopConfig===5);
   }
   
-  // ── Employee actions ──────────────────────────────────
+  // – Employee actions –––––––––––––––––
   function htActivateEmployee(id){
   if(!hoursState.shiftStarted){
   // Prompt to start shift if not yet started
@@ -1891,7 +1896,7 @@ v5.06:
   htSaveState();htCloseModal(‘ht-add-modal’);htRenderAll();
   }
   
-  // ── Custom start time ─────────────────────────────────
+  // – Custom start time ———————————
   function htOpenCustomTime(id){
   hoursState.pendingTimeId=id;
   const emp=hoursState.employees.find(e=>e.id===id);
@@ -1907,7 +1912,7 @@ v5.06:
   htCloseModal(‘ht-time-modal’);hoursState.pendingTimeId=null;htRenderAll();
   }
   
-  // ── Constraint checker ────────────────────────────────
+  // – Constraint checker ––––––––––––––––
   function htGetAvailableRoles(targetEmpId){
   const engaged=hoursState.employees.filter(e=>(e.status===‘active’||e.status===‘cut’)&&e.id!==targetEmpId);
   const beltTaken=engaged.some(e=>e.manualRole===‘belt’);
@@ -1915,7 +1920,7 @@ v5.06:
   return{belt:!beltTaken,bulk:manualBulk<2,unload:true,auto:true};
   }
   
-  // ── Role modal ────────────────────────────────────────
+  // – Role modal ––––––––––––––––––––
   function htOpenRoleModal(id,evt){
   if(evt)evt.stopPropagation();
   const emp=hoursState.employees.find(e=>e.id===id);
@@ -1946,7 +1951,7 @@ v5.06:
   htCloseModal(‘ht-role-modal’);hoursState.pendingRoleId=null;htRenderAll();
   }
   
-  // ── REQ4: KPI breakdown modal ─────────────────────────
+  // – REQ4: KPI breakdown modal ———————––
   function htOpenBreakdownModal(role){
   const elapsed=htShiftElapsed();
   const ROLE_LABELS={belt:‘Belt Tender’,bulk:‘Bulk Sweep’,unload:‘Unloader’};
@@ -1985,7 +1990,7 @@ v5.06:
   htOpenModal(‘ht-breakdown-modal’);
   }
   
-  // ── Role assignment engine ────────────────────────────
+  // – Role assignment engine ––––––––––––––
   function htAssignRoles(){
   const engaged=hoursState.employees.filter(e=>e.status===‘active’||e.status===‘cut’);
   const bulkMax=2,unloadMax=hoursState.dopConfig;
@@ -2019,7 +2024,7 @@ v5.06:
   hoursState.employees.filter(e=>e.status===‘inactive’).forEach(e=>{e.role=null;});
   }
   
-  // ── DOP calculation ───────────────────────────────────
+  // – DOP calculation ———————————–
   function htCalcDOP(){
   const active=hoursState.employees.filter(e=>e.status===‘active’);
   if(!active.length)return{dopState:‘none’,label:‘NO ACTIVE STAFF’,
@@ -2036,7 +2041,7 @@ v5.06:
   return{dopState,label,sub,unloaderCount,bulkCount,targetUnloaders:hoursState.dopConfig,delta};
   }
   
-  // ── Over-DOP toast ────────────────────────────────────
+  // – Over-DOP toast ————————————
   let htLastDOPOver=false;
   function htCheckOverDOP(){
   const{dopState,delta}=htCalcDOP();
@@ -2053,7 +2058,7 @@ v5.06:
   if(mute){hoursState.overDopMuted=true;htSaveState();}
   }
   
-  // ── Render DOP bar ────────────────────────────────────
+  // – Render DOP bar ————————————
   function htRenderDOPBar(d){
   const bar=document.getElementById(‘ht-dop-bar’);
   if(!bar)return;
@@ -2068,7 +2073,7 @@ v5.06:
   ‘<div class="ht-count-chip">\ud83d\udce6 ‘+d.unloaderCount+’/’+d.targetUnloaders+’</div>’:’’;
   }
   
-  // ── Render KPI (count x elapsed) ──────────────────────
+  // – Render KPI (count x elapsed) –––––––––––
   function htRenderKPI(){
   if(!hoursState.shiftStarted||!hoursState.shiftStartTime){
   [‘ht-kpi-belt’,‘ht-kpi-bulk’,‘ht-kpi-unload’].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=‘0.00’;});
@@ -2089,7 +2094,7 @@ v5.06:
   setEl(‘ht-kpi-unload-sub’,‘hrs \u00b7 ‘+unloadN+’ people’);
   }
   
-  // ── Render employee row ───────────────────────────────
+  // – Render employee row —————————––
   function htRenderRow(emp,rank){
   const hrs=htCalcHours(emp);
   const roleCfg=emp.role?HT_ROLES[emp.role]:null;
@@ -2138,7 +2143,7 @@ v5.06:
   ‘</div>’;
   }
   
-  // ── Full render ───────────────────────────────────────
+  // – Full render —————————————
   function htRenderAll(){
   htAssignRoles();
   const btn=document.getElementById(‘ht-shift-btn’);
@@ -2184,7 +2189,7 @@ v5.06:
   htCheckOverDOP();
   }
   
-  // ── Tick ─────────────────────────────────────────────
+  // – Tick ———————————————
   function htTick(){
   const hoursTab=document.getElementById(‘tab-hours’);
   if(!hoursTab||!hoursTab.classList.contains(‘active’))return;
@@ -2205,7 +2210,7 @@ v5.06:
   hoursState.employees.forEach(e=>{e.prevRole=e.role;});
   }
   
-  // ── Modal helpers ─────────────────────────────────────
+  // – Modal helpers ———————————––
   function htOpenModal(id){document.getElementById(id).classList.add(‘open’);}
   function htCloseModal(id){document.getElementById(id).classList.remove(‘open’);}
   function htOverlayClick(e,id){if(e.target===document.getElementById(id))htCloseModal(id);}
