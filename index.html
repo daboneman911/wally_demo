@@ -448,6 +448,9 @@
         .ht-btn-cut{background:var(--accent-red-bg);border:1px solid var(--accent-red);color:var(--accent-red);}
         .ht-btn-time{background:transparent;border:1px solid var(--border);color:var(--text-sub);font-size:10px;padding:5px 9px;}
         .ht-cut-label{font-size:10px;font-weight:700;color:var(--text-sub);text-transform:uppercase;padding:4px 6px;text-align:center;}
+        /* REQ8: paused employee row */
+        .ht-emp-row.ht-paused{border-left-color:#ff9500;background:#fff8ee;}
+        .ht-btn-pause{background:#fff3e0;border:1px solid #ff9500;color:#c85000;}
         /* REQ4: selected state -- on DOP roster, clock not started */
         .ht-emp-row.ht-selected{border-left-color:#a78bfa;background:#ede9fe;}
         .ht-btn-select{background:var(--accent-purple-bg);border:1px solid var(--accent-purple);color:var(--accent-purple);}
@@ -522,7 +525,7 @@
         <div class="nameplate">
             <div class="nameplate-top">
                 <div class="nameplate-title">Wally Dashboard</div>
-                <div class="nameplate-sub" id="nameplate-sub">by Fitz Joseph &nbsp;&middot;&nbsp; v6.42</div>
+                <div class="nameplate-sub" id="nameplate-sub">by Fitz Joseph &nbsp;&middot;&nbsp; v6.43</div>
             </div>
             <div class="nameplate-actions">
                 <div class="shift-state-pill idle" id="shift-state-pill">
@@ -759,12 +762,19 @@
     <!-- Ended banner -->
     <div class="ht-ended-banner" id="ht-ended-banner">Shift Complete &mdash; Final Hours Locked</div>
 
-    <!-- Active employees -->
+    <!-- REQ7: Active employees section (active + selected + paused) -->
     <div class="ht-section" id="ht-active-section" style="display:none;">Active</div>
     <div class="ht-emp-list" id="ht-active-list"></div>
 
-    <!-- Roster -->
-    <div class="ht-section">Roster</div>
+    <!-- REQ7: Cut employees section -- separate from active, always visible if any cut -->
+    <div class="ht-section" id="ht-cut-section" style="display:none;">Cut</div>
+    <div class="ht-emp-list" id="ht-cut-list"></div>
+
+    <!-- REQ1: Roster (inactive employees) with collapsible toggle -->
+    <div class="ht-section" style="display:flex;align-items:center;justify-content:space-between;">
+      <span>Roster</span>
+      <button id="ht-roster-toggle" onclick="htToggleRoster()" style="background:none;border:none;font-size:11px;font-weight:700;color:var(--text-sub);cursor:pointer;padding:4px 8px;border-radius:6px;letter-spacing:0.3px;">HIDE</button>
+    </div>
     <div class="ht-add-row">
       <button class="ht-add-btn" onclick="htOpenAddModal()">
         <i class="ph ph-user-plus"></i> Add Employee
@@ -875,12 +885,40 @@
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
 <script>
     let demoActive=false,duplicateWallyFlag=false,pendingWallyDuplicate=null,currentDoor=null,currentType='Wally',detailDoor=null,currentLogFilter='All',activeLogFilter={door:'All',unloader:'All',type:'All',timeRange:'All',search:'',date:'All'},statsVisible=false,hourlyVisible=false,lastSortStartTime=null,isFirstOnboard=false,dashboardRefreshTimer=null,wallyNotes={},manualType='Wally',pendingMoveDest=null,shiftState='idle',shiftEndTime=null;
-    const APP_VERSION='6.42',DOORS_START=9,DOORS_END=16,DEFAULT_TEAM=["Robert W","David F","Lorena R","Matt R","Trevon C","Russell H","Fonseca J","Eddie F","Juan F","Arce J","Jeff","Solis","Anthony","Josh","Damian","Jarrett"];
+    const APP_VERSION='6.43',DOORS_START=9,DOORS_END=16,DEFAULT_TEAM=["Robert W","David F","Lorena R","Matt R","Trevon C","Russell H","Fonseca J","Eddie F","Juan F","Arce J","Jeff","Solis","Anthony","Josh","Damian","Jarrett"];
     const WEBHOOK_URL='https://script.google.com/macros/s/AKfycbwss7dFIVBNUuQQHzp5KDURwpRJyH58wUrlJR3XbSrL3SjrF4tvAFSaQiLjJJeOmH9m/exec';
     const byId=(id)=>document.getElementById(id);
     function dateKeyFromTs(ts){const d=new Date(ts);return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
     function debounce(func,wait){let timeout;return function(...args){clearTimeout(timeout);timeout=setTimeout(()=>func.apply(this,args),wait)}}
     const CHANGELOG=`
+v6.43:
+- REQ1 (Collapsible roster): Roster section gets a SHOW/HIDE toggle.
+  Auto-collapses the first time DOP is met. State persisted in hoursState.
+- REQ2 (CPU suppress-share terminates): confirmCompleteDoor() now checks
+  the suppress-share checkbox first for CPU doors. If checked, the
+  replacement-type prompt is bypassed and the door closes immediately.
+- REQ3 (KPI includes cut/paused): htRenderKPI() now sums individual
+  htCalcHours() per role across active, cut, and paused employees.
+  More accurate than count*elapsed and never loses cut employee labor.
+- REQ4 (Editable cut employees): Cut rows show Re-add and time-edit
+  buttons. Re-add reactivates with prior hours preserved as a startTime
+  offset. Time-edit (htOpenCustomTime) recalculates frozenHours from
+  the entered start time for cut and paused employees.
+- REQ5 (10-minute revert): Revert grace period extended from 2 minutes
+  (120s) to 10 minutes (600s). l.end is an absolute timestamp so this
+  survives app reloads and tab switches without extra state.
+- REQ6 (DOP display simplified): htRenderDOPBar shows 'N/2' (e.g. '6/2')
+  when DOP is met. Sub-text hidden; chip counts show the breakdown.
+  Underlying htCalcDOP() logic and all returned fields unchanged.
+- REQ7 (Active/Cut sections): htRenderAll splits employees into three
+  sections: Active (active+selected+paused), Cut (cut), Roster (inactive).
+  Cut section visible only when employees have been cut.
+- REQ8 (Pause/Resume): New 'paused' status. htPauseEmployee() snapshots
+  current hours into frozenHours and stops the clock. htResumeEmployee()
+  adjusts startTime so accumulated hours continue from the snapshot.
+  Paused employees count for DOP and role assignment, shown with orange
+  PAUSED badge. htEndShift and htAssignRoles include paused status.
+
 v6.42:
 - SYNC FIX A (Exponential backoff): Retry delay was a flat 3 seconds on
   every network failure. Now uses exponential backoff starting at 3s,
@@ -1826,10 +1864,18 @@ v5.06:
         const d=doors[detailDoor];
         let cpuNext=false;
         if(d.type==='Wally'){
-            // Wally: single optional checkbox
             cpuNext=!!(byId('chk-cpu-next')&&byId('chk-cpu-next').checked);
         }else{
-            // CPU: must choose replacement type (required)
+            // REQ2: If suppress-share is checked for a CPU door, the user has
+            // explicitly opted out of team notification. Treat as a clean
+            // termination -- no replacement prompt required, no share fires.
+            const suppressShare=!!(byId('chk-suppress-share')&&byId('chk-suppress-share').checked);
+            if(suppressShare){
+                // Complete immediately with cpuNext=false (no replacement text to share)
+                completeDoor(detailDoor,false,false);
+                return;
+            }
+            // Normal CPU path: replacement type is required so the right share text fires
             const replaceCpu=byId('chk-replace-cpu')&&byId('chk-replace-cpu').checked;
             const replaceWally=byId('chk-replace-wally')&&byId('chk-replace-wally').checked;
             if(!replaceCpu&&!replaceWally){
@@ -1991,9 +2037,18 @@ v5.06:
     function toggleStats(sec){const c=byId(sec==='unloader'?'stats-content':'hourly-content'),i=byId(sec==='unloader'?'stats-caret':'hourly-caret');const show=c.style.display!=='block';c.style.display=show?'block':'none';i.className=show?'ph ph-caret-up':'ph ph-caret-down';if(show)sec==='unloader'?calculateAndRenderStats():calculateAndRenderHourlyStats()}
     let currentVisibleLogs=50,filteredLogsCache=[];
     function renderLogs(){const list=byId('logs-list');if(!list)return;const filterDisplay=byId('active-filter-display'),filterText=byId('filter-text-display'),sVal=byId('log-search').value.trim().toUpperCase();activeLogFilter.search=sVal;const{thisHourStart,thisHourEnd,lastHourStart,lastHourEnd}=getShiftTimeWindows();filteredLogsCache=[];historyLog.forEach((l,masterIndex)=>{if(activeLogFilter.date!=='All'&&l.dateKey!==activeLogFilter.date)return;if(activeLogFilter.door!=='All'&&l.door!=activeLogFilter.door)return;if(activeLogFilter.unloader!=='All'&&l.unloader!==activeLogFilter.unloader)return;if(activeLogFilter.type!=='All'&&l.type!==activeLogFilter.type)return;if(activeLogFilter.search){const nObj=getNoteObj(l.id);const noteText=nObj?(nObj.tags.join(' ')+' '+(nObj.text||'')).toUpperCase():'';if(!l.id.includes(sVal)&&!(l.account||'').includes(sVal)&&String(l.door)!=sVal&&!noteText.includes(sVal))return}if(activeLogFilter.timeRange!=='All'){const t=l.end-(l.statOffset||0);if(activeLogFilter.timeRange==='ThisHour'&&(t<thisHourStart.getTime()||t>=thisHourEnd.getTime()))return;if(activeLogFilter.timeRange==='LastHour'&&(t<lastHourStart.getTime()||t>=lastHourEnd.getTime()))return}filteredLogsCache.push({log:l,masterIndex:masterIndex})});const isFiltering=Object.values(activeLogFilter).some(v=>v!=='All'&&v!=='');if(filterDisplay){filterDisplay.style.display=isFiltering?'flex':'none';if(isFiltering){const p=[];if(activeLogFilter.date!=='All')p.push(activeLogFilter.date);if(activeLogFilter.door!=='All')p.push("Door "+activeLogFilter.door);if(activeLogFilter.unloader!=='All')p.push(activeLogFilter.unloader);if(activeLogFilter.type!=='All')p.push(activeLogFilter.type);if(activeLogFilter.search)p.push(`"${activeLogFilter.search}"`);filterText.innerText=p.join(' + ')}}list.innerHTML='';currentVisibleLogs=50;renderLogBatch();if(statsVisible)calculateAndRenderStats();if(hourlyVisible)calculateAndRenderHourlyStats()}
-    function renderLogBatch(){const list=byId('logs-list'),loadMore=byId('logs-load-more');if(filteredLogsCache.length===0){list.innerHTML='<div style="text-align:center;color:#999;margin-top:20px;">No logs found.</div>';loadMore.style.display='none';return}const frag=document.createDocumentFragment(),batch=filteredLogsCache.slice(list.children.length,currentVisibleLogs);batch.forEach(item=>{const l=item.log,idx=item.masterIndex,card=document.createElement('div');card.className='log-card';const dur=Math.round(l.duration/60000);const unloadDur=l.unloadDurationMinutes!=null?l.unloadDurationMinutes:dur;const dwell=l.dwellMinutes||0;let statusPill='';if(l.status==='moved')statusPill=`<span class="log-tag tag-gray"><i class="ph ph-arrows-left-right"></i> ${l.moveDest}</span>`;else if(l.status==='incomplete')statusPill=`<span class="log-tag tag-red"><i class="ph ph-x-circle"></i> Incomplete</span>`;else{statusPill=`<span class="log-tag tag-black">${l.type}</span>`;if(l.duplicate)statusPill+=` <span class="log-tag tag-red">DUP</span>`;if(l.type==='CPU'&&l.cpuOptions&&l.cpuOptions.length>0)l.cpuOptions.forEach(opt=>{statusPill+=` <span class="log-tag tag-gray">${opt}</span>`})}statusPill+=`<span class="log-tag" style="background:#fff;border:1px solid #e5e5ea;">${l.completionHour?getHourText(l.completionHour):'--'}</span>`;if(l.manual)statusPill+=` <span class="log-tag tag-gray"><i class="ph ph-pencil-simple-line"></i> Manual</span>`;if(l.idleBeforeMinutes!=null&&l.idleBeforeMinutes>=0)statusPill+=` <span class="log-tag" style="background:#e5f0ff;color:#007aff;"><i class="ph ph-timer"></i> Idle: ${l.idleBeforeMinutes}m</span>`;const timeRange=`${new Date(l.start).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} - ${new Date(l.end).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;const hasN=l.type==='Wally'&&noteHasContent(l.id);const noteIcon=l.type==='Wally'?`<button class="note-icon-btn ${hasN?'has-note':''}" onclick="openNoteModal('${l.id}','log')"><i class="ph ph-note${hasN?'-pencil':''}"></i></button>`:'';const dwellStr=dwell>0?`<div class="log-footer-item" style="color:#ff9500;"><i class="ph ph-hourglass"></i> Dwell ${dwell}m</div>`:'';card.innerHTML=`<div class="log-info"><div class="log-header-row"><span class="log-door-pill" onclick="viewDoorLogs(${l.door})">Door ${l.door}</span><div class="log-title">${l.id}${noteIcon}<span class="log-account">${l.account?l.account:''}</span></div></div><div class="log-tags-row">${statusPill}</div><div class="log-footer-row"><div class="log-footer-item"><i class="ph ph-user"></i> ${l.unloader}</div><div class="log-footer-item"><i class="ph ph-clock"></i> ${timeRange}</div>${dwellStr}</div></div><div class="log-right-col"><div style="text-align:right;"><div class="log-duration">${unloadDur}<span style="font-size:14px;font-weight:700;">m</span></div><div class="log-duration-label">Unload</div>${dwell>0?`<div style="font-size:10px;color:#8e8e93;font-weight:600;margin-top:2px;">${dur}m Door</div>`:''}</div><div class="log-actions-row">${(Date.now()-l.end<120000&&!demoActive&&l.status==='completed')?`<button class="log-mini-btn" onclick="revertLog(${idx})"><i class="ph ph-arrow-u-up-left"></i></button>`:''}<button class="log-mini-btn" onclick="openEditLogModal(${idx})"><i class="ph ph-pencil-simple"></i></button></div></div>`;frag.appendChild(card)});list.appendChild(frag);loadMore.style.display=(currentVisibleLogs<filteredLogsCache.length)?'block':'none'}
+    function renderLogBatch(){const list=byId('logs-list'),loadMore=byId('logs-load-more');if(filteredLogsCache.length===0){list.innerHTML='<div style="text-align:center;color:#999;margin-top:20px;">No logs found.</div>';loadMore.style.display='none';return}const frag=document.createDocumentFragment(),batch=filteredLogsCache.slice(list.children.length,currentVisibleLogs);batch.forEach(item=>{const l=item.log,idx=item.masterIndex,card=document.createElement('div');card.className='log-card';const dur=Math.round(l.duration/60000);const unloadDur=l.unloadDurationMinutes!=null?l.unloadDurationMinutes:dur;const dwell=l.dwellMinutes||0;let statusPill='';if(l.status==='moved')statusPill=`<span class="log-tag tag-gray"><i class="ph ph-arrows-left-right"></i> ${l.moveDest}</span>`;else if(l.status==='incomplete')statusPill=`<span class="log-tag tag-red"><i class="ph ph-x-circle"></i> Incomplete</span>`;else{statusPill=`<span class="log-tag tag-black">${l.type}</span>`;if(l.duplicate)statusPill+=` <span class="log-tag tag-red">DUP</span>`;if(l.type==='CPU'&&l.cpuOptions&&l.cpuOptions.length>0)l.cpuOptions.forEach(opt=>{statusPill+=` <span class="log-tag tag-gray">${opt}</span>`})}statusPill+=`<span class="log-tag" style="background:#fff;border:1px solid #e5e5ea;">${l.completionHour?getHourText(l.completionHour):'--'}</span>`;if(l.manual)statusPill+=` <span class="log-tag tag-gray"><i class="ph ph-pencil-simple-line"></i> Manual</span>`;if(l.idleBeforeMinutes!=null&&l.idleBeforeMinutes>=0)statusPill+=` <span class="log-tag" style="background:#e5f0ff;color:#007aff;"><i class="ph ph-timer"></i> Idle: ${l.idleBeforeMinutes}m</span>`;const timeRange=`${new Date(l.start).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} - ${new Date(l.end).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;const hasN=l.type==='Wally'&&noteHasContent(l.id);const noteIcon=l.type==='Wally'?`<button class="note-icon-btn ${hasN?'has-note':''}" onclick="openNoteModal('${l.id}','log')"><i class="ph ph-note${hasN?'-pencil':''}"></i></button>`:'';const dwellStr=dwell>0?`<div class="log-footer-item" style="color:#ff9500;"><i class="ph ph-hourglass"></i> Dwell ${dwell}m</div>`:'';card.innerHTML=`<div class="log-info"><div class="log-header-row"><span class="log-door-pill" onclick="viewDoorLogs(${l.door})">Door ${l.door}</span><div class="log-title">${l.id}${noteIcon}<span class="log-account">${l.account?l.account:''}</span></div></div><div class="log-tags-row">${statusPill}</div><div class="log-footer-row"><div class="log-footer-item"><i class="ph ph-user"></i> ${l.unloader}</div><div class="log-footer-item"><i class="ph ph-clock"></i> ${timeRange}</div>${dwellStr}</div></div><div class="log-right-col"><div style="text-align:right;"><div class="log-duration">${unloadDur}<span style="font-size:14px;font-weight:700;">m</span></div><div class="log-duration-label">Unload</div>${dwell>0?`<div style="font-size:10px;color:#8e8e93;font-weight:600;margin-top:2px;">${dur}m Door</div>`:''}</div><div class="log-actions-row">// REQ5: revert button visible for 10 minutes (600000ms) after completion
+${(Date.now()-l.end<600000&&!demoActive&&l.status==='completed')?`<button class="log-mini-btn" onclick="revertLog(${idx})"><i class="ph ph-arrow-u-up-left"></i></button>`:''}<button class="log-mini-btn" onclick="openEditLogModal(${idx})"><i class="ph ph-pencil-simple"></i></button></div></div>`;frag.appendChild(card)});list.appendChild(frag);loadMore.style.display=(currentVisibleLogs<filteredLogsCache.length)?'block':'none'}
     function loadMoreLogs(){currentVisibleLogs+=50;renderLogBatch()}
-    function revertLog(i){const l=historyLog[i];if(!l||(Date.now()-l.end>120000&&!demoActive)||doors[l.door].status!=='empty')return alert("Cannot revert");doors[l.door]={status:'active',start:l.start,id:l.id,account:l.account,type:l.type,unloader:l.unloader,unavailable:false,lastCompletionTime:null,cpuOptions:l.cpuOptions||[],assignments:[{name:l.unloader,start:l.start,end:null}],logId:l.logId};historyLog.splice(i,1);saveDoors();saveHistory();renderDashboard();renderLogs();updateTabBadges()}
+    function revertLog(i){
+        const l=historyLog[i];
+        // REQ5: 10-minute revert grace period (600000ms). l.end is an absolute
+        // timestamp so this survives app reloads and tab switches correctly.
+        if(!l||(Date.now()-l.end>600000&&!demoActive)||doors[l.door].status!=='empty')
+            return alert("Cannot revert -- 10-minute window has passed or bay is occupied.");
+        doors[l.door]={status:'active',start:l.start,id:l.id,account:l.account,type:l.type,unloader:l.unloader,unavailable:false,lastCompletionTime:null,cpuOptions:l.cpuOptions||[],assignments:[{name:l.unloader,start:l.start,end:null}],logId:l.logId};
+        historyLog.splice(i,1);saveDoors();saveHistory();renderDashboard();renderLogs();updateTabBadges();
+    }
     function openEditLogModal(i){const l=historyLog[i];byId('edit-log-index').value=i;byId('edit-input-id').value=l.id;const sel=byId('edit-select-unloader');sel.innerHTML='<option value="">Unassigned</option>';teamNamesSorted.forEach(n=>{const o=document.createElement('option');o.value=n;o.innerText=n;sel.appendChild(o)});sel.value=l.unloader;setEditType(l.type);const opts=l.cpuOptions||[];byId('edit-log-chk-hott').checked=opts.includes('HOTT');byId('edit-log-chk-recycle').checked=opts.includes('RECYCLE');byId('edit-log-chk-gv').checked=opts.includes('GV');byId('edit-completion-hour').value=l.completionHour;byId('edit-log-modal').style.display='flex'}
     function confirmLogEdit(){const i=parseInt(byId('edit-log-index').value),id=byId('edit-input-id').value.toUpperCase(),unl=byId('edit-select-unloader').value,type=byId('edit-log-modal').dataset.type;let cpuOpts=[];if(type==='CPU'){if(byId('edit-log-chk-hott').checked)cpuOpts.push('HOTT');if(byId('edit-log-chk-recycle').checked)cpuOpts.push('RECYCLE');if(byId('edit-log-chk-gv').checked)cpuOpts.push('GV')}const newHour=parseInt(byId('edit-completion-hour').value),{shiftStart}=getShiftTimeWindows(),newEnd=shiftStart.getTime()+(newHour*3600000)-5*60000,start=historyLog[i].start;historyLog[i].id=id;historyLog[i].unloader=unl;historyLog[i].type=type;historyLog[i].cpuOptions=cpuOpts;historyLog[i].end=newEnd;historyLog[i].duration=newEnd-start;historyLog[i].durationMinutes=Math.round(historyLog[i].duration/60000);historyLog[i].completionHour=newHour;historyLog[i].dateKey=dateKeyFromTs(newEnd);historyLog[i].statOffset=0;saveHistory();sendToWebhook(historyLog[i],'end');closeModal('edit-log-modal');renderLogs();renderDashboard();showSaveToast()}
     function openExportModal(){byId('export-modal').style.display='flex'}
@@ -2118,6 +2173,9 @@ v5.06:
     function htFmtTime(date){return date.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}
     function htCalcHours(emp){
         if(emp.status==='cut')return emp.frozenHours;
+        // REQ8: paused employees accumulate no additional time while paused.
+        // frozenHours holds the snapshot taken at pause time.
+        if(emp.status==='paused')return emp.frozenHours||0;
         // REQ4: 'selected' employees are on the roster for DOP but clock not running
         if(emp.status!=='active')return 0;
         return Math.max(0,Date.now()-emp.startTime.getTime())/3600000;
@@ -2262,11 +2320,56 @@ v5.06:
         emp.startTime=emp.customStartStr?htParseHHMM(emp.customStartStr):new Date(hoursState.shiftStartTime);
         htSaveState();htRenderAll();htCheckOverDOP();
     }
+
+    // REQ4: Re-add a cut employee back to active status.
+    // frozenHours is preserved as a starting offset so their prior time is not lost.
+    // A new startTime is set from now (or customStartStr) and hours continue accruing.
+    function htReactivateEmployee(id){
+        if(!hoursState.shiftStarted||hoursState.shiftEnded)return;
+        const emp=hoursState.employees.find(e=>e.id===id);
+        if(!emp||emp.status!=='cut')return;
+        // Keep frozenHours as prior-session credit; restart clock from now
+        emp.status='active';
+        emp.startTime=emp.customStartStr?htParseHHMM(emp.customStartStr):new Date();
+        // frozenHours stays non-zero -- htCalcHours for 'active' adds live time
+        // on top. We offset startTime so total = frozenHours + (now - startTime).
+        // Actually: adjust startTime backwards by frozenHours worth of seconds
+        // so that htCalcHours() returns the correct cumulative total.
+        emp.startTime=new Date(emp.startTime.getTime()-emp.frozenHours*3600000);
+        emp.frozenHours=0; // clear -- now embedded in startTime offset
+        htSaveState();htRenderAll();htCheckOverDOP();
+    }
+
+    // REQ8: Pause an employee's time. Snapshot their hours so far into frozenHours.
+    // While paused, htCalcHours returns frozenHours (clock stopped).
+    function htPauseEmployee(id){
+        const emp=hoursState.employees.find(e=>e.id===id);
+        if(!emp||emp.status!=='active')return;
+        emp.frozenHours=htCalcHours(emp); // snapshot current hours
+        emp.status='paused';
+        htSaveState();htRenderAll();
+    }
+
+    // REQ8: Resume a paused employee. Adjust startTime so accumulated hours
+    // continue from where they left off without losing the paused-period snapshot.
+    function htResumeEmployee(id){
+        const emp=hoursState.employees.find(e=>e.id===id);
+        if(!emp||emp.status!=='paused')return;
+        // Set startTime such that Date.now() - startTime = frozenHours exactly,
+        // so future htCalcHours() calls continue growing from the frozen value.
+        emp.startTime=new Date(Date.now()-emp.frozenHours*3600000);
+        emp.frozenHours=0;
+        emp.status='active';
+        htSaveState();htRenderAll();htCheckOverDOP();
+    }
+
     function htCutEmployee(id){
         const emp=hoursState.employees.find(e=>e.id===id);
         // REQ4: can deselect 'selected' employees (returns them to inactive)
         if(!emp)return;
         if(emp.status==='selected'){emp.status='inactive';emp.manualRole=null;htSaveState();htRenderAll();return;}
+        // REQ8: can cut a paused employee (keeps frozenHours as final value)
+        if(emp.status==='paused'){emp.status='cut';htSaveState();htRenderAll();return;}
         if(emp.status!=='active')return;
         emp.frozenHours=htCalcHours(emp);emp.status='cut';emp.manualRole=null;
         htSaveState();
@@ -2298,7 +2401,21 @@ v5.06:
         const val=document.getElementById('ht-custom-time').value;
         if(!val)return;
         const emp=hoursState.employees.find(e=>e.id===hoursState.pendingTimeId);
-        if(emp){emp.customStartStr=val;if(emp.status==='active')emp.startTime=htParseHHMM(val);htSaveState();}
+        if(emp){
+            emp.customStartStr=val;
+            if(emp.status==='active'){
+                emp.startTime=htParseHHMM(val);
+            }else if(emp.status==='cut'||emp.status==='paused'){
+                // REQ4: editing cut/paused time recalculates frozenHours based on
+                // the new start time and the existing end (now for paused, or
+                // keep frozenHours as override). We treat the entered time as a
+                // direct hours-total override for simplicity and accuracy.
+                // Parse as a start time and compute hours to present moment.
+                const newStart=htParseHHMM(val);
+                emp.frozenHours=Math.max(0,Date.now()-newStart.getTime())/3600000;
+            }
+            htSaveState();
+        }
         htCloseModal('ht-time-modal');hoursState.pendingTimeId=null;htRenderAll();
     }
 
@@ -2397,7 +2514,7 @@ v5.06:
     // and the belt slot is open (normal rank-based behavior).
     function htAssignRoles(){
         // REQ4: selected + active + cut all participate in role assignment
-        const engaged=hoursState.employees.filter(e=>e.status==='active'||e.status==='cut'||e.status==='selected');
+        const engaged=hoursState.employees.filter(e=>e.status==='active'||e.status==='cut'||e.status==='selected'||e.status==='paused');
         const bulkMax=2,unloadMax=hoursState.dopConfig;
         const sorted=[...engaged].sort((a,b)=>{
             const diff=htCalcHours(b)-htCalcHours(a);
@@ -2454,7 +2571,7 @@ v5.06:
     // REQ4: 'selected' employees count toward DOP even though their clock
     // is not running. They are treated as if active for staffing purposes.
     function htCalcDOP(){
-        const active=hoursState.employees.filter(e=>e.status==='active'||e.status==='selected');
+        const active=hoursState.employees.filter(e=>e.status==='active'||e.status==='selected'||e.status==='paused');
         if(!active.length)return{dopState:'none',label:'NO ACTIVE STAFF',
             sub:'Select or start employees to evaluate DOP',unloaderCount:0,bulkCount:0,
             targetUnloaders:hoursState.dopConfig,delta:0};
@@ -2492,8 +2609,19 @@ v5.06:
         if(!bar)return;
         bar.className='ht-dop-bar state-'+d.dopState;
         document.getElementById('ht-dop-icon').textContent=HT_DOP_ICON_MAP[d.dopState];
-        document.getElementById('ht-dop-label').textContent=d.label;
-        document.getElementById('ht-dop-sub').textContent=d.sub;
+        // REQ6: simplified label -- show 'U/2' ratio instead of verbose text
+        // when DOP is met or staffed; keep descriptive text only for low/over/none.
+        let simplifiedLabel=d.label;
+        if(d.dopState==='met'){
+            // e.g. '6/2' meaning 6 unloaders / 2 bulk (the defining DOP numbers)
+            simplifiedLabel=d.targetUnloaders+'/2';
+        }else if(d.dopState==='low'||d.dopState==='over'){
+            simplifiedLabel=d.unloaderCount+'/'+d.targetUnloaders;
+        }
+        document.getElementById('ht-dop-label').textContent=simplifiedLabel;
+        // REQ6: hide sub-text -- the chip counts already show the breakdown
+        const subEl=document.getElementById('ht-dop-sub');
+        if(subEl)subEl.textContent='';
         const counts=document.getElementById('ht-dop-counts');
         counts.innerHTML=d.dopState!=='none'?
             '<div class="ht-count-chip">\u26a1 1</div>'+
@@ -2501,7 +2629,7 @@ v5.06:
             '<div class="ht-count-chip">\ud83d\udce6 '+d.unloaderCount+'/'+d.targetUnloaders+'</div>':'';
     }
 
-    // -- Render KPI (count x elapsed) ----------------------
+    // -- Render KPI (sum of individual hours per role, including cut employees) ---
     function htRenderKPI(){
         if(!hoursState.shiftStarted||!hoursState.shiftStartTime){
             ['ht-kpi-belt','ht-kpi-bulk','ht-kpi-unload'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='0.00';});
@@ -2509,15 +2637,22 @@ v5.06:
             if(bs)bs.textContent='hrs \u00b7 0 people';if(us)us.textContent='hrs \u00b7 0 people';
             return;
         }
-        const elapsed=htShiftElapsed();
-        const active=hoursState.employees.filter(e=>e.status==='active');
-        const beltN=active.filter(e=>e.role==='belt').length;
-        const bulkN=active.filter(e=>e.role==='bulk').length;
-        const unloadN=active.filter(e=>e.role==='unload').length;
+        // REQ3: KPI includes cut (and paused) employees so their labor is never lost.
+        // Sum individual htCalcHours() per role rather than count*elapsed, which is
+        // more accurate (employees started at different times, cut at different times).
+        const contributors=hoursState.employees.filter(e=>
+            e.status==='active'||e.status==='cut'||e.status==='paused');
         const setEl=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
-        setEl('ht-kpi-belt',htFmtHrs(beltN*elapsed));
-        setEl('ht-kpi-bulk',htFmtHrs(bulkN*elapsed));
-        setEl('ht-kpi-unload',htFmtHrs(unloadN*elapsed));
+        let beltHrs=0,bulkHrs=0,unloadHrs=0,bulkN=0,unloadN=0;
+        contributors.forEach(e=>{
+            const h=htCalcHours(e);
+            if(e.role==='belt')beltHrs+=h;
+            else if(e.role==='bulk'){bulkHrs+=h;bulkN++;}
+            else if(e.role==='unload'){unloadHrs+=h;unloadN++;}
+        });
+        setEl('ht-kpi-belt',htFmtHrs(beltHrs));
+        setEl('ht-kpi-bulk',htFmtHrs(bulkHrs));
+        setEl('ht-kpi-unload',htFmtHrs(unloadHrs));
         setEl('ht-kpi-bulk-sub','hrs \u00b7 '+bulkN+' people');
         setEl('ht-kpi-unload-sub','hrs \u00b7 '+unloadN+' people');
     }
@@ -2529,8 +2664,9 @@ v5.06:
         const isBeltDefault=emp.name===HT_BELT_DEFAULT&&emp.role==='belt'&&!emp.manualRole;
         const rowCls=['ht-emp-row',
             emp.status==='active'?'ht-active':'',
-            emp.status==='selected'?'ht-selected':'',  // REQ4: selected visual state
+            emp.status==='selected'?'ht-selected':'',
             emp.status==='cut'?'ht-cut':'',
+            emp.status==='paused'?'ht-paused':'',
             emp.role?'ht-role-'+emp.role:'',
             (emp.status!=='inactive')?'ht-clickable':''].filter(Boolean).join(' ');
         const rankTxt=emp.status!=='inactive'?rank+1:'--';
@@ -2540,22 +2676,18 @@ v5.06:
         if(emp.manualRole)meta+='<span class="ht-tag-manual">\ud83d\udccc Pinned</span>';
         else if(isBeltDefault)meta+='<span class="ht-tag-manual">\u2605 Default Belt</span>';
         if(startTs)meta+='<span class="ht-emp-ts">'+startTs+'</span>';
+        if(emp.status==='paused')meta+='<span class="ht-tag-manual" style="background:#ff9500;color:#fff;">PAUSED</span>';
         const hrsHTML=emp.status!=='inactive'
             ?'<div class="ht-hrs">'+htFmtHrs(hrs)+'</div><div class="ht-hrs-lbl">hrs</div>'
             :'<div class="ht-hrs" style="color:var(--text-muted);font-size:18px;">--</div>';
         const rowClick=emp.status!=='inactive'?'onclick="htOpenRoleModal('+emp.id+',event)"':'';
         let actHTML='';
         if(emp.status==='inactive'){
-            const ctLbl=emp.customStartStr||'Set Time';
-            // REQ4: Two buttons -- Select (DOP only) and Start (clock+DOP)
             actHTML='<div class="ht-actions">'+
                 '<button class="ht-btn ht-btn-select" onclick="htSelectEmployee('+emp.id+');event.stopPropagation()">Select</button>'+
                 '<button class="ht-btn ht-btn-start" onclick="htActivateEmployee('+emp.id+');event.stopPropagation()">Start</button>'+
                 '</div>';
         }else if(emp.status==='selected'){
-            // REQ4: selected -- counts for DOP, clock not running
-            // REQ5: selected employees can also set a custom start time so their
-            // clock begins at the right moment when they are activated via Start.
             const ctLbl=emp.customStartStr||'Set Time';
             actHTML='<div class="ht-actions">'+
                 '<button class="ht-btn ht-btn-start" onclick="htActivateEmployee('+emp.id+');event.stopPropagation()">Start</button>'+
@@ -2566,14 +2698,24 @@ v5.06:
             const ts=emp.startTime?htFmtTime(emp.startTime):'Edit';
             actHTML='<div class="ht-actions">'+
                 '<button class="ht-btn ht-btn-cut" onclick="htCutEmployee('+emp.id+');event.stopPropagation()">Cut</button>'+
+                '<button class="ht-btn ht-btn-pause" onclick="htPauseEmployee('+emp.id+');event.stopPropagation()">Pause</button>'+
                 '<button class="ht-btn ht-btn-time" onclick="htOpenCustomTime('+emp.id+');event.stopPropagation()">'+ts+'</button>'+
                 '</div>';
+        }else if(emp.status==='paused'){
+            actHTML='<div class="ht-actions">'+
+                '<button class="ht-btn ht-btn-start" onclick="htResumeEmployee('+emp.id+');event.stopPropagation()">Resume</button>'+
+                '<button class="ht-btn ht-btn-cut" onclick="htCutEmployee('+emp.id+');event.stopPropagation()">Cut</button>'+
+                '</div>';
         }else{
-            actHTML='<div class="ht-actions"><div class="ht-cut-label">CUT</div></div>';
+            // REQ4: cut employees -- Re-add button and time-edit for hours adjustment
+            actHTML='<div class="ht-actions">'+
+                '<button class="ht-btn ht-btn-start" onclick="htReactivateEmployee('+emp.id+');event.stopPropagation()">Re-add</button>'+
+                '<button class="ht-btn ht-btn-time" onclick="htOpenCustomTime('+emp.id+');event.stopPropagation()">'+htFmtHrs(hrs)+'h</button>'+
+                '</div>';
         }
         return'<div class="'+rowCls+'" id="ht-row-'+emp.id+'" '+rowClick+'>'+
             '<div class="ht-rank">'+rankTxt+'</div>'+
-            '<div class="ht-role-icon">'+( roleCfg?roleCfg.icon:'\u00b7')+'</div>'+
+            '<div class="ht-role-icon">'+(roleCfg?roleCfg.icon:'\u00b7')+'</div>'+
             '<div class="ht-emp-info">'+
                 '<div class="ht-emp-name">'+emp.name+'</div>'+
                 '<div class="ht-emp-meta">'+meta+'</div>'+
@@ -2586,11 +2728,10 @@ v5.06:
     // -- Full render ---------------------------------------
     function htRenderAll(){
         htAssignRoles();
-        htRefreshStartDisplay(); // CHANGE 1: keep start-time display synced on every render
+        htRefreshStartDisplay();
         const btn=document.getElementById('ht-shift-btn');
-        const inp=null; // CHANGE 1: ht-time-input removed; was used to disable during shift
+        const inp=null;
         const pill=document.getElementById('ht-live-pill');
-        // REQ1: Mirror Wally's shift state
         const wallyLive=(typeof shiftState!=='undefined')&&(shiftState==='live'||shiftState==='demo');
         if(!hoursState.shiftStarted||(!hoursState.shiftStarted&&wallyLive)){
             if(btn){btn.textContent='Begin';btn.className='ht-shift-btn idle';}
@@ -2609,29 +2750,57 @@ v5.06:
         if(endBanner)endBanner.classList.toggle('show',hoursState.shiftEnded);
         const dopInfo=htCalcDOP();
         htRenderDOPBar(dopInfo);htRenderKPI();
-        // FIX 1: 'selected' employees must appear in the Active section, not the Roster.
-        // Previously the filter only included active/cut, so selected employees fell
-        // through to inactList and were rendered with Select/Start buttons -- making
-        // them appear invisible/unassigned even though they counted for DOP.
-        const engaged=hoursState.employees.filter(e=>e.status==='active'||e.status==='cut'||e.status==='selected');
+
+        // REQ7: Split engaged into active/paused/selected (clock running or DOP-only)
+        // vs cut (finished, kept for KPI history). Each gets its own section.
+        const activeGroup=hoursState.employees.filter(e=>e.status==='active'||e.status==='selected'||e.status==='paused');
+        const cutGroup=hoursState.employees.filter(e=>e.status==='cut');
         const inactive=hoursState.employees.filter(e=>e.status==='inactive');
         const ROLE_ORDER={belt:0,bulk:1,unload:2};
-        const sortedEngaged=[...engaged].sort((a,b)=>{
-            const ra=ROLE_ORDER[a.role]??3,rb=ROLE_ORDER[b.role]??3;
-            if(ra!==rb)return ra-rb;
-            const diff=htCalcHours(b)-htCalcHours(a);
-            if(Math.abs(diff)>0.0001)return diff;
-            if(a.startTime&&b.startTime)return a.startTime-b.startTime;
-            return 0;
-        });
+        function sortByRole(arr){
+            return [...arr].sort((a,b)=>{
+                const ra=ROLE_ORDER[a.role]??3,rb=ROLE_ORDER[b.role]??3;
+                if(ra!==rb)return ra-rb;
+                const diff=htCalcHours(b)-htCalcHours(a);
+                if(Math.abs(diff)>0.0001)return diff;
+                if(a.startTime&&b.startTime)return a.startTime-b.startTime;
+                return 0;
+            });
+        }
         const actSect=document.getElementById('ht-active-section');
-        if(actSect)actSect.style.display=engaged.length?'flex':'none';
+        if(actSect)actSect.style.display=activeGroup.length?'flex':'none';
         const actList=document.getElementById('ht-active-list');
-        if(actList)actList.innerHTML=sortedEngaged.map((e,i)=>htRenderRow(e,i)).join('');
-        const inactList=document.getElementById('ht-inactive-list');
-        if(inactList)inactList.innerHTML=inactive.map(e=>htRenderRow(e,-1)).join('');
+        if(actList)actList.innerHTML=sortByRole(activeGroup).map((e,i)=>htRenderRow(e,i)).join('');
+
+        // REQ7: Cut section -- visible only when there are cut employees
+        const cutSect=document.getElementById('ht-cut-section');
+        if(cutSect)cutSect.style.display=cutGroup.length?'flex':'none';
+        const cutList=document.getElementById('ht-cut-list');
+        if(cutList)cutList.innerHTML=sortByRole(cutGroup).map((e,i)=>htRenderRow(e,i)).join('');
+
+        // REQ1: Roster section -- auto-collapse when DOP is met
+        // hoursState.rosterCollapsed is toggled by htToggleRoster(); defaults
+        // to collapsed once DOP is satisfied for the first time this session.
+        if(dopInfo.dopState==='met'&&hoursState.rosterCollapsed===undefined){
+            hoursState.rosterCollapsed=true;
+        }
+        const rosterBody=document.getElementById('ht-inactive-list');
+        const rosterAdd=document.querySelector('.ht-add-row');
+        const rosterToggle=document.getElementById('ht-roster-toggle');
+        const collapsed=!!hoursState.rosterCollapsed;
+        if(rosterBody)rosterBody.style.display=collapsed?'none':'';
+        if(rosterAdd)rosterAdd.style.display=collapsed?'none':'';
+        if(rosterToggle)rosterToggle.textContent=collapsed?'SHOW':'HIDE';
+        if(rosterBody&&!collapsed)rosterBody.innerHTML=inactive.map(e=>htRenderRow(e,-1)).join('');
+
         hoursState.employees.forEach(e=>{e.prevRole=e.role;});
         htCheckOverDOP();
+    }
+
+    // REQ1: Toggle roster visibility and persist state
+    function htToggleRoster(){
+        hoursState.rosterCollapsed=!hoursState.rosterCollapsed;
+        htSaveState();htRenderAll();
     }
 
     // -- Tick ---------------------------------------------
