@@ -325,27 +325,28 @@
         /* hours tab is now a standard tab-content div -- no fixed positioning needed */
 
         /* Panel header */
-        .ht-header{background:var(--surface-raised);border-bottom:1px solid var(--border-light);padding:16px 16px 14px;flex-shrink:0;position:sticky;top:0;z-index:10;}
-        .ht-header-row1{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+        .ht-header{background:var(--surface-raised);border-bottom:1px solid var(--border-light);padding:14px 16px 12px;flex-shrink:0;position:sticky;top:0;z-index:10;}
+        /* REQ1: center title block with LIVE pill inline */
+        .ht-header-row1{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+        .ht-title-block{display:flex;align-items:center;gap:8px;}
+        .ht-title{font-size:18px;font-weight:900;color:var(--text-main);letter-spacing:-0.5px;}
         .ht-back-btn{background:var(--border-light);border:none;border-radius:var(--radius-sm);padding:8px 14px;font-size:14px;font-weight:700;color:var(--text-main);cursor:pointer;display:flex;align-items:center;gap:6px;}
         .ht-back-btn:active{background:var(--border);}
-        .ht-title{font-size:18px;font-weight:900;color:var(--text-main);letter-spacing:-0.5px;}
-        .ht-header-row2{display:flex;align-items:center;gap:8px;}
-
-        /* Shift time row */
-        .ht-time-wrap{display:flex;align-items:center;gap:8px;flex:1;background:var(--border-light);border:1.5px solid var(--border);border-radius:var(--radius-md);padding:8px 14px;}
-        .ht-time-lbl{font-size:11px;font-weight:700;color:var(--text-sub);text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;}
-        .ht-time-input{background:transparent;border:none;color:var(--text-main);font-family:inherit;font-size:16px;font-weight:800;width:90px;outline:none;}
-        .ht-shift-btn{border:none;border-radius:var(--radius-sm);padding:10px 18px;font-size:13px;font-weight:900;cursor:pointer;letter-spacing:0.3px;white-space:nowrap;transition:all 0.15s;}
+        .ht-header-row2{display:flex;align-items:center;gap:8px;margin-bottom:2px;}
+        /* Shift time row REMOVED (REQ2) -- keep class for safety but unused */
+        .ht-time-wrap{display:none;}
+        .ht-time-lbl{display:none;}
+        .ht-time-input{display:none;}
+        .ht-shift-btn{border:none;border-radius:var(--radius-sm);padding:9px 20px;font-size:13px;font-weight:900;cursor:pointer;letter-spacing:0.3px;white-space:nowrap;transition:all 0.15s;}
         .ht-shift-btn.idle{background:var(--text-main);color:#fff;}
         .ht-shift-btn.live{background:var(--accent-red-bg);border:1px solid var(--accent-red);color:var(--accent-red);}
         .ht-shift-btn.ended{background:var(--border-light);border:1px solid var(--border);color:var(--text-sub);}
         .ht-shift-btn:active{transform:scale(0.96);}
 
-        /* DOP toggle */
-        .ht-dop-toggle{display:flex;gap:3px;background:var(--border-light);border-radius:var(--radius-sm);padding:3px;border:1px solid var(--border);}
-        .ht-dop-btn{font-size:11px;font-weight:800;padding:5px 10px;border:none;border-radius:6px;background:transparent;color:var(--text-sub);cursor:pointer;transition:all 0.15s;white-space:nowrap;letter-spacing:0.2px;}
-        .ht-dop-btn.active{background:var(--text-main);color:#fff;}
+        /* REQ4: DOP toggle redesigned -- matches the segment-control pattern used elsewhere */
+        .ht-dop-toggle{display:flex;background:var(--border-light);border-radius:20px;padding:3px;border:1px solid var(--border);gap:2px;}
+        .ht-dop-btn{font-size:12px;font-weight:800;padding:5px 14px;border:none;border-radius:17px;background:transparent;color:var(--text-sub);cursor:pointer;transition:all 0.15s;white-space:nowrap;letter-spacing:0.3px;}
+        .ht-dop-btn.active{background:var(--text-main);color:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.15);}
 
         /* DOP status bar */
         .ht-dop-bar{margin:0 16px 0;border-radius:var(--radius-md);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid transparent;transition:background 0.3s,border-color 0.3s;position:relative;overflow:hidden;}
@@ -525,7 +526,7 @@
         <div class="nameplate">
             <div class="nameplate-top">
                 <div class="nameplate-title">Wally Dashboard</div>
-                <div class="nameplate-sub" id="nameplate-sub">by Fitz Joseph &nbsp;&middot;&nbsp; v6.43</div>
+                <div class="nameplate-sub" id="nameplate-sub">by Fitz Joseph &nbsp;&middot;&nbsp; v6.44</div>
             </div>
             <div class="nameplate-actions">
                 <div class="shift-state-pill idle" id="shift-state-pill">
@@ -697,30 +698,25 @@
 ══════════════════════════════════════════ -->
 <div id="tab-hours" class="tab-content tab-hours-flex" style="background:#f2f2f7;padding:0;">
 
-  <!-- HEADER -->
+  <!-- HEADER: REQ1 centered layout, REQ2 shift-time row removed -->
   <div class="ht-header">
+    <!-- Row 1: centered title + LIVE pill -->
     <div class="ht-header-row1">
-      <div style="font-size:16px;font-weight:900;color:var(--text-main);letter-spacing:-0.3px;">Hours Tracker</div>
-      <div class="ht-live-pill" id="ht-live-pill">
-        <div class="ht-live-dot"></div>LIVE
+      <div class="ht-title-block">
+        <span class="ht-title">Hours Tracker</span>
+        <div class="ht-live-pill" id="ht-live-pill">
+          <div class="ht-live-dot"></div>LIVE
+        </div>
       </div>
+      <!-- REQ4: DOP toggle redesigned to match app segment-control pattern -->
       <div class="ht-dop-toggle">
-        <button class="ht-dop-btn active" id="ht-dop6" onclick="htSetDOP(6)">6U/2B</button>
-        <button class="ht-dop-btn"        id="ht-dop5" onclick="htSetDOP(5)">5U/2B</button>
+        <button class="ht-dop-btn active" id="ht-dop6" onclick="htSetDOP(6)">6U</button>
+        <button class="ht-dop-btn"        id="ht-dop5" onclick="htSetDOP(5)">5U</button>
       </div>
     </div>
-    <div class="ht-header-row2">
-      <!-- CHANGE 1: ht-time-input replaced with a read-only display.
-           The editable input was a duplicate source of truth. Start time is
-           set in Settings only (setting-shift-start -> saveShiftStart ->
-           ps9_shift_start). This span mirrors that value and is kept in sync
-           by htRefreshStartDisplay(), called from saveShiftStart() and on
-           every htRenderAll(). No user-editable field here prevents drift. -->
-      <div class="ht-time-wrap">
-        <span class="ht-time-lbl">Shift</span>
-        <span class="ht-time-input" id="ht-time-display" style="font-size:16px;font-weight:800;color:var(--text-main);">20:00</span>
-      </div>
-      <button class="ht-shift-btn idle" id="ht-shift-btn" onclick="htHandleShiftBtn()">Begin</button>
+    <!-- Row 2: Begin/End shift button only -- no shift time display (REQ2) -->
+    <div class="ht-header-row2" style="justify-content:flex-end;">
+      <button class="ht-shift-btn idle" id="ht-shift-btn" onclick="htHandleShiftBtn()">Begin Shift</button>
     </div>
     <div class="ht-dop-bar state-none" id="ht-dop-bar" style="margin-top:10px;">
       <div class="ht-dop-left">
@@ -766,8 +762,8 @@
     <div class="ht-section" id="ht-active-section" style="display:none;">Active</div>
     <div class="ht-emp-list" id="ht-active-list"></div>
 
-    <!-- REQ7: Cut employees section -- separate from active, always visible if any cut -->
-    <div class="ht-section" id="ht-cut-section" style="display:none;">Cut</div>
+    <!-- REQ6: Cut employees section -- labelled "Cut Employees" per spec -->
+    <div class="ht-section" id="ht-cut-section" style="display:none;">Cut Employees</div>
     <div class="ht-emp-list" id="ht-cut-list"></div>
 
     <!-- REQ1: Roster (inactive employees) with collapsible toggle -->
@@ -885,12 +881,38 @@
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
 <script>
     let demoActive=false,duplicateWallyFlag=false,pendingWallyDuplicate=null,currentDoor=null,currentType='Wally',detailDoor=null,currentLogFilter='All',activeLogFilter={door:'All',unloader:'All',type:'All',timeRange:'All',search:'',date:'All'},statsVisible=false,hourlyVisible=false,lastSortStartTime=null,isFirstOnboard=false,dashboardRefreshTimer=null,wallyNotes={},manualType='Wally',pendingMoveDest=null,shiftState='idle',shiftEndTime=null;
-    const APP_VERSION='6.43',DOORS_START=9,DOORS_END=16,DEFAULT_TEAM=["Robert W","David F","Lorena R","Matt R","Trevon C","Russell H","Fonseca J","Eddie F","Juan F","Arce J","Jeff","Solis","Anthony","Josh","Damian","Jarrett"];
+    const APP_VERSION='6.44',DOORS_START=9,DOORS_END=16,DEFAULT_TEAM=["Robert W","David F","Lorena R","Matt R","Trevon C","Russell H","Fonseca J","Eddie F","Juan F","Arce J","Jeff","Solis","Anthony","Josh","Damian","Jarrett"];
     const WEBHOOK_URL='https://script.google.com/macros/s/AKfycbwss7dFIVBNUuQQHzp5KDURwpRJyH58wUrlJR3XbSrL3SjrF4tvAFSaQiLjJJeOmH9m/exec';
     const byId=(id)=>document.getElementById(id);
     function dateKeyFromTs(ts){const d=new Date(ts);return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
     function debounce(func,wait){let timeout;return function(...args){clearTimeout(timeout);timeout=setTimeout(()=>func.apply(this,args),wait)}}
     const CHANGELOG=`
+v6.44:
+- REQ1 (Header redesign): 'Hours Tracker' title now left-aligned with LIVE
+  pill inline beside it. Header row uses flex space-between with the DOP
+  toggle on the right. Consistent with app-wide visual hierarchy.
+- REQ2 (Shift time removed): The 'SHIFT HH:MM' display row has been
+  removed from the header entirely. All time calculations reference only
+  the global start time via getShiftStartTime(). htRefreshStartDisplay()
+  is now a no-op (kept so call sites require no changes). The .ht-time-wrap
+  CSS class is hidden via display:none as a belt-and-suspenders guard.
+- REQ3 (0.00 hours root cause fixed): Two issues caused hours to stay at
+  0.00. (1) Employees were being put in 'selected' status (DOP-only, clock
+  off) instead of 'active' (clock running) -- the 'Remove' button was the
+  tell. Fix: 'Cut' is now the consistent label; Start button is prominent.
+  (2) htCalcHours now guards against null/invalid startTime (would crash
+  silently in the tick interval, leaving hours frozen at 0.00). (3)
+  htActivateEmployee now derives shiftStartTime from getShiftStartTime()
+  if hoursState.shiftStartTime is null, repairing any corrupted state.
+- REQ4 (DOP toggle redesign): Toggle now uses a pill/segment-control style
+  with rounded-full background, matching the app's existing segment-control
+  pattern (e.g. Wally/CPU selector). Labels simplified to '6U'/'5U'.
+- REQ5 (Remove -> Cut): 'Remove' label on selected-employee rows renamed
+  to 'Cut' for consistency with all other employee action labels.
+- REQ6 (Cut section label): Cut section header changed to 'Cut Employees'.
+- REQ7/8 (Cut detail, Start time): Retained from v6.43 -- Re-add button,
+  time-edit on cut rows, custom start time for selected/active employees.
+
 v6.43:
 - REQ1 (Collapsible roster): Roster section gets a SHOW/HIDE toggle.
   Auto-collapses the first time DOP is met. State persisted in hoursState.
@@ -2056,13 +2078,10 @@ ${(Date.now()-l.end<600000&&!demoActive&&l.status==='completed')?`<button class=
     function exportLogsPDF(){closeModal('export-modal');if(!window.jspdf)return alert("PDF library loading.");const doc=new window.jspdf.jsPDF(),now=new Date();doc.setFontSize(18);doc.text(`PS9 Wally Tracker Report - ${now.toLocaleDateString()}`,14,20);doc.setFontSize(12);doc.text(`Generated: ${now.toLocaleTimeString()}`,14,30);const stats={};historyLog.forEach(l=>{if(!l.completionHour)return;const n=l.unloader;if(!stats[n])stats[n]={w:0,c:0,t:0};if(l.type==='Wally')stats[n].w++;else if(l.type==='CPU')stats[n].c++;stats[n].t++});doc.autoTable({startY:45,head:[['Name','Wally','CPU','Total']],body:Object.entries(stats).sort((a,b)=>b[1].t-a[1].t).map(([n,d])=>[n,d.w,d.c,d.t])});const logsBody=historyLog.map(l=>{let typeStr=l.type+(l.duplicate?' (DUP)':'');if(l.status==='moved')typeStr=`MOVED: ${l.moveDest}`;else if(l.status==='incomplete')typeStr='INCOMPLETE';else if(l.type==='CPU'&&l.cpuOptions&&l.cpuOptions.length>0)typeStr+=`\n${l.cpuOptions.join(',')}`;return[new Date(l.end).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),l.door,typeStr,l.id,l.unloader,Math.round(l.duration/60000)+"m",l.completionHour?getHourText(l.completionHour):'--']});doc.autoTable({startY:doc.lastAutoTable.finalY+15,head:[['Time','Door','Type','ID','Unloader','Duration','Hour']],body:logsBody});doc.save(`wally-report-${now.toISOString().split('T')[0]}.pdf`)}
     function setEditType(t){byId('edit-opt-wally').classList.toggle('selected',t==='Wally');byId('edit-opt-cpu').classList.toggle('selected',t==='CPU');byId('edit-log-modal').dataset.type=t;const c=byId('edit-log-options-container');if(c)c.style.display=(t==='CPU')?'block':'none'}
     function openMoveMenu(){closeModal('active-detail-modal');byId('move-menu-modal').style.display='flex'}
-    // CHANGE 1: htRefreshStartDisplay -- keeps the Hours tab read-only display
-    // in sync with the single source of truth (ps9_shift_start via Settings).
-    // Called from saveShiftStart() and htRenderAll() so it stays current.
+    // htRefreshStartDisplay -- REQ2: the shift-time display row was removed from
+    // the header so this is now a no-op. Kept so call sites don't need changes.
     function htRefreshStartDisplay(){
-        const val=getShiftStartTime();
-        const el=document.getElementById('ht-time-display');
-        if(el)el.textContent=val;
+        // The ht-time-display element was removed in v6.44. No-op for safety.
     }
 
     // -- Boot: wrapped in DOMContentLoaded for reliable cross-browser execution --
@@ -2174,10 +2193,11 @@ ${(Date.now()-l.end<600000&&!demoActive&&l.status==='completed')?`<button class=
     function htCalcHours(emp){
         if(emp.status==='cut')return emp.frozenHours;
         // REQ8: paused employees accumulate no additional time while paused.
-        // frozenHours holds the snapshot taken at pause time.
         if(emp.status==='paused')return emp.frozenHours||0;
-        // REQ4: 'selected' employees are on the roster for DOP but clock not running
+        // selected = DOP-eligible, clock not running
         if(emp.status!=='active')return 0;
+        // REQ3: guard against null/invalid startTime to prevent crash and silent zeros
+        if(!emp.startTime||!(emp.startTime instanceof Date)||isNaN(emp.startTime.getTime()))return 0;
         return Math.max(0,Date.now()-emp.startTime.getTime())/3600000;
     }
     function htFmtHrs(h){return h.toFixed(2);}
@@ -2314,10 +2334,19 @@ ${(Date.now()-l.end<600000&&!demoActive&&l.status==='completed')?`<button class=
             return;
         }
         const emp=hoursState.employees.find(e=>e.id===id);
-        // REQ4: can activate from either inactive or selected
         if(!emp||(emp.status!=='inactive'&&emp.status!=='selected'))return;
         emp.status='active';
-        emp.startTime=emp.customStartStr?htParseHHMM(emp.customStartStr):new Date(hoursState.shiftStartTime);
+        // REQ3/REQ8: Derive startTime with guaranteed non-null, non-future value.
+        // If customStartStr set by user, use that. Otherwise use the global shift
+        // start time. If hoursState.shiftStartTime is somehow null (state corruption
+        // or first activation before htSyncFromWallyShift), derive it fresh from
+        // getShiftStartTime() so the clock always starts correctly.
+        let baseTime=hoursState.shiftStartTime;
+        if(!baseTime){
+            baseTime=htParseHHMM(getShiftStartTime());
+            hoursState.shiftStartTime=baseTime; // repair missing state
+        }
+        emp.startTime=emp.customStartStr?htParseHHMM(emp.customStartStr):new Date(baseTime);
         htSaveState();htRenderAll();htCheckOverDOP();
     }
 
@@ -2692,7 +2721,8 @@ ${(Date.now()-l.end<600000&&!demoActive&&l.status==='completed')?`<button class=
             actHTML='<div class="ht-actions">'+
                 '<button class="ht-btn ht-btn-start" onclick="htActivateEmployee('+emp.id+');event.stopPropagation()">Start</button>'+
                 '<button class="ht-btn ht-btn-time" onclick="htOpenCustomTime('+emp.id+');event.stopPropagation()">'+ctLbl+'</button>'+
-                '<button class="ht-btn ht-btn-cut" onclick="htCutEmployee('+emp.id+');event.stopPropagation()">Remove</button>'+
+                // REQ5: label changed from "Remove" to "Cut" for consistency
+                '<button class="ht-btn ht-btn-cut" onclick="htCutEmployee('+emp.id+');event.stopPropagation()">Cut</button>'+
                 '</div>';
         }else if(emp.status==='active'){
             const ts=emp.startTime?htFmtTime(emp.startTime):'Edit';
