@@ -522,7 +522,7 @@
         <div class="nameplate">
             <div class="nameplate-top">
                 <div class="nameplate-title">Wally Dashboard</div>
-                <div class="nameplate-sub" id="nameplate-sub">by Fitz Joseph &nbsp;&middot;&nbsp; v6.40</div>
+                <div class="nameplate-sub" id="nameplate-sub">by Fitz Joseph &nbsp;&middot;&nbsp; v6.41</div>
             </div>
             <div class="nameplate-actions">
                 <div class="shift-state-pill idle" id="shift-state-pill">
@@ -875,12 +875,31 @@
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
 <script>
     let demoActive=false,duplicateWallyFlag=false,pendingWallyDuplicate=null,currentDoor=null,currentType='Wally',detailDoor=null,currentLogFilter='All',activeLogFilter={door:'All',unloader:'All',type:'All',timeRange:'All',search:'',date:'All'},statsVisible=false,hourlyVisible=false,lastSortStartTime=null,isFirstOnboard=false,dashboardRefreshTimer=null,wallyNotes={},manualType='Wally',pendingMoveDest=null,shiftState='idle',shiftEndTime=null;
-    const APP_VERSION='6.40',DOORS_START=9,DOORS_END=16,DEFAULT_TEAM=["Robert W","David F","Lorena R","Matt R","Trevon C","Russell H","Fonseca J","Eddie F","Juan F","Arce J","Jeff","Solis","Anthony","Josh","Damian","Jarrett"];
+    const APP_VERSION='6.41',DOORS_START=9,DOORS_END=16,DEFAULT_TEAM=["Robert W","David F","Lorena R","Matt R","Trevon C","Russell H","Fonseca J","Eddie F","Juan F","Arce J","Jeff","Solis","Anthony","Josh","Damian","Jarrett"];
     const WEBHOOK_URL='https://script.google.com/macros/s/AKfycbwss7dFIVBNUuQQHzp5KDURwpRJyH58wUrlJR3XbSrL3SjrF4tvAFSaQiLjJJeOmH9m/exec';
     const byId=(id)=>document.getElementById(id);
     function dateKeyFromTs(ts){const d=new Date(ts);return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
     function debounce(func,wait){let timeout;return function(...args){clearTimeout(timeout);timeout=setTimeout(()=>func.apply(this,args),wait)}}
     const CHANGELOG=`
+v6.41:
+- FIX 1 (Employee visibility): 'selected' employees were excluded from the
+  'engaged' filter in htRenderAll(), causing them to fall through to the
+  inactive Roster list and render with Select/Start buttons instead of
+  appearing in the Active section with their role assignment. The filter
+  now includes status==='selected' alongside active and cut, matching the
+  same filter already used in htAssignRoles() and htCalcDOP(). Selected
+  employees now always appear under their assigned role in the Active
+  section and remain visible across all interactions.
+- FIX 2 (Zero-hour bug / start time rollover): htParseHHMM() always set
+  the date to today, so an evening shift time (e.g. 16:00) reviewed the
+  following morning produced a future timestamp. Math.max(0,...) in
+  htCalcHours() and htShiftElapsed() clamped the negative difference to
+  zero, making all hours read 0.00 despite active staffing and DOP met.
+  Fix: after setting hours/minutes, if the resulting Date is more than
+  60 seconds in the future, roll back by one day. This correctly handles
+  evening shifts (16:00, 20:00), overnight shifts (23:59), and same-day
+  sessions without any impact on currently-running shifts.
+
 v6.40:
 - CHANGE 1 (Unified Start Time): The editable time input in the Hours tab
   header has been removed. It was a duplicate source of truth with no onchange
@@ -1982,7 +2001,16 @@ v5.06:
     // -- Time helpers --------------------------------------
     function htParseHHMM(str){
         const[h,m]=str.split(':').map(Number);
-        const d=new Date();d.setHours(h,m,0,0);return d;
+        const d=new Date();
+        d.setHours(h,m,0,0);
+        // FIX 2: If the parsed time is more than 1 minute in the future, the shift
+        // started yesterday (common for evening/overnight shifts checked the next
+        // morning). Roll back by one day so elapsed-time and hours calculations are
+        // correct. Without this fix, a 16:00 shift reviewed at 10:00 AM the next day
+        // produces a future timestamp, Math.max(0,...) clamps to 0, and all hours
+        // display as 0.00 even though DOP is fully staffed.
+        if(d.getTime()>Date.now()+60000)d.setDate(d.getDate()-1);
+        return d;
     }
     function htFmtTime(date){return date.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}
     function htCalcHours(emp){
@@ -2475,7 +2503,11 @@ v5.06:
         if(endBanner)endBanner.classList.toggle('show',hoursState.shiftEnded);
         const dopInfo=htCalcDOP();
         htRenderDOPBar(dopInfo);htRenderKPI();
-        const engaged=hoursState.employees.filter(e=>e.status==='active'||e.status==='cut');
+        // FIX 1: 'selected' employees must appear in the Active section, not the Roster.
+        // Previously the filter only included active/cut, so selected employees fell
+        // through to inactList and were rendered with Select/Start buttons -- making
+        // them appear invisible/unassigned even though they counted for DOP.
+        const engaged=hoursState.employees.filter(e=>e.status==='active'||e.status==='cut'||e.status==='selected');
         const inactive=hoursState.employees.filter(e=>e.status==='inactive');
         const ROLE_ORDER={belt:0,bulk:1,unload:2};
         const sortedEngaged=[...engaged].sort((a,b)=>{
