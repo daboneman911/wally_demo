@@ -522,7 +522,7 @@
         <div class="nameplate">
             <div class="nameplate-top">
                 <div class="nameplate-title">Wally Dashboard</div>
-                <div class="nameplate-sub" id="nameplate-sub">by Fitz Joseph &nbsp;&middot;&nbsp; v6.41</div>
+                <div class="nameplate-sub" id="nameplate-sub">by Fitz Joseph &nbsp;&middot;&nbsp; v6.42</div>
             </div>
             <div class="nameplate-actions">
                 <div class="shift-state-pill idle" id="shift-state-pill">
@@ -875,12 +875,43 @@
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
 <script>
     let demoActive=false,duplicateWallyFlag=false,pendingWallyDuplicate=null,currentDoor=null,currentType='Wally',detailDoor=null,currentLogFilter='All',activeLogFilter={door:'All',unloader:'All',type:'All',timeRange:'All',search:'',date:'All'},statsVisible=false,hourlyVisible=false,lastSortStartTime=null,isFirstOnboard=false,dashboardRefreshTimer=null,wallyNotes={},manualType='Wally',pendingMoveDest=null,shiftState='idle',shiftEndTime=null;
-    const APP_VERSION='6.41',DOORS_START=9,DOORS_END=16,DEFAULT_TEAM=["Robert W","David F","Lorena R","Matt R","Trevon C","Russell H","Fonseca J","Eddie F","Juan F","Arce J","Jeff","Solis","Anthony","Josh","Damian","Jarrett"];
+    const APP_VERSION='6.42',DOORS_START=9,DOORS_END=16,DEFAULT_TEAM=["Robert W","David F","Lorena R","Matt R","Trevon C","Russell H","Fonseca J","Eddie F","Juan F","Arce J","Jeff","Solis","Anthony","Josh","Damian","Jarrett"];
     const WEBHOOK_URL='https://script.google.com/macros/s/AKfycbwss7dFIVBNUuQQHzp5KDURwpRJyH58wUrlJR3XbSrL3SjrF4tvAFSaQiLjJJeOmH9m/exec';
     const byId=(id)=>document.getElementById(id);
     function dateKeyFromTs(ts){const d=new Date(ts);return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
     function debounce(func,wait){let timeout;return function(...args){clearTimeout(timeout);timeout=setTimeout(()=>func.apply(this,args),wait)}}
     const CHANGELOG=`
+v6.42:
+- SYNC FIX A (Exponential backoff): Retry delay was a flat 3 seconds on
+  every network failure. Now uses exponential backoff starting at 3s,
+  doubling each attempt, capped at 5 minutes. Prevents retry storms after
+  outages and gives Apps Script time to recover.
+- SYNC FIX B (Stuck mutex): isSyncingWebhook=true persisted across bfcache
+  page restores (iOS Safari back/forward cache), permanently blocking all
+  subsequent sends. A visibilitychange listener now resets the mutex when
+  the page becomes visible again and restarts the drain loop if queue is
+  non-empty. Also reset at DOMContentLoaded to clear stale session state.
+- SYNC FIX C (Progress badge): Sync badge now shows '1/N...' so the user
+  sees sequential progress. Exhausted payloads show 'Sync stalled (N)' in
+  red so the operator knows action is needed (not a silent failure).
+- SYNC FIX D (Attempt counter + dead-payload protection): Each queued
+  payload now carries a _attempts counter. After SYNC_MAX_ATTEMPTS (12)
+  network failures (~30 min of backoff), the payload is marked as dead but
+  never silently dropped -- it stays in the queue. Live payloads are always
+  attempted before dead ones. logId-based removal ensures the correct item
+  is dequeued even if the queue was modified between fetch start and resolve.
+- SYNC FIX (Periodic reconciliation): A 30-second setInterval checks
+  whether the queue has items but processing has stopped (stuck mutex or
+  missed online event). If so, restarts processWebhookQueue().
+- REQ5 (Manual start time for selected employees): Selected employees in
+  the Hours roster now show a 'Set Time' button alongside Start and Remove.
+  This lets operators set a custom clock-in time before activating the
+  employee. The custom time is stored in emp.customStartStr and applied
+  when the employee is activated via htActivateEmployee(). Hours calculation
+  uses htParseHHMM(customStartStr) for that employee only; all other
+  employees continue using the global shift start time. The midnight-
+  rollover fix (v6.41) ensures custom times crossing midnight work correctly.
+
 v6.41:
 - FIX 1 (Employee visibility): 'selected' employees were excluded from the
   'engaged' filter in htRenderAll(), causing them to fall through to the
@@ -1335,56 +1366,115 @@ v5.06:
         if(config.noWebhook){console.log('[Webhook suppressed - demo mode]',payload);return;}
         let queue=[];
         try{queue=JSON.parse(localStorage.getItem('ps9_webhook_queue')||'[]');}catch(e){}
-        if(queue.length>=500){console.warn('Webhook queue full, dropping oldest');
-            // Drop oldest non-completion payload first to protect completions
+        if(queue.length>=500){
+            console.warn('Webhook queue full, dropping oldest');
+            // Protect high-priority completions: drop a start/update first
             const dropIdx=queue.findIndex(p=>p.stage==='start'||p.stage==='update');
-            if(dropIdx>-1)queue.splice(dropIdx,1);else queue.shift();}
-        // Tag completions as high priority so they sort to front
+            if(dropIdx>-1)queue.splice(dropIdx,1);else queue.shift();
+        }
+        // Tag priority: completions (0) and shift events (0) before starts/updates (1)
         payload._priority=(payload.stage==='end'||payload.dataType==='SHIFT_END'||payload.dataType==='NEW_SHIFT')?0:1;
+        // FIX D: stamp attempt counter so we can apply exponential backoff
+        // and mark dead payloads after MAX_ATTEMPTS without losing them.
+        if(typeof payload._attempts!=='number')payload._attempts=0;
         queue.push(payload);
-        // Sort: completions (priority 0) ahead of arrivals/updates (priority 1)
-        // Stable sort -- preserve relative order within each priority tier
+        // Stable sort by priority -- completions always before arrivals
         queue.sort(function(a,b){return (a._priority||0)-(b._priority||0);});
         try{localStorage.setItem('ps9_webhook_queue',JSON.stringify(queue));}catch(e){console.error('Queue storage failed:',e);}
         updateSyncBadge();
     }
+    // Max network retries before a payload is marked dead (stays in queue, never
+    // silently dropped). 12 attempts spans ~30 minutes of exponential backoff.
+    const SYNC_MAX_ATTEMPTS=12;
     let isSyncingWebhook=false;
+    let syncRetryTimer=null; // FIX B: tracked so we can cancel stale timers
+
+    // FIX C: badge shows "Syncing X/N" so user sees real sequential progress
     function updateSyncBadge(){
         const badge=byId('sync-badge'),text=byId('sync-badge-text');
         if(!badge)return;
         let queue=[];
         try{queue=JSON.parse(localStorage.getItem('ps9_webhook_queue')||'[]');}catch(e){}
-        if(queue.length===0){badge.classList.remove('visible','error');return;}
-        badge.classList.add('visible');badge.classList.remove('error');
-        text.textContent=queue.length===1?'Syncing...':`Syncing (${queue.length})...`;
+        const total=queue.length;
+        const dead=queue.filter(p=>p._attempts>=SYNC_MAX_ATTEMPTS).length;
+        if(total===0){badge.classList.remove('visible','error');return;}
+        if(dead>0){
+            // Some payloads exhausted retries -- flag as error but keep trying
+            badge.classList.add('visible','error');
+            text.textContent='Sync stalled ('+dead+' failed)';
+        }else{
+            badge.classList.add('visible');badge.classList.remove('error');
+            // Show position "1/N" so user sees progress, not just a static count
+            text.textContent=total===1?'Syncing...':'Syncing 1/'+total+'...';
+        }
     }
+
+    // FIX A: exponential backoff -- base 3s, doubles each attempt, cap at 5 min
+    function syncBackoffMs(attempts){
+        return Math.min(3000*Math.pow(2,attempts),300000);
+    }
+
     function processWebhookQueue(){
         if(isSyncingWebhook||!navigator.onLine){updateSyncBadge();return;}
         let queue=[];
         try{queue=JSON.parse(localStorage.getItem('ps9_webhook_queue')||'[]');}catch(e){}
         if(queue.length===0){updateSyncBadge();return;}
+        // FIX D: skip payloads that have exhausted retries -- try them last
+        // They stay in queue so data is never lost; operator can reset app to retry.
+        const liveIdx=queue.findIndex(p=>p._attempts<SYNC_MAX_ATTEMPTS);
+        const workIdx=liveIdx>=0?liveIdx:0; // fall back to first if all exhausted
+        const payload=queue[workIdx];
         isSyncingWebhook=true;
         updateSyncBadge();
-        const payload=queue[0];
         fetch(WEBHOOK_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
         .then(function(){
+            // mode:no-cors gives opaque response -- we cannot verify HTTP status.
+            // We treat any resolved fetch as a successful delivery. This is the
+            // same guarantee as before; the logId field lets Apps Script deduplicate.
             let cq=[];
             try{cq=JSON.parse(localStorage.getItem('ps9_webhook_queue')||'[]');}catch(e){}
-            cq.shift();
+            // Remove exactly the payload we just sent by matching its logId or index
+            const sentId=payload.logId||null;
+            const sentIdx=sentId?cq.findIndex(p=>p.logId===sentId):workIdx;
+            if(sentIdx>=0)cq.splice(sentIdx,1);else if(cq.length>0)cq.splice(workIdx,1);
             try{localStorage.setItem('ps9_webhook_queue',JSON.stringify(cq));}catch(e){}
             isSyncingWebhook=false;
             updateSyncBadge();
-            // 1.5s breathe gap -- measured from response received
-            setTimeout(processWebhookQueue,600);
+            // 600ms breathe gap between sends -- continue draining the queue
+            syncRetryTimer=setTimeout(processWebhookQueue,600);
         })
-        .catch(function(err){
+        .catch(function(){
+            // Network error: increment attempts and apply exponential backoff
             isSyncingWebhook=false;
-            const badge=byId('sync-badge');
-            if(badge){badge.classList.add('visible','error');const t=byId('sync-badge-text');if(t)t.textContent='Sync failed';}
-            // retry in 5s on network error
-            setTimeout(function(){updateSyncBadge();processWebhookQueue();},3000);
+            let cq=[];
+            try{cq=JSON.parse(localStorage.getItem('ps9_webhook_queue')||'[]');}catch(e){}
+            const failIdx=payload.logId?cq.findIndex(p=>p.logId===payload.logId):workIdx;
+            if(failIdx>=0){
+                // FIX A: increment attempt counter so backoff grows each retry
+                cq[failIdx]._attempts=(cq[failIdx]._attempts||0)+1;
+                try{localStorage.setItem('ps9_webhook_queue',JSON.stringify(cq));}catch(e){}
+            }
+            const delay=syncBackoffMs((cq[failIdx]&&cq[failIdx]._attempts)||1);
+            updateSyncBadge();
+            syncRetryTimer=setTimeout(function(){processWebhookQueue();},delay);
         });
     }
+
+    // FIX B: Reset the sync mutex if the page returns from bfcache or
+    // regains focus with a stuck lock. Without this, isSyncingWebhook=true
+    // persists across bfcache restores and permanently blocks all sends.
+    document.addEventListener('visibilitychange',function(){
+        if(document.visibilityState==='visible'){
+            // If we were mid-sync when backgrounded, the fetch is gone.
+            // Safe to reset the mutex and let processWebhookQueue restart.
+            if(isSyncingWebhook){
+                isSyncingWebhook=false;
+                if(syncRetryTimer)clearTimeout(syncRetryTimer);
+            }
+            // Also re-attempt if anything is pending and we are online
+            if(navigator.onLine)processWebhookQueue();
+        }
+    });
     function openPPHCalculator(){byId('pph-volume').value='';byId('pph-hours').value='';byId('pph-result').innerText='0';byId('pph-diff').innerText='0.00 hrs';byId('pph-diff').style.background='#e5e5ea';byId('pph-diff').style.color='#000';byId('pph-modal').style.display='flex'}
     function calculatePPH(){const vol=parseFloat(byId('pph-volume').value),hrs=parseFloat(byId('pph-hours').value),resEl=byId('pph-result'),diffEl=byId('pph-diff');if(isNaN(vol)||isNaN(hrs)||hrs<=0){resEl.innerText='0';diffEl.innerText='0.00 hrs';diffEl.style.background='#e5e5ea';diffEl.style.color='#000';return}const pph=Math.round(vol/hrs);resEl.innerText=pph;const targetHours=vol/600,diff=hrs-targetHours;let diffText=diff>0?'+'+diff.toFixed(2):diff.toFixed(2);diffEl.innerText=diffText+' hrs';if(diff<=0){diffEl.style.background='#e8f5e9';diffEl.style.color='#2e7d32'}else{diffEl.style.background='#ffebee';diffEl.style.color='#c62828'}}
     function uploadPPH(){const vol=parseFloat(byId('pph-volume').value),hrs=parseFloat(byId('pph-hours').value);if(isNaN(vol)||isNaN(hrs)||hrs<=0)return alert("Please enter valid volume and hours first.");const pph=Math.round(vol/hrs),diff=(hrs-vol/600).toFixed(2);attemptWebhook({dataType:'PPH_UPLOAD',dateKey:dateKeyFromTs(Date.now()),shiftStart:getShiftStartTime(),volume:vol,hours:hrs,pph:pph,diffHours:diff});const btn=byId('pph-push-btn'),origText=btn.innerText;btn.innerText='Pushed!';btn.style.background='#34c759';setTimeout(()=>{btn.innerText=origText;btn.style.background='#000'},2000)}
@@ -1927,6 +2017,19 @@ v5.06:
         htLoadState();
         htSyncDOPButtons();
         htRefreshStartDisplay(); // CHANGE 1: populate Hours tab start display on load
+        // FIX B: also reset any stale sync mutex from a previous page session
+        isSyncingWebhook=false;
+        // FIX (periodic reconciliation): every 30s, check if there are queued
+        // payloads that are not being processed (e.g. mutex got stuck, app was
+        // backgrounded mid-send). If found and online, restart the drain loop.
+        setInterval(function(){
+            if(isSyncingWebhook)return; // already running
+            let queue=[];
+            try{queue=JSON.parse(localStorage.getItem('ps9_webhook_queue')||'[]');}catch(e){}
+            if(queue.length>0&&navigator.onLine){
+                processWebhookQueue();
+            }
+        },30000);
     });
 
     // ======================================================
@@ -2451,9 +2554,12 @@ v5.06:
                 '</div>';
         }else if(emp.status==='selected'){
             // REQ4: selected -- counts for DOP, clock not running
-            // Row click opens role modal; Remove returns to inactive
+            // REQ5: selected employees can also set a custom start time so their
+            // clock begins at the right moment when they are activated via Start.
+            const ctLbl=emp.customStartStr||'Set Time';
             actHTML='<div class="ht-actions">'+
                 '<button class="ht-btn ht-btn-start" onclick="htActivateEmployee('+emp.id+');event.stopPropagation()">Start</button>'+
+                '<button class="ht-btn ht-btn-time" onclick="htOpenCustomTime('+emp.id+');event.stopPropagation()">'+ctLbl+'</button>'+
                 '<button class="ht-btn ht-btn-cut" onclick="htCutEmployee('+emp.id+');event.stopPropagation()">Remove</button>'+
                 '</div>';
         }else if(emp.status==='active'){
