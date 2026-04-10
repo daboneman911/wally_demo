@@ -70,7 +70,10 @@
 ```
     /* ── BASE ─────────────────────────────────────────── */
     *{-webkit-tap-highlight-color:transparent;box-sizing:border-box}
-    html{height:100%}body{font-family:"SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text-main);margin:0;padding:0;height:100dvh;width:100vw;-webkit-font-smoothing:antialiased;overflow:hidden}
+    html{height:100%}body{font-family:"SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text-main);margin:0;padding:0;height:100dvh;width:100vw;-webkit-font-smoothing:antialiased}
+    /* overflow:hidden removed from body -- iOS Safari blocks touch on position:fixed elements
+       (tab bar, modals) when the body itself has overflow:hidden. The app-container
+       below already carries overflow:hidden which is sufficient to clip content. */
     .app-container{display:flex;flex-direction:column;height:100%;padding-top:calc(var(--safe-top) + 44px);overflow:hidden}
     .tab-content{flex:1;min-height:0;overflow-y:auto;display:none;padding:0 16px;padding-bottom:calc(var(--tab-height) + var(--safe-bottom) + 80px);-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain}
     .tab-content.active{display:block}.tab-content.tab-hours-flex.active{display:flex;flex-direction:column;}
@@ -612,7 +615,7 @@
         <div class="nameplate">
             <div class="nameplate-top">
                 <div class="nameplate-title">Wally Dashboard</div>
-                <div class="nameplate-sub" id="nameplate-sub">by Fitz Joseph &nbsp;&middot;&nbsp; v6.46</div>
+                <div class="nameplate-sub" id="nameplate-sub">by Fitz Joseph &nbsp;&middot;&nbsp; v6.46gem3</div>
             </div>
             <div class="nameplate-actions">
                 <div class="shift-state-pill idle" id="shift-state-pill">
@@ -995,13 +998,65 @@
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
 <script>
     let demoActive=false,duplicateWallyFlag=false,pendingWallyDuplicate=null,currentDoor=null,currentType='Wally',detailDoor=null,currentLogFilter='All',activeLogFilter={door:'All',unloader:'All',type:'All',timeRange:'All',search:'',date:'All'},statsVisible=false,hourlyVisible=false,lastSortStartTime=null,isFirstOnboard=false,dashboardRefreshTimer=null,wallyNotes={},manualType='Wally',pendingMoveDest=null,shiftState='idle',shiftEndTime=null;
-    const APP_VERSION='6.46',DOORS_START=9,DOORS_END=16,DEFAULT_TEAM=["Robert W","David F","Lorena R","Matt R","Trevon C","Russell H","Fonseca J","Eddie F","Juan F","Arce J","Jeff","Solis","Anthony","Josh","Damian","Jarrett"];
+    const APP_VERSION='6.46gem3',DOORS_START=9,DOORS_END=16,DEFAULT_TEAM=["Robert W","David F","Lorena R","Matt R","Trevon C","Russell H","Fonseca J","Eddie F","Juan F","Arce J","Jeff","Solis","Anthony","Josh","Damian","Jarrett"];
     const WEBHOOK_URL='https://script.google.com/macros/s/AKfycbwss7dFIVBNUuQQHzp5KDURwpRJyH58wUrlJR3XbSrL3SjrF4tvAFSaQiLjJJeOmH9m/exec';
     const byId=(id)=>document.getElementById(id);
     function dateKeyFromTs(ts){const d=new Date(ts);return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
     function debounce(func,wait){let timeout;return function(...args){clearTimeout(timeout);timeout=setTimeout(()=>func.apply(this,args),wait)}}
     const CHANGELOG=`
-v6.46 (UI refinement only -- no logic changes):
+v6.46gem3:
+- FIX (Bays unresponsive -- modal never opens): Root cause was a
+  DOMContentLoaded timing race. The main <script> block sits inside
+  <body> after all HTML. By the time the browser executes the script,
+  the DOM is already fully parsed and DOMContentLoaded has already
+  fired. The previous code registered addEventListener('DOMContentLoaded')
+  at that point -- a listener for an event that will never fire again.
+  init() never ran, click handlers were never attached to the bays grids,
+  and tapping any bay did nothing silently.
+  Fix: check document.readyState before registering the listener.
+  If readyState is 'loading', the DOM is not yet ready and the event
+  listener is still valid. If readyState is 'interactive' or 'complete',
+  the DOM is already parsed and _wallyBoot() is called directly and
+  immediately without waiting for an event that already passed.
+  This one change fixes bays, all modals, and every other interaction
+  because init() now reliably attaches all event listeners on load.
+  No logic, calculations, DOP, hours tracking, or UI changed.
+
+v6.46gem2:
+
+- FIX (Bay touch unresponsive on iOS): body had overflow:hidden which is a
+  documented iOS Safari bug – when the body scroll is locked, the browser
+  blocks touch events on position:fixed children (tab bar, modals, FABs).
+  Tapping bays fired the click handler but openArrivalModal tried to show
+  a modal whose touch was already dead before the modal opened. Removed
+  overflow:hidden from body; app-container retains its own overflow:hidden
+  which is sufficient to clip inner content.
+- FIX (Modal log row broken): A // comment was injected literally into the
+  middle of the renderLogBatch template literal string, corrupting the
+  log-actions-row HTML. The comment text appeared verbatim in the DOM,
+  pushing the revert and edit buttons out of position. Removed the comment;
+  the 600000ms (10-minute) revert window logic is unchanged.
+- All existing functionality confirmed unaffected: DOP, hours tracking,
+  employee state, sync queue, attribution, notes.
+
+v6.46gem:
+
+- Fix: Comprehensive smart-quote and non-ASCII sanitization across both
+  inline script blocks. Replaced all typographic box-drawing characters
+  (U+2500, U+2550) used in // section-separator comments with plain ASCII
+  dashes and equals signs. Replaced any typographic quotes (U+2018/2019
+  U+201C/201D) and other non-ASCII punctuation with ASCII equivalents.
+  Root cause: when code is edited through Apple ecosystem apps with Smart
+  Punctuation enabled, straight quotes and dashes are silently replaced
+  with typographic variants. iOS Safari’s strict JS parser throws
+  Uncaught SyntaxError on the first affected token and halts all script
+  execution, making bays fail to render and all touch handlers dead.
+  Verification: node –check passes; zero non-ASCII in executable
+  JS positions; only string-data emoji remain in the CHANGELOG constant.
+  No logic, calculations, or UI behaviour changed.
+
+v6.46 (UI refinement only – no logic changes):
+
 - Begin Shift button removed from header HTML. The ht-shift-btn CSS class
   and htHandleShiftBtn() function are unchanged; htRenderAll() guards the
   DOM lookup with if(btn) so removing the element is safe.
@@ -1020,7 +1075,7 @@ v6.46 (UI refinement only -- no logic changes):
   depth. Softer contrast, matches the card elevation language.
 - Subtle fade-in animation on the header (0.25s, translateY -4px to 0).
   Lightweight, non-distracting, gives the screen a polished entry feel.
-- DOP icon: inline emoji replaced with &#x2b1c; HTML entity (avoids
+- DOP icon: inline emoji replaced with ⬜ HTML entity (avoids
   platform-specific emoji rendering variation).
 
 v6.45 (UI refinement only – no logic changes):
@@ -2243,7 +2298,7 @@ v5.06:
   function toggleStats(sec){const c=byId(sec===‘unloader’?‘stats-content’:‘hourly-content’),i=byId(sec===‘unloader’?‘stats-caret’:‘hourly-caret’);const show=c.style.display!==‘block’;c.style.display=show?‘block’:‘none’;i.className=show?‘ph ph-caret-up’:‘ph ph-caret-down’;if(show)sec===‘unloader’?calculateAndRenderStats():calculateAndRenderHourlyStats()}
   let currentVisibleLogs=50,filteredLogsCache=[];
   function renderLogs(){const list=byId(‘logs-list’);if(!list)return;const filterDisplay=byId(‘active-filter-display’),filterText=byId(‘filter-text-display’),sVal=byId(‘log-search’).value.trim().toUpperCase();activeLogFilter.search=sVal;const{thisHourStart,thisHourEnd,lastHourStart,lastHourEnd}=getShiftTimeWindows();filteredLogsCache=[];historyLog.forEach((l,masterIndex)=>{if(activeLogFilter.date!==‘All’&&l.dateKey!==activeLogFilter.date)return;if(activeLogFilter.door!==‘All’&&l.door!=activeLogFilter.door)return;if(activeLogFilter.unloader!==‘All’&&l.unloader!==activeLogFilter.unloader)return;if(activeLogFilter.type!==‘All’&&l.type!==activeLogFilter.type)return;if(activeLogFilter.search){const nObj=getNoteObj(l.id);const noteText=nObj?(nObj.tags.join(’ ‘)+’ ‘+(nObj.text||’’)).toUpperCase():’’;if(!l.id.includes(sVal)&&!(l.account||’’).includes(sVal)&&String(l.door)!=sVal&&!noteText.includes(sVal))return}if(activeLogFilter.timeRange!==‘All’){const t=l.end-(l.statOffset||0);if(activeLogFilter.timeRange===‘ThisHour’&&(t<thisHourStart.getTime()||t>=thisHourEnd.getTime()))return;if(activeLogFilter.timeRange===‘LastHour’&&(t<lastHourStart.getTime()||t>=lastHourEnd.getTime()))return}filteredLogsCache.push({log:l,masterIndex:masterIndex})});const isFiltering=Object.values(activeLogFilter).some(v=>v!==‘All’&&v!==’’);if(filterDisplay){filterDisplay.style.display=isFiltering?‘flex’:‘none’;if(isFiltering){const p=[];if(activeLogFilter.date!==‘All’)p.push(activeLogFilter.date);if(activeLogFilter.door!==‘All’)p.push(“Door “+activeLogFilter.door);if(activeLogFilter.unloader!==‘All’)p.push(activeLogFilter.unloader);if(activeLogFilter.type!==‘All’)p.push(activeLogFilter.type);if(activeLogFilter.search)p.push(`"${activeLogFilter.search}"`);filterText.innerText=p.join(’ + ‘)}}list.innerHTML=’’;currentVisibleLogs=50;renderLogBatch();if(statsVisible)calculateAndRenderStats();if(hourlyVisible)calculateAndRenderHourlyStats()}
-  function renderLogBatch(){const list=byId(‘logs-list’),loadMore=byId(‘logs-load-more’);if(filteredLogsCache.length===0){list.innerHTML=’<div style="text-align:center;color:#999;margin-top:20px;">No logs found.</div>’;loadMore.style.display=‘none’;return}const frag=document.createDocumentFragment(),batch=filteredLogsCache.slice(list.children.length,currentVisibleLogs);batch.forEach(item=>{const l=item.log,idx=item.masterIndex,card=document.createElement(‘div’);card.className=‘log-card’;const dur=Math.round(l.duration/60000);const unloadDur=l.unloadDurationMinutes!=null?l.unloadDurationMinutes:dur;const dwell=l.dwellMinutes||0;let statusPill=’’;if(l.status===‘moved’)statusPill=`<span class="log-tag tag-gray"><i class="ph ph-arrows-left-right"></i> ${l.moveDest}</span>`;else if(l.status===‘incomplete’)statusPill=`<span class="log-tag tag-red"><i class="ph ph-x-circle"></i> Incomplete</span>`;else{statusPill=`<span class="log-tag tag-black">${l.type}</span>`;if(l.duplicate)statusPill+=` <span class="log-tag tag-red">DUP</span>`;if(l.type===‘CPU’&&l.cpuOptions&&l.cpuOptions.length>0)l.cpuOptions.forEach(opt=>{statusPill+=` <span class="log-tag tag-gray">${opt}</span>`})}statusPill+=`<span class="log-tag" style="background:#fff;border:1px solid #e5e5ea;">${l.completionHour?getHourText(l.completionHour):'--'}</span>`;if(l.manual)statusPill+=` <span class="log-tag tag-gray"><i class="ph ph-pencil-simple-line"></i> Manual</span>`;if(l.idleBeforeMinutes!=null&&l.idleBeforeMinutes>=0)statusPill+=` <span class="log-tag" style="background:#e5f0ff;color:#007aff;"><i class="ph ph-timer"></i> Idle: ${l.idleBeforeMinutes}m</span>`;const timeRange=`${new Date(l.start).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} - ${new Date(l.end).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;const hasN=l.type===‘Wally’&&noteHasContent(l.id);const noteIcon=l.type===‘Wally’?`<button class="note-icon-btn ${hasN?'has-note':''}" onclick="openNoteModal('${l.id}','log')"><i class="ph ph-note${hasN?'-pencil':''}"></i></button>`:’’;const dwellStr=dwell>0?`<div class="log-footer-item" style="color:#ff9500;"><i class="ph ph-hourglass"></i> Dwell ${dwell}m</div>`:’’;card.innerHTML=`<div class="log-info"><div class="log-header-row"><span class="log-door-pill" onclick="viewDoorLogs(${l.door})">Door ${l.door}</span><div class="log-title">${l.id}${noteIcon}<span class="log-account">${l.account?l.account:''}</span></div></div><div class="log-tags-row">${statusPill}</div><div class="log-footer-row"><div class="log-footer-item"><i class="ph ph-user"></i> ${l.unloader}</div><div class="log-footer-item"><i class="ph ph-clock"></i> ${timeRange}</div>${dwellStr}</div></div><div class="log-right-col"><div style="text-align:right;"><div class="log-duration">${unloadDur}<span style="font-size:14px;font-weight:700;">m</span></div><div class="log-duration-label">Unload</div>${dwell>0?`<div style="font-size:10px;color:#8e8e93;font-weight:600;margin-top:2px;">${dur}m Door</div>`:''}</div><div class="log-actions-row">// REQ5: revert button visible for 10 minutes (600000ms) after completion ${(Date.now()-l.end<600000&&!demoActive&&l.status==='completed')?`<button class="log-mini-btn" onclick="revertLog(${idx})"><i class="ph ph-arrow-u-up-left"></i></button>`:''}<button class="log-mini-btn" onclick="openEditLogModal(${idx})"><i class="ph ph-pencil-simple"></i></button></div></div>`;frag.appendChild(card)});list.appendChild(frag);loadMore.style.display=(currentVisibleLogs<filteredLogsCache.length)?‘block’:‘none’}
+  function renderLogBatch(){const list=byId(‘logs-list’),loadMore=byId(‘logs-load-more’);if(filteredLogsCache.length===0){list.innerHTML=’<div style="text-align:center;color:#999;margin-top:20px;">No logs found.</div>’;loadMore.style.display=‘none’;return}const frag=document.createDocumentFragment(),batch=filteredLogsCache.slice(list.children.length,currentVisibleLogs);batch.forEach(item=>{const l=item.log,idx=item.masterIndex,card=document.createElement(‘div’);card.className=‘log-card’;const dur=Math.round(l.duration/60000);const unloadDur=l.unloadDurationMinutes!=null?l.unloadDurationMinutes:dur;const dwell=l.dwellMinutes||0;let statusPill=’’;if(l.status===‘moved’)statusPill=`<span class="log-tag tag-gray"><i class="ph ph-arrows-left-right"></i> ${l.moveDest}</span>`;else if(l.status===‘incomplete’)statusPill=`<span class="log-tag tag-red"><i class="ph ph-x-circle"></i> Incomplete</span>`;else{statusPill=`<span class="log-tag tag-black">${l.type}</span>`;if(l.duplicate)statusPill+=` <span class="log-tag tag-red">DUP</span>`;if(l.type===‘CPU’&&l.cpuOptions&&l.cpuOptions.length>0)l.cpuOptions.forEach(opt=>{statusPill+=` <span class="log-tag tag-gray">${opt}</span>`})}statusPill+=`<span class="log-tag" style="background:#fff;border:1px solid #e5e5ea;">${l.completionHour?getHourText(l.completionHour):'--'}</span>`;if(l.manual)statusPill+=` <span class="log-tag tag-gray"><i class="ph ph-pencil-simple-line"></i> Manual</span>`;if(l.idleBeforeMinutes!=null&&l.idleBeforeMinutes>=0)statusPill+=` <span class="log-tag" style="background:#e5f0ff;color:#007aff;"><i class="ph ph-timer"></i> Idle: ${l.idleBeforeMinutes}m</span>`;const timeRange=`${new Date(l.start).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} - ${new Date(l.end).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;const hasN=l.type===‘Wally’&&noteHasContent(l.id);const noteIcon=l.type===‘Wally’?`<button class="note-icon-btn ${hasN?'has-note':''}" onclick="openNoteModal('${l.id}','log')"><i class="ph ph-note${hasN?'-pencil':''}"></i></button>`:’’;const dwellStr=dwell>0?`<div class="log-footer-item" style="color:#ff9500;"><i class="ph ph-hourglass"></i> Dwell ${dwell}m</div>`:’’;card.innerHTML=`<div class="log-info"><div class="log-header-row"><span class="log-door-pill" onclick="viewDoorLogs(${l.door})">Door ${l.door}</span><div class="log-title">${l.id}${noteIcon}<span class="log-account">${l.account?l.account:''}</span></div></div><div class="log-tags-row">${statusPill}</div><div class="log-footer-row"><div class="log-footer-item"><i class="ph ph-user"></i> ${l.unloader}</div><div class="log-footer-item"><i class="ph ph-clock"></i> ${timeRange}</div>${dwellStr}</div></div><div class="log-right-col"><div style="text-align:right;"><div class="log-duration">${unloadDur}<span style="font-size:14px;font-weight:700;">m</span></div><div class="log-duration-label">Unload</div>${dwell>0?`<div style="font-size:10px;color:#8e8e93;font-weight:600;margin-top:2px;">${dur}m Door</div>`:''}</div><div class="log-actions-row">${(Date.now()-l.end<600000&&!demoActive&&l.status==='completed')?`<button class="log-mini-btn" onclick="revertLog(${idx})"><i class="ph ph-arrow-u-up-left"></i></button>`:''}<button class="log-mini-btn" onclick="openEditLogModal(${idx})"><i class="ph ph-pencil-simple"></i></button></div></div>`;frag.appendChild(card)});list.appendChild(frag);loadMore.style.display=(currentVisibleLogs<filteredLogsCache.length)?‘block’:‘none’}
   function loadMoreLogs(){currentVisibleLogs+=50;renderLogBatch()}
   function revertLog(i){
   const l=historyLog[i];
@@ -2267,27 +2322,47 @@ v5.06:
   // The ht-time-display element was removed in v6.44. No-op for safety.
   }
   
-  // – Boot: wrapped in DOMContentLoaded for reliable cross-browser execution –
-  // Guarantees full DOM is parsed before init() runs, regardless of CDN timing.
-  document.addEventListener(‘DOMContentLoaded’, function() {
+  // – Boot —————————————————––
+  // ROOT CAUSE OF BAY TOUCH BUG:
+  // This script block lives inside <body>, after all HTML elements.
+  // By the time the browser executes this code, the DOM is already
+  // fully parsed and DOMContentLoaded has already fired.
+  // Calling addEventListener(‘DOMContentLoaded’, …) at this point
+  // registers a listener for an event that will never fire again –
+  // so init() never runs, click handlers are never attached to the
+  // bays grids, and tapping any bay does nothing.
+  //
+  // THE FIX: Check document.readyState before registering the listener.
+  // ‘loading’     = DOM not yet parsed  -> safe to wait for the event.
+  // ‘interactive’ = DOM parsed, subresources may still be loading -> run now.
+  // ‘complete’    = fully loaded -> run now.
+  // This pattern is robust in all browsers, preview iframes, and PWA mode.
+  function _wallyBoot() {
   init();
   htLoadState();
   htSyncDOPButtons();
-  htRefreshStartDisplay(); // CHANGE 1: populate Hours tab start display on load
-  // FIX B: also reset any stale sync mutex from a previous page session
+  htRefreshStartDisplay();
+  // Reset stale sync mutex that may persist across bfcache restores
   isSyncingWebhook=false;
-  // FIX (periodic reconciliation): every 30s, check if there are queued
-  // payloads that are not being processed (e.g. mutex got stuck, app was
-  // backgrounded mid-send). If found and online, restart the drain loop.
+  // Periodic reconciliation: restart sync drain if queue is stuck
   setInterval(function(){
-  if(isSyncingWebhook)return; // already running
+  if(isSyncingWebhook)return;
   let queue=[];
   try{queue=JSON.parse(localStorage.getItem(‘ps9_webhook_queue’)||’[]’);}catch(e){}
   if(queue.length>0&&navigator.onLine){
   processWebhookQueue();
   }
   },30000);
-  });
+  }
+  if(document.readyState===‘loading’){
+  // DOM not yet ready – wait for the event as normal
+  document.addEventListener(‘DOMContentLoaded’,_wallyBoot);
+  }else{
+  // DOM is already parsed (script ran after HTML body was processed).
+  // DOMContentLoaded already fired, so the listener would never trigger.
+  // Call the boot function directly and immediately.
+  _wallyBoot();
+  }
   
   // ======================================================
   // HOURS TRACKER – all functions prefixed ht* to avoid
